@@ -107,8 +107,10 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
-          PRODUCT_TABLE_NAME: !Ref ProductTable      
-  
+          PRODUCT_TABLE_NAME: !Ref ProductTable
+          FAUNADB_DOMAIN: "db.us.fauna.com"
+          FAUNADB_SECRET: "temp"
+
   
   GetProductsFunction:
     Type: AWS::Serverless::Function 
@@ -125,7 +127,9 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
           PRODUCT_TABLE_NAME: !Ref ProductTable      
-  
+          FAUNADB_DOMAIN: "db.us.fauna.com"
+          FAUNADB_SECRET: "temp"
+
   CreateProductFunction:
     Type: AWS::Serverless::Function
     DependsOn: ProductFunctionExecutionRole 
@@ -141,6 +145,8 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
           PRODUCT_TABLE_NAME: !Ref ProductTable
+          FAUNADB_DOMAIN: "db.us.fauna.com"
+          FAUNADB_SECRET: "temp"
       
   UpdateProductFunction:
     Type: AWS::Serverless::Function
@@ -157,6 +163,9 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
           PRODUCT_TABLE_NAME: !Ref ProductTable
+          FAUNADB_DOMAIN: "db.us.fauna.com"
+          FAUNADB_SECRET: "temp"
+
   
   DeleteProductFunction:
     Type: AWS::Serverless::Function
@@ -173,6 +182,8 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
           PRODUCT_TABLE_NAME: !Ref ProductTable
+          FAUNADB_DOMAIN: "db.us.fauna.com"
+          FAUNADB_SECRET: "temp"
           
   OrderFunctionExecutionRole:
     Type: AWS::IAM::Role     
