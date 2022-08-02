@@ -59,6 +59,64 @@ Resources:
       BillingMode: PAY_PER_REQUEST
       TableName: Order-Lab1
 
+  FaunaConfig:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: '/serverless-saas-workshop/faunadb/config/appConfig'
+      Description: 'Fauna env variables'
+      Type: String
+      Value: '{"domain": "db.us.fauna.com"}'
+      
+  ParameterStoreKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: 'alias/ParameterStoreKey'
+      TargetKeyId: !Ref ParameterStoreEncryptionKey
+
+  ParameterStoreEncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: 'Encryption key for secret config values'
+      Enabled: True
+      EnableKeyRotation: False
+      KeyPolicy:
+        Version: '2012-10-17'
+        Id: 'key-default-1'
+        Statement:
+          -
+            Sid: 'Allow administration of the key & encryption of new values'
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action:
+              - 'kms:Create*'
+              - 'kms:Encrypt'
+              - 'kms:Describe*'
+              - 'kms:Enable*'
+              - 'kms:List*'
+              - 'kms:Put*'
+              - 'kms:Update*'
+              - 'kms:Revoke*'
+              - 'kms:Disable*'
+              - 'kms:Get*'
+              - 'kms:Delete*'
+              - 'kms:ScheduleKeyDeletion'
+              - 'kms:CancelKeyDeletion'
+            Resource: '*'
+          -
+            Sid: 'Allow use of the key'
+            Effect: Allow
+            Principal:
+              AWS: !GetAtt ProductFunctionExecutionRole.Arn
+            Action:
+              - 'kms:Encrypt'
+              - 'kms:Decrypt'
+              - 'kms:ReEncrypt*'
+              - 'kms:GenerateDataKey*'
+              - 'kms:DescribeKey'
+            Resource: '*'
+
   ProductFunctionExecutionRole:
     Type: AWS::IAM::Role     
     Properties:
@@ -92,6 +150,27 @@ Resources:
                   - dynamodb:Scan
                 Resource:
                   - !GetAtt ProductTable.Arn
+        -
+          PolicyName: 'ProductFunctionsParameterStoreAccess'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - 'ssm:GetParameter*'
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/serverless-saas-workshop/faunadb/config'
+        -
+          PolicyName: 'ProductFunctionsXRayAccess'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - 'xray:PutTraceSegments'
+                  - 'xray:PutTelemetryRecords'
+                Resource: '*'
              
   GetProductFunction:
     Type: AWS::Serverless::Function 
@@ -108,9 +187,7 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
           PRODUCT_TABLE_NAME: !Ref ProductTable
-          FAUNADB_DOMAIN: "db.us.fauna.com"
-          FAUNADB_SECRET: "temp"
-
+          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
   
   GetProductsFunction:
     Type: AWS::Serverless::Function 
@@ -126,9 +203,8 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
-          PRODUCT_TABLE_NAME: !Ref ProductTable      
-          FAUNADB_DOMAIN: "db.us.fauna.com"
-          FAUNADB_SECRET: "temp"
+          PRODUCT_TABLE_NAME: !Ref ProductTable
+          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
 
   CreateProductFunction:
     Type: AWS::Serverless::Function
@@ -145,8 +221,7 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
           PRODUCT_TABLE_NAME: !Ref ProductTable
-          FAUNADB_DOMAIN: "db.us.fauna.com"
-          FAUNADB_SECRET: "temp"
+          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
       
   UpdateProductFunction:
     Type: AWS::Serverless::Function
@@ -163,9 +238,7 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
           PRODUCT_TABLE_NAME: !Ref ProductTable
-          FAUNADB_DOMAIN: "db.us.fauna.com"
-          FAUNADB_SECRET: "temp"
-
+          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
   
   DeleteProductFunction:
     Type: AWS::Serverless::Function
@@ -182,8 +255,7 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
           PRODUCT_TABLE_NAME: !Ref ProductTable
-          FAUNADB_DOMAIN: "db.us.fauna.com"
-          FAUNADB_SECRET: "temp"
+          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
           
   OrderFunctionExecutionRole:
     Type: AWS::IAM::Role     

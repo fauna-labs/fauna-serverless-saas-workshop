@@ -7,6 +7,10 @@ import logger
 import product_service_dal
 from types import SimpleNamespace
 
+from aws_xray_sdk.core import patch_all
+patch_all()
+
+
 def get_product(event, context):
     logger.info("Request received to get a product")
     params = event['pathParameters']
