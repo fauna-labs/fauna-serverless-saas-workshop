@@ -1,60 +1,25 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT-0
 
-import os, traceback, configparser, json
-import boto3
-from botocore.exceptions import ClientError
+# import os, traceback, configparser, json
+# import boto3
+# from botocore.exceptions import ClientError
 import uuid
 import logger
 
 from product_models import Product
-from types import SimpleNamespace
-from boto3.dynamodb.conditions import Key
+# from types import SimpleNamespace
+# from boto3.dynamodb.conditions import Key
 
+from utils import Fauna, load_config
 from faunadb import query as q
-from faunadb.client import FaunaClient
 from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
 
 # table_name = os.environ['PRODUCT_TABLE_NAME']
 # dynamodb = boto3.resource('dynamodb')
 # table = dynamodb.Table(table_name)
 
-boto_client = boto3.client('ssm')
-
-FAUNA_CONFIG_PATH = os.environ['FAUNA_CONFIG_PATH']
-
 db = None
-
-class Fauna(FaunaClient):
-    @classmethod
-    def from_config(cls, config):
-        print("Loading config and creating new db...")
-        print("Fauna domain = {}".format(config['FAUNA']['domain']))
-        return cls(
-            secret=config['FAUNA']['secret'],
-            domain=config['FAUNA']['domain']
-        )
-
-# https://aws.amazon.com/blogs/compute/sharing-secrets-with-aws-lambda-using-aws-systems-manager-parameter-store/
-def load_config():
-    configuration = configparser.ConfigParser()
-    config_dict = {}
-    try: 
-        param_details = boto_client.get_parameters_by_path(
-            Path=FAUNA_CONFIG_PATH,
-            Recursive=False,
-            WithDecryption=True
-        )
-        if 'Parameters' in param_details and len(param_details.get('Parameters')) > 0:
-            for param in param_details.get('Parameters'):
-                config_dict.update(json.loads(param.get('Value')))
-    except:
-        print("Encountered an error loading config from SSM.")
-        traceback.print_exc()
-    finally:
-        configuration['FAUNA'] = config_dict
-        return configuration
-
 
 def get_product(event, productId):
     try:
@@ -114,23 +79,9 @@ def delete_product(event, productId):
 
 
 def create_product(event, payload):
-    product = Product(str(uuid.uuid4()), payload.sku,payload.name, payload.price, payload.category)
-
+    # product = Product(str(uuid.uuid4()), payload.sku,payload.name, payload.price, payload.category)
+    product = None
     try:
-        global db
-        if db is None:
-            db = Fauna.from_config(load_config())
-
-        db.query(
-          q.create(q.collection("product"), {
-            "data": {
-              "sku": payload.sku,
-              "name": payload.name,
-              "price": payload.price,
-              "category": payload.category
-            }
-          })
-        )
         # response = table.put_item(
         #     Item=
         #         {
@@ -141,6 +92,26 @@ def create_product(event, payload):
         #             'category': product.category
         #         }
         # )
+        global db
+        if db is None:
+            db = Fauna.from_config(load_config())
+
+        response = db.query(
+          q.let(
+            {
+              "result": q.create(q.collection("product"), {
+                    "data": {
+                      "sku": payload.sku,
+                      "name": payload.name,
+                      "price": payload.price,
+                      "category": payload.category
+                    }
+                  })
+            },
+            { "id": q.select(["ref", "id"], q.var("result")) }
+          )
+        )
+        product = Product(response["id"], payload.sku,payload.name, payload.price, payload.category)
     # except ClientError as e:
     #     logger.error(e.response['Error']['Message'])
     #     raise Exception('Error adding a product', e)

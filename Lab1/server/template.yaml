@@ -35,18 +35,6 @@ Resources:
     Metadata:
       BuildMethod: python3.8
 
-  OrderTable:
-    Type: AWS::DynamoDB::Table
-    Properties: 
-      AttributeDefinitions:
-        - AttributeName: orderId
-          AttributeType: S          
-      KeySchema:
-        - AttributeName: orderId
-          KeyType: HASH  
-      BillingMode: PAY_PER_REQUEST
-      TableName: Order-Lab1
-
   FaunaConfig:
     Type: AWS::SSM::Parameter
     Properties:
@@ -96,7 +84,7 @@ Resources:
             Sid: 'Allow use of the key'
             Effect: Allow
             Principal:
-              AWS: !GetAtt ProductFunctionExecutionRole.Arn
+              AWS: [!GetAtt ProductFunctionExecutionRole.Arn, !GetAtt OrderFunctionExecutionRole.Arn]
             Action:
               - 'kms:Encrypt'
               - 'kms:Decrypt'
@@ -245,20 +233,27 @@ Resources:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole       
         - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess 
       Policies:
-        - PolicyName: order-function-policy-lab1
+        -
+          PolicyName: 'OrderFunctionsParameterStoreAccess'
           PolicyDocument:
-            Version: 2012-10-17
-            Statement:              
-              - Effect: Allow
+            Version: '2012-10-17'
+            Statement:
+              -
+                Effect: Allow
                 Action:
-                  - dynamodb:GetItem
-                  - dynamodb:UpdateItem
-                  - dynamodb:PutItem
-                  - dynamodb:DeleteItem
-                  - dynamodb:Query
-                  - dynamodb:Scan
-                Resource:
-                  - !GetAtt OrderTable.Arn
+                  - 'ssm:GetParameter*'
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/serverless-saas-workshop/faunadb/config'
+        -
+          PolicyName: 'OrderFunctionsXRayAccess'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - 'xray:PutTraceSegments'
+                  - 'xray:PutTelemetryRecords'
+                Resource: '*'
                 
   GetOrdersFunction:
     Type: AWS::Serverless::Function 
@@ -274,7 +269,7 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          ORDER_TABLE_NAME: !Ref OrderTable
+          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
   
   GetOrderFunction:
     Type: AWS::Serverless::Function 
@@ -290,7 +285,7 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          ORDER_TABLE_NAME: !Ref OrderTable
+          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
       
   CreateOrderFunction:
     Type: AWS::Serverless::Function
@@ -306,7 +301,7 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          ORDER_TABLE_NAME: !Ref OrderTable
+          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
       
   UpdateOrderFunction:
     Type: AWS::Serverless::Function
@@ -322,7 +317,7 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          ORDER_TABLE_NAME: !Ref OrderTable
+          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
       
   DeleteOrderFunction:
     Type: AWS::Serverless::Function
@@ -338,7 +333,7 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          ORDER_TABLE_NAME: !Ref OrderTable
+          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
       
   ApiGatewayAccessLogs:
     Type: AWS::Logs::LogGroup
