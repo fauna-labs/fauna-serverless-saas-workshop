@@ -4,7 +4,7 @@
 # import os
 # import boto3
 from botocore.exceptions import ClientError
-import uuid
+# import uuid
 from order_models import Order
 # import json
 # import utils

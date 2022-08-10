@@ -9,6 +9,42 @@ import boto3
 from aws_requests_auth.aws_auth import AWSRequestsAuth
 from enum import Enum
 
+import os, configparser, traceback
+from faunadb.client import FaunaClient
+
+FAUNA_CONFIG_PATH = os.environ['FAUNA_CONFIG_PATH']
+boto_client = boto3.client('ssm')
+
+class Fauna(FaunaClient):
+    @classmethod
+    def from_config(cls, config):
+        print("Loading config and creating new db...")
+        print("Fauna domain = {}".format(config['FAUNA']['domain']))
+        return cls(
+            secret=config['FAUNA']['secret'],
+            domain=config['FAUNA']['domain']
+        )
+
+# https://aws.amazon.com/blogs/compute/sharing-secrets-with-aws-lambda-using-aws-systems-manager-parameter-store/
+def load_config():
+    configuration = configparser.ConfigParser()
+    config_dict = {}
+    try: 
+        param_details = boto_client.get_parameters_by_path(
+            Path=FAUNA_CONFIG_PATH,
+            Recursive=False,
+            WithDecryption=True
+        )
+        if 'Parameters' in param_details and len(param_details.get('Parameters')) > 0:
+            for param in param_details.get('Parameters'):
+                config_dict.update(json.loads(param.get('Value')))
+    except:
+        print("Encountered an error loading config from SSM.")
+        traceback.print_exc()
+    finally:
+        configuration['FAUNA'] = config_dict
+        return configuration
+
 class StatusCodes(Enum):
     SUCCESS    = 200
     UN_AUTHORIZED  = 401

@@ -9,10 +9,15 @@ import logger
 import utils
 from boto3.dynamodb.conditions import Key
 
+from utils import Fauna, load_config
+from faunadb import query as q
+from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
+db = None
+
 client = boto3.client('cognito-idp')
-dynamodb = boto3.resource('dynamodb')
-table_tenant_user_map = dynamodb.Table('ServerlessSaaS-TenantUserMapping')
-table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')
+# dynamodb = boto3.resource('dynamodb')
+# table_tenant_user_map = dynamodb.Table('ServerlessSaaS-TenantUserMapping')
+# table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')
 
 user_pool_id = os.environ['TENANT_USER_POOL_ID']
 
@@ -42,7 +47,40 @@ def create_tenant_admin_user(event, context):
 #only tenant admin can create users
 #TODO: Implement the below method
 def create_user(event, context):
-    pass
+    user_details = json.loads(event['body'])
+
+    logger.info("Request received to create new user")
+    logger.info(event)    
+    
+    tenant_id = user_details['tenantId']
+    
+    response = client.admin_create_user(
+        Username=user_details['userName'],
+        UserPoolId=user_pool_id,
+        ForceAliasCreation=True,
+        UserAttributes=[
+            {
+                'Name': 'email',
+                'Value': user_details['userEmail']
+            },
+            {
+                'Name': 'custom:userRole',
+                'Value': user_details['userRole'] 
+            },            
+            {
+                'Name': 'custom:tenantId',
+                'Value': tenant_id
+            }
+        ]
+    )
+    
+    logger.info(response)
+    user_mgmt = UserManagement()
+    user_mgmt.add_user_to_group(user_pool_id, user_details['userName'], tenant_id)
+    response_mapping = user_mgmt.create_user_tenant_mapping(user_details['userName'], tenant_id)
+
+    logger.info("Request completed to create new user ")
+    return utils.create_success_response("New user created")
     
 def get_users(event, context):
     users = []  
@@ -132,13 +170,24 @@ def disable_users_by_tenant(event, context):
     
     tenantid_to_update = event['tenantid']
     
-    filtering_exp = Key('tenantId').eq(tenantid_to_update)
-    response = table_tenant_user_map.query(KeyConditionExpression=filtering_exp)
-    users = response.get('Items')
-    
-    for user in users:
+    # filtering_exp = Key('tenantId').eq(tenantid_to_update)
+    # response = table_tenant_user_map.query(KeyConditionExpression=filtering_exp)
+    # users = response.get('Items')
+    # for user in users:
+    #     response = client.admin_disable_user(
+    #         Username=user['userName'],
+    #         UserPoolId=user_pool_id
+    #     )
+
+    global db
+    if db is None:
+        db = Fauna.from_config(load_config())
+    users = db.query(
+      q.select(["data"], q.paginate(q.match(q.index("usernames_by_tenant_id"), tenantid_to_update)))
+    )
+    for username in users:
         response = client.admin_disable_user(
-            Username=user['userName'],
+            Username=username,
             UserPoolId=user_pool_id
         )
         
@@ -154,16 +203,27 @@ def enable_users_by_tenant(event, context):
     
     tenantid_to_update = event['tenantid']
     
-    filtering_exp = Key('tenantId').eq(tenantid_to_update)
-    response = table_tenant_user_map.query(KeyConditionExpression=filtering_exp)
-    users = response.get('Items')
+    # filtering_exp = Key('tenantId').eq(tenantid_to_update)
+    # response = table_tenant_user_map.query(KeyConditionExpression=filtering_exp)
+    # users = response.get('Items')
     
-    for user in users:
+    # for user in users:
+    #     response = client.admin_enable_user(
+    #         Username=user['userName'],
+    #         UserPoolId=user_pool_id
+    #     )
+    global db
+    if db is None:
+        db = Fauna.from_config(load_config())
+    users = db.query(
+      q.select(["data"], q.paginate(q.match(q.index("usernames_by_tenant_id"), tenantid_to_update)))
+    )
+    for username in users:
         response = client.admin_enable_user(
-            Username=user['userName'],
+            Username=username,
             UserPoolId=user_pool_id
         )
-        
+
     logger.info(response)
     logger.info("Request completed to enable users")
     return utils.create_success_response("Users enables")
@@ -227,13 +287,27 @@ class UserManagement:
         return response
 
     def create_user_tenant_mapping(self, user_name, tenant_id):
-        response = table_tenant_user_map.put_item(
-                Item={
-                        'tenantId': tenant_id,
-                        'userName': user_name
-                    }
-                )                    
+        # response = table_tenant_user_map.put_item(
+        #         Item={
+        #                 'tenantId': tenant_id,
+        #                 'userName': user_name
+        #             }
+        #         )                    
 
+        global db
+        if db is None:
+            db = Fauna.from_config(load_config())
+
+        response = db.query(
+          q.create(
+            q.collection("tenant_user"), {
+              "data": {
+                "tenant_id": q.ref(q.collection("tenant"), tenant_id),
+                "user_name": user_name
+              }
+            }
+          )
+        )
         return response
 
 

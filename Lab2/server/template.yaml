@@ -19,10 +19,10 @@ Parameters:
     Default: "prod"
     Description: "Stage Name for the api"  
 Resources:
-  DynamoDBTables:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: nested_templates/tables.yaml
+  # DynamoDBTables:
+  #   Type: AWS::Serverless::Application
+  #   Properties:
+  #     Location: nested_templates/tables.yaml
 
   #Create cloudfront and s3 for UI Cde
   UserInterface:
@@ -50,8 +50,8 @@ Resources:
         CognitoUserPoolClientId: !GetAtt Cognito.Outputs.CognitoUserPoolClientId                
         CognitoOperationUsersUserPoolId: !GetAtt Cognito.Outputs.CognitoOperationUsersUserPoolId
         CognitoOperationUsersUserPoolClientId: !GetAtt Cognito.Outputs.CognitoOperationUsersUserPoolClientId
-        TenantDetailsTableArn: !GetAtt DynamoDBTables.Outputs.TenantDetailsTableArn
-        TenantUserMappingTableArn: !GetAtt DynamoDBTables.Outputs.TenantUserMappingTableArn
+        # TenantDetailsTableArn: !GetAtt DynamoDBTables.Outputs.TenantDetailsTableArn
+        # TenantUserMappingTableArn: !GetAtt DynamoDBTables.Outputs.TenantUserMappingTableArn
         
   APIs:
     Type: AWS::Serverless::Application

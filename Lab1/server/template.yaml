@@ -13,7 +13,8 @@ Globals:
       - !Sub "arn:aws:lambda:${AWS::Region}:580247275435:layer:LambdaInsightsExtension:14"
     Environment:
         Variables:
-          LOG_LEVEL: DEBUG                   
+          LOG_LEVEL: DEBUG
+          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
 
 Parameters:
   StageName:
@@ -84,7 +85,10 @@ Resources:
             Sid: 'Allow use of the key'
             Effect: Allow
             Principal:
-              AWS: [!GetAtt ProductFunctionExecutionRole.Arn, !GetAtt OrderFunctionExecutionRole.Arn]
+              AWS: [
+                !GetAtt ProductFunctionExecutionRole.Arn, 
+                !GetAtt OrderFunctionExecutionRole.Arn
+              ]
             Action:
               - 'kms:Encrypt'
               - 'kms:Decrypt'
@@ -148,7 +152,6 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
-          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
   
   GetProductsFunction:
     Type: AWS::Serverless::Function 
@@ -164,7 +167,6 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
-          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
 
   CreateProductFunction:
     Type: AWS::Serverless::Function
@@ -180,7 +182,6 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
-          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
       
   UpdateProductFunction:
     Type: AWS::Serverless::Function
@@ -196,7 +197,6 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
-          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
   
   DeleteProductFunction:
     Type: AWS::Serverless::Function
@@ -212,7 +212,6 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
-          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
           
   OrderFunctionExecutionRole:
     Type: AWS::IAM::Role     
@@ -269,7 +268,6 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
   
   GetOrderFunction:
     Type: AWS::Serverless::Function 
@@ -285,7 +283,6 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
       
   CreateOrderFunction:
     Type: AWS::Serverless::Function
@@ -301,7 +298,6 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
       
   UpdateOrderFunction:
     Type: AWS::Serverless::Function
@@ -317,7 +313,6 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
       
   DeleteOrderFunction:
     Type: AWS::Serverless::Function
@@ -333,7 +328,6 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
       
   ApiGatewayAccessLogs:
     Type: AWS::Logs::LogGroup
