@@ -1,0 +1,12 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "serverless-saas-fauna"
+s3_bucket = "sam-bootstrap-bucket-e2de0b5e-1335-481f-8759-f2c35919ba57"
+s3_prefix = "serverless-saas-fauna"
+region = "us-west-2"
+confirm_changeset = false
+capabilities = "CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND"
+cached="true"
+parallel="true"
