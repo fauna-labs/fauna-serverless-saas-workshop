@@ -75,6 +75,8 @@ Resources:
     Properties:
       Domain: !Join ["-", [pooledtenant-serverlesssaas-fauna,!Ref "AWS::AccountId"]]
       UserPoolId: !Ref CognitoUserPool
+
+
   CognitoOperationUsersUserPool:
     Type: "AWS::Cognito::UserPool"
     Properties:

@@ -15,15 +15,22 @@ from faunadb.client import FaunaClient
 FAUNA_CONFIG_PATH = os.environ['FAUNA_CONFIG_PATH']
 boto_client = boto3.client('ssm')
 
-class Fauna(FaunaClient):
-    @classmethod
-    def from_config(cls, config):
-        print("Loading config and creating new db...")
+class FaunaFromConfig(FaunaClient):
+    def __init__(self):
+        config = load_config()
+        print("Loading config and creating new Fauna client...")
         print("Fauna domain = {}".format(config['FAUNA']['domain']))
-        return cls(
-            secret=config['FAUNA']['secret'],
-            domain=config['FAUNA']['domain']
+        
+        self.domain = config['FAUNA']['domain']
+
+        FaunaClient.__init__(self,
+            domain=config['FAUNA']['domain'],
+            secret=config['FAUNA']['secret']
         )
+        
+    def get_domain(self):
+        return self.domain
+
 
 # https://aws.amazon.com/blogs/compute/sharing-secrets-with-aws-lambda-using-aws-systems-manager-parameter-store/
 def load_config():

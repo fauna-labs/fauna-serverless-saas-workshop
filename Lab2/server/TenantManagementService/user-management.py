@@ -9,7 +9,7 @@ import logger
 import utils
 from boto3.dynamodb.conditions import Key
 
-from utils import Fauna, load_config
+from utils import FaunaFromConfig
 from faunadb import query as q
 from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
 db = None
@@ -181,7 +181,7 @@ def disable_users_by_tenant(event, context):
 
     global db
     if db is None:
-        db = Fauna.from_config(load_config())
+        db = FaunaFromConfig()
     users = db.query(
       q.select(["data"], q.paginate(q.match(q.index("usernames_by_tenant_id"), tenantid_to_update)))
     )
@@ -214,7 +214,7 @@ def enable_users_by_tenant(event, context):
     #     )
     global db
     if db is None:
-        db = Fauna.from_config(load_config())
+        db = FaunaFromConfig()
     users = db.query(
       q.select(["data"], q.paginate(q.match(q.index("usernames_by_tenant_id"), tenantid_to_update)))
     )
@@ -296,7 +296,7 @@ class UserManagement:
 
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = FaunaFromConfig()
 
         response = db.query(
           q.create(

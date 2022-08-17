@@ -13,10 +13,16 @@ from boto3.dynamodb.conditions import Key
 from aws_lambda_powertools import Tracer
 tracer = Tracer()
 
+from utils import FaunaFromConfig
+from faunadb import query as q
+from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
+db = None
+
+
 client = boto3.client('cognito-idp')
-dynamodb = boto3.resource('dynamodb')
-table_tenant_user_map = dynamodb.Table('ServerlessSaaS-TenantUserMapping')
-table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')
+# dynamodb = boto3.resource('dynamodb')
+# table_tenant_user_map = dynamodb.Table('ServerlessSaaS-TenantUserMapping')
+# table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')
 
 user_pool_id = os.environ['TENANT_USER_POOL_ID']
 
@@ -232,16 +238,27 @@ def disable_users_by_tenant(event, context):
     tracer.put_annotation(key="TenantId", value=tenantid_to_update)
     
     if ((auth_manager.isTenantAdmin(user_role) and tenantid_to_update == requesting_tenant_id) or auth_manager.isSystemAdmin(user_role)):
-        filtering_exp = Key('tenantId').eq(tenantid_to_update)
-        response = table_tenant_user_map.query(KeyConditionExpression=filtering_exp)
-        users = response.get('Items')
+        # filtering_exp = Key('tenantId').eq(tenantid_to_update)
+        # response = table_tenant_user_map.query(KeyConditionExpression=filtering_exp)
+        # users = response.get('Items')
         
-        for user in users:
+        # for user in users:
+        #     response = client.admin_disable_user(
+        #         Username=user['userName'],
+        #         UserPoolId=user_pool_id
+        #     )            
+        global db
+        if db is None:
+            db = FaunaFromConfig()
+        users = db.query(
+          q.select(["data"], q.paginate(q.match(q.index("usernames_by_tenant_id"), tenantid_to_update)))
+        )
+        for username in users:
             response = client.admin_disable_user(
-                Username=user['userName'],
+                Username=username,
                 UserPoolId=user_pool_id
             )
-            
+
         logger.info(response)
         logger.info("Request completed to disable users")
         return utils.create_success_response("Users disabled")
@@ -261,13 +278,24 @@ def enable_users_by_tenant(event, context):
     tracer.put_annotation(key="TenantId", value=tenantid_to_update)
     
     if (auth_manager.isSystemAdmin(user_role)):
-        filtering_exp = Key('tenantId').eq(tenantid_to_update)
-        response = table_tenant_user_map.query(KeyConditionExpression=filtering_exp)
-        users = response.get('Items')
+        # filtering_exp = Key('tenantId').eq(tenantid_to_update)
+        # response = table_tenant_user_map.query(KeyConditionExpression=filtering_exp)
+        # users = response.get('Items')
         
-        for user in users:
+        # for user in users:
+        #     response = client.admin_enable_user(
+        #         Username=user['userName'],
+        #         UserPoolId=user_pool_id
+        #     )
+        global db
+        if db is None:
+            db = FaunaFromConfig()
+        users = db.query(
+          q.select(["data"], q.paginate(q.match(q.index("usernames_by_tenant_id"), tenantid_to_update)))
+        )
+        for username in users:
             response = client.admin_enable_user(
-                Username=user['userName'],
+                Username=username,
                 UserPoolId=user_pool_id
             )
             
@@ -339,13 +367,26 @@ class UserManagement:
         return response
 
     def create_user_tenant_mapping(self, user_name, tenant_id):
-        response = table_tenant_user_map.put_item(
-                Item={
-                        'tenantId': tenant_id,
-                        'userName': user_name
-                    }
-                )                    
+        # response = table_tenant_user_map.put_item(
+        #         Item={
+        #                 'tenantId': tenant_id,
+        #                 'userName': user_name
+        #             }
+        #         )                    
+        global db
+        if db is None:
+            db = FaunaFromConfig()
 
+        response = db.query(
+          q.create(
+            q.collection("tenant_user"), {
+              "data": {
+                "tenant_id": q.ref(q.collection("tenant"), tenant_id),
+                "user_name": user_name
+              }
+            }
+          )
+        )
         return response
 
 

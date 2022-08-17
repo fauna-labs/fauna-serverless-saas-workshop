@@ -96,7 +96,7 @@ Resources:
   ServerlessSaaSLayers:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      LayerName: serverless-saas-dependencies
+      LayerName: serverless-saas-fauna-dependencies
       Description: Utilities for project
       ContentUri: ../layers/
       CompatibleRuntimes:
@@ -162,7 +162,7 @@ Resources:
   TenantUserPoolLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub saas-fauna-tenant-usrpool-lambda-execution-role-${AWS::Region}
+      RoleName: !Sub saas-fauna-tenant-usrpool-lambda-exe-role
       Path: "/"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -210,7 +210,7 @@ Resources:
   CreateUserLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub saas-fauna-create-usr-lambda-execution-role-${AWS::Region}
+      RoleName: !Sub saas-fauna-create-usr-lambda-exe-role
       Path: "/"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -388,7 +388,7 @@ Resources:
   TenantManagementLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub saas-fauna-tenant-mgmt-lambda-execution-role-${AWS::Region}
+      RoleName: !Sub saas-fauna-tenant-mgmt-lambda-exe-role
       Path: "/"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -521,7 +521,7 @@ Resources:
   RegisterTenantLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub saas-fauna-tenant-reg-lambda-execution-role-${AWS::Region}
+      RoleName: !Sub saas-fauna-tenant-reg-lambda-exe-role
       Path: "/"
       AssumeRolePolicyDocument:
         Version: 2012-10-17

@@ -11,7 +11,7 @@ from botocore.exceptions import ClientError
 import logger
 import requests
 
-from utils import Fauna, load_config
+from utils import FaunaFromConfig
 from faunadb import query as q
 from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
 db = None
@@ -36,10 +36,10 @@ def create_tenant(event, context):
         #             'tenantTier': tenant_details['tenantTier'],                    
         #             'isActive': True                    
         #         }
-        #     )                    
+        #     )
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = FaunaFromConfig()
 
         tenant = db.query(
           q.let(
@@ -82,8 +82,8 @@ def get_tenants(event, context):
     try:
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
-
+            db = FaunaFromConfig()
+        print("DOMAIN = {}".format(db.get_domain()))
         results = db.query(
           q.map_(
             q.lambda_("x", 
@@ -128,7 +128,8 @@ def update_tenant(event, context):
 
     global db
     if db is None:
-        db = Fauna.from_config(load_config())
+        db = FaunaFromConfig()
+
     response_update = db.query(
       q.update(
         q.ref(q.collection("tenant"), tenant_id), {
@@ -169,7 +170,8 @@ def get_tenant(event, context):
 
     global db
     if db is None:
-        db = Fauna.from_config(load_config())
+        db = FaunaFromConfig()
+
     item = db.query(
       q.let(
         { "tenant": q.get(q.ref(q.collection("tenant"), tenant_id)) },
@@ -208,7 +210,8 @@ def deactivate_tenant(event, context):
     # )
     global db
     if db is None:
-        db = Fauna.from_config(load_config())
+        db = FaunaFromConfig()
+
     response = db.query(
       q.update(
         q.get(q.ref(q.collection("tenant"), tenant_id)),
@@ -247,7 +250,8 @@ def activate_tenant(event, context):
     # )             
     global db
     if db is None:
-        db = Fauna.from_config(load_config())
+        db = FaunaFromConfig()
+
     response = db.query(
       q.update(
         q.get(q.ref(q.collection("tenant"), tenant_id)),

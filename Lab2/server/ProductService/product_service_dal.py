@@ -11,7 +11,7 @@ from product_models import Product
 # from types import SimpleNamespace
 # from boto3.dynamodb.conditions import Key
 
-from utils import Fauna, load_config
+from utils import FaunaFromConfig
 from faunadb import query as q
 from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
 
@@ -25,7 +25,7 @@ def get_product(event, productId):
     try:
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = FaunaFromConfig()
 
         item = db.query(
           q.let(
@@ -48,7 +48,7 @@ def delete_product(event, productId):
     try:
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = FaunaFromConfig()
 
         response = db.query(
           q.select(
@@ -71,7 +71,7 @@ def create_product(event, payload):
     try:
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = FaunaFromConfig()
 
         response = db.query(
           q.let(
@@ -102,7 +102,7 @@ def update_product(event, payload, productId):
 
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = FaunaFromConfig()
 
         db.query(
           q.update(
@@ -128,7 +128,7 @@ def get_products(event):
     try:
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = FaunaFromConfig()
 
         results = db.query(
           q.map_(

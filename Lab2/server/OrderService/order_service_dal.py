@@ -12,7 +12,7 @@ from order_models import Order
 import logger
 # import random
 
-from utils import Fauna, load_config
+from utils import FaunaFromConfig
 from faunadb import query as q
 from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
 db = None
@@ -26,7 +26,7 @@ def get_order(event, orderId):
     try:
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = FaunaFromConfig()
 
         item = db.query(
           q.let(
@@ -63,7 +63,7 @@ def delete_order(event, orderId):
     try:
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = FaunaFromConfig()
 
         response = db.query(
           q.select(
@@ -88,7 +88,7 @@ def create_order(event, payload):
     try:
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = FaunaFromConfig()
 
         response = db.query(
           q.let(
@@ -118,7 +118,7 @@ def update_order(event, payload, orderId):
 
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = FaunaFromConfig()
 
         db.query(
           q.update(
@@ -143,7 +143,7 @@ def get_orders(event):
     try:
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = FaunaFromConfig()
 
         results = db.query(
           q.map_(
@@ -172,7 +172,6 @@ def get_orders(event):
 
 
 def _format_order_products(orderProducts):
-    print("orderProducts: {}".format(orderProducts))
     orderProductList = []
     for i in range(len(orderProducts)):
         product = {

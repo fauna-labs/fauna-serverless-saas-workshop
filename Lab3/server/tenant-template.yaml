@@ -15,6 +15,7 @@ Globals:
         Variables:
           LOG_LEVEL: DEBUG         
           POWERTOOLS_METRICS_NAMESPACE: "ServerlessSaaS"
+          FAUNA_CONFIG_PATH: '/serverless-saas-fauna-workshop/faunadb/config'
           
 Parameters:
   StageName:
@@ -25,7 +26,7 @@ Resources:
   ServerlessSaaSLayers:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      LayerName: serverless-saas-dependencies-pooled
+      LayerName: serverless-saas-fauna-dependencies-pooled
       Description: Utilities for project
       ContentUri: layers/
       CompatibleRuntimes:
@@ -35,46 +36,110 @@ Resources:
     Metadata:
       BuildMethod: python3.8   
   
-  ProductTable:
-    Type: AWS::DynamoDB::Table
-    Properties: 
-      AttributeDefinitions:
-        - AttributeName: shardId
-          AttributeType: S          
-        - AttributeName: productId
-          AttributeType: S          
-      KeySchema:
-        - AttributeName: shardId
-          KeyType: HASH  
-        - AttributeName: productId
-          KeyType: RANGE  
-      ProvisionedThroughput: 
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
-      TableName: Product-pooled
+  # ProductTable:
+  #   Type: AWS::DynamoDB::Table
+  #   Properties: 
+  #     AttributeDefinitions:
+  #       - AttributeName: shardId
+  #         AttributeType: S          
+  #       - AttributeName: productId
+  #         AttributeType: S          
+  #     KeySchema:
+  #       - AttributeName: shardId
+  #         KeyType: HASH  
+  #       - AttributeName: productId
+  #         KeyType: RANGE  
+  #     ProvisionedThroughput: 
+  #       ReadCapacityUnits: 5
+  #       WriteCapacityUnits: 5
+  #     TableName: Product-pooled
 
-  OrderTable:
-    Type: AWS::DynamoDB::Table
-    Properties: 
-      AttributeDefinitions:
-        - AttributeName: shardId
-          AttributeType: S 
-        - AttributeName: orderId
-          AttributeType: S          
-      KeySchema:
-        - AttributeName: shardId
-          KeyType: HASH 
-        - AttributeName: orderId
-          KeyType: RANGE  
-      ProvisionedThroughput: 
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
-      TableName: Order-pooled
+  # OrderTable:
+  #   Type: AWS::DynamoDB::Table
+  #   Properties: 
+  #     AttributeDefinitions:
+  #       - AttributeName: shardId
+  #         AttributeType: S 
+  #       - AttributeName: orderId
+  #         AttributeType: S          
+  #     KeySchema:
+  #       - AttributeName: shardId
+  #         KeyType: HASH 
+  #       - AttributeName: orderId
+  #         KeyType: RANGE  
+  #     ProvisionedThroughput: 
+  #       ReadCapacityUnits: 5
+  #       WriteCapacityUnits: 5
+  #     TableName: Order-pooled
+
+  FaunaConfig:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: '/serverless-saas-fauna-workshop/faunadb/config/appConfig'
+      Description: 'Fauna env variables'
+      Type: String
+      Value: '{"domain": "db.us.fauna.com"}'
+      
+  ParameterStoreKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: 'alias/ServerlessSaasFaunaWorkshopParameterStoreKey'
+      TargetKeyId: !Ref ParameterStoreEncryptionKey
+
+  ParameterStoreEncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: 'Encryption key for secret config values'
+      Enabled: True
+      EnableKeyRotation: False
+      KeyPolicy:
+        Version: '2012-10-17'
+        Id: 'key-default-1'
+        Statement:
+          -
+            Sid: 'Allow administration of the key & encryption of new values'
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action:
+              - 'kms:Create*'
+              - 'kms:Encrypt'
+              - 'kms:Describe*'
+              - 'kms:Enable*'
+              - 'kms:List*'
+              - 'kms:Put*'
+              - 'kms:Update*'
+              - 'kms:Revoke*'
+              - 'kms:Disable*'
+              - 'kms:Get*'
+              - 'kms:Delete*'
+              - 'kms:ScheduleKeyDeletion'
+              - 'kms:CancelKeyDeletion'
+            Resource: '*'
+          -
+            Sid: 'Allow use of the key'
+            Effect: Allow
+            Principal:
+              AWS: [
+                !ImportValue Saas-Fauna-TenantManagementLambdaExecutionRoleArn, 
+                !ImportValue Saas-Fauna-TenantUserPoolLambdaExecutionRoleArn,
+                !ImportValue Saas-Fauna-CreateUserLambdaExecutionRoleArn,
+                !GetAtt ProductFunctionExecutionRole.Arn,
+                !GetAtt OrderFunctionExecutionRole.Arn
+              ]
+            Action:
+              - 'kms:Encrypt'
+              - 'kms:Decrypt'
+              - 'kms:ReEncrypt*'
+              - 'kms:GenerateDataKey*'
+              - 'kms:DescribeKey'
+            Resource: '*'  
 
   ProductFunctionExecutionRole:
     Type: AWS::IAM::Role     
     Properties:
-      RoleName: pooled-product-function-execution-role
+      RoleName: saas-fauna-product-fxn-role
       Path: '/'
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -90,20 +155,45 @@ Resources:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
       Policies:
-        - PolicyName: pooled-product-function-policy
+        - PolicyName: 'ProductFxnsParameterStoreAccess'
           PolicyDocument:
-            Version: 2012-10-17
-            Statement:              
-              - Effect: Allow
+            Version: '2012-10-17'
+            Statement:
+              -
+                Effect: Allow
                 Action:
-                  - dynamodb:GetItem
-                  - dynamodb:UpdateItem
-                  - dynamodb:PutItem
-                  - dynamodb:DeleteItem
-                  - dynamodb:Query
-                Resource:
-                  - !GetAtt ProductTable.Arn
-             
+                  - 'ssm:GetParameter*'
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/serverless-saas-fauna-workshop/faunadb/config'
+
+  OrderFunctionExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: saas-fauna-order-fxn-role
+      Path: '/'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy    
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
+      Policies:
+        - PolicyName: 'OrderFxnsParameterStoreAccess'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - 'ssm:GetParameter*'
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/serverless-saas-fauna-workshop/faunadb/config'
+
   GetProductFunction:
     Type: AWS::Serverless::Function 
     DependsOn: ProductFunctionExecutionRole 
@@ -118,7 +208,7 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
-          PRODUCT_TABLE_NAME: !Ref ProductTable      
+          # PRODUCT_TABLE_NAME: !Ref ProductTable      
   
   GetProductsFunction:
     Type: AWS::Serverless::Function 
@@ -134,7 +224,7 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
-          PRODUCT_TABLE_NAME: !Ref ProductTable
+          # PRODUCT_TABLE_NAME: !Ref ProductTable
       
   CreateProductFunction:
     Type: AWS::Serverless::Function
@@ -150,7 +240,7 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
-          PRODUCT_TABLE_NAME: !Ref ProductTable
+          # PRODUCT_TABLE_NAME: !Ref ProductTable
 
   UpdateProductFunction:
     Type: AWS::Serverless::Function
@@ -166,7 +256,7 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
-          PRODUCT_TABLE_NAME: !Ref ProductTable
+          # PRODUCT_TABLE_NAME: !Ref ProductTable
 
   DeleteProductFunction:
     Type: AWS::Serverless::Function
@@ -182,40 +272,7 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
-          PRODUCT_TABLE_NAME: !Ref ProductTable
-
-  OrderFunctionExecutionRole:
-    Type: AWS::IAM::Role     
-    Properties:
-      RoleName: pooled-order-function-execution-role
-      Path: '/'
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      ManagedPolicyArns: 
-        - arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy    
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-        - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
-      Policies:
-        - PolicyName: pooled-order-function-policy
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:              
-              - Effect: Allow
-                Action:
-                  - dynamodb:GetItem
-                  - dynamodb:UpdateItem
-                  - dynamodb:PutItem
-                  - dynamodb:DeleteItem
-                  - dynamodb:Query
-                Resource:
-                  - !GetAtt OrderTable.Arn
+          # PRODUCT_TABLE_NAME: !Ref ProductTable
                 
   GetOrdersFunction:
     Type: AWS::Serverless::Function 
@@ -231,7 +288,7 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          ORDER_TABLE_NAME: !Ref OrderTable
+          # ORDER_TABLE_NAME: !Ref OrderTable
       
   GetOrderFunction:
     Type: AWS::Serverless::Function 
@@ -247,7 +304,7 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          ORDER_TABLE_NAME: !Ref OrderTable
+          # ORDER_TABLE_NAME: !Ref OrderTable
       
   CreateOrderFunction:
     Type: AWS::Serverless::Function
@@ -263,7 +320,7 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          ORDER_TABLE_NAME: !Ref OrderTable
+          # ORDER_TABLE_NAME: !Ref OrderTable
   
   UpdateOrderFunction:
     Type: AWS::Serverless::Function
@@ -279,7 +336,7 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          ORDER_TABLE_NAME: !Ref OrderTable
+          # ORDER_TABLE_NAME: !Ref OrderTable
   
   DeleteOrderFunction:
     Type: AWS::Serverless::Function
@@ -295,13 +352,13 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          ORDER_TABLE_NAME: !Ref OrderTable
+          # ORDER_TABLE_NAME: !Ref OrderTable
   
   #Tenant Authorizer
   TenantAuthorizerExecutionRole:
     Type: AWS::IAM::Role     
     Properties:
-      RoleName: tenant-authorizer-execution-role
+      RoleName: saas-fauna-tenant-authorizer-role
       Path: '/'
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -341,13 +398,13 @@ Resources:
         - !Ref ServerlessSaaSLayers
       Environment:
         Variables:
-          TENANT_USER_POOL: !ImportValue Serverless-SaaS-CognitoTenantUserPoolId
-          TENANT_APP_CLIENT: !ImportValue Serverless-SaaS-CognitoTenantAppClientId
+          TENANT_USER_POOL: !ImportValue Serverless-SaaS-Fauna-CognitoTenantUserPoolId
+          TENANT_APP_CLIENT: !ImportValue Serverless-SaaS-Fauna-CognitoTenantAppClientId
           
   ApiGatewayAccessLogs:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /aws/api-gateway/access-logs-serverless-saas-tenant-api-pooled
+      LogGroupName: /aws/api-gateway/access-logs-serverless-saas-fauna-tenant-api-pooled
       RetentionInDays: 30
   ApiGatewayTenantApi:
     Type: AWS::Serverless::Api
@@ -365,7 +422,7 @@ Resources:
       DefinitionBody:
         openapi: 3.0.1
         info:
-          title: 'pooled-serverless-saas-tenant-api'
+          title: 'pooled-serverless-saas-fauna-tenant-api'
         basePath: !Join ['', ['/', !Ref StageName]]
         x-amazon-apigateway-api-key-source : "AUTHORIZER"
         schemes:

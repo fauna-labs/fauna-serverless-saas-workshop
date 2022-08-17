@@ -23,19 +23,6 @@ Parameters:
     Description: "Stage Name for the api"
     
 Resources: 
-  ServerlessSaaSLayers:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      LayerName: serverless-saas-workshoplab1
-      Description: Utilities for project
-      ContentUri: layers/
-      CompatibleRuntimes:
-        - python3.8          
-      LicenseInfo: 'MIT'
-      RetentionPolicy: Retain      
-    Metadata:
-      BuildMethod: python3.8
-
   FaunaConfig:
     Type: AWS::SSM::Parameter
     Properties:
@@ -97,6 +84,19 @@ Resources:
               - 'kms:DescribeKey'
             Resource: '*'
 
+  ServerlessSaaSLayers:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: serverless-saas-workshoplab1
+      Description: Utilities for project
+      ContentUri: layers/
+      CompatibleRuntimes:
+        - python3.8          
+      LicenseInfo: 'MIT'
+      RetentionPolicy: Retain      
+    Metadata:
+      BuildMethod: python3.8
+
   ProductFunctionExecutionRole:
     Type: AWS::IAM::Role     
     Properties:
@@ -126,17 +126,7 @@ Resources:
                 Action:
                   - 'ssm:GetParameter*'
                 Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/serverless-saas-workshop/faunadb/config'
-        -
-          PolicyName: 'ProductFunctionsXRayAccess'
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              -
-                Effect: Allow
-                Action:
-                  - 'xray:PutTraceSegments'
-                  - 'xray:PutTelemetryRecords'
-                Resource: '*'
+
              
   GetProductFunction:
     Type: AWS::Serverless::Function 
@@ -242,17 +232,7 @@ Resources:
                 Action:
                   - 'ssm:GetParameter*'
                 Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/serverless-saas-workshop/faunadb/config'
-        -
-          PolicyName: 'OrderFunctionsXRayAccess'
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              -
-                Effect: Allow
-                Action:
-                  - 'xray:PutTraceSegments'
-                  - 'xray:PutTelemetryRecords'
-                Resource: '*'
+
                 
   GetOrdersFunction:
     Type: AWS::Serverless::Function 

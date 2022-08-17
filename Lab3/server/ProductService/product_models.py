@@ -3,10 +3,11 @@
 
 class Product:
     key =''
-    def __init__(self, shardId, productId, sku, name, price, category):
-        self.shardId = shardId
+    # def __init__(self, shardId, productId, sku, name, price, category):
+    #     self.shardId = shardId
+    #    self.key = shardId + ':' +  productId
+    def __init__(self, productId, sku, name, price, category):
         self.productId = productId
-        self.key = shardId + ':' +  productId
         self.sku = sku
         self.name = name
         self.price = price
