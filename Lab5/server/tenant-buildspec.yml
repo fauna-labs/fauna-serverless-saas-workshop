@@ -8,6 +8,7 @@ phases:
       # Install packages or any pre-reqs in this phase.
       # Upgrading SAM CLI to 1.33.0 version
       - cd Lab5/server/fauna
+      - node -v
       - npm install
       - npm run dev
       - python -m pip install aws-sam-cli==1.33.0
