@@ -14,7 +14,7 @@ const client = new faunadb.Client({
 });
 
 const q = faunadb.query;
-const { Map, Paginate, Documents, Collection, Match, Index, Lambda, Select, Get, Var } = q;
+const { Map, Paginate, Collections, Documents, Collection, Match, Index, Lambda, Select, Get, Var } = q;
 
 function execute(command, callback){
     exec(command, function(error, stdout, stderr){ callback(stdout); });
@@ -22,7 +22,7 @@ function execute(command, callback){
 
 client.query( 
   Map(
-    Paginate(Documents(Collection("Users"))),
+    Paginate(Collections()),
     Lambda("x", Get(Var("x")))
   )
 ).then(res=>{
@@ -36,6 +36,6 @@ client.query(
 //   })
 // })
 
-execute('echo $FAUNADB_SECRET', (y)=> {
-  console.log(`FAUNADB_SECRET: ${y}`)
+execute('node_modules/.bin/fauna-schema-migrate -k $FAUNADB_SECRET -c fsm4 apply', (y)=> {
+  console.log(y)
 })
