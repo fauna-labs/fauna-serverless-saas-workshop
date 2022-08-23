@@ -7,10 +7,13 @@ phases:
     commands:
       # Install packages or any pre-reqs in this phase.
       # Upgrading SAM CLI to 1.33.0 version
+      - cd Lab5/server/fauna
+      - npm install
+      - npm run dev
       - python -m pip install aws-sam-cli==1.33.0
       - sam --version
       # Installing project dependencies
-      - cd Lab5/server/ProductService
+      - cd ../ProductService
       - python -m pip install -r requirements.txt 
       - cd ../OrderService
       - python -m pip install -r requirements.txt 
