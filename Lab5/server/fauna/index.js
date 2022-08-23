@@ -1,6 +1,12 @@
-import 'dotenv/config';
-import faunadb from 'faunadb';
-import cp from 'child_process';
+// ES6
+// import 'dotenv/config';
+// import faunadb from 'faunadb';
+// import cp from 'child_process';
+// const exec = cp.exec;
+
+require('dotenv').config();
+const exec = require('child_process').exec;
+const faunadb = require('faunadb');
 
 const client = new faunadb.Client({
   secret: process.env.FAUNADB_SECRET,
@@ -10,18 +16,18 @@ const client = new faunadb.Client({
 const q = faunadb.query;
 const { Map, Paginate, Documents, Collection, Match, Index, Lambda, Select, Get, Var } = q;
 
-const exec = cp.exec;
 function execute(command, callback){
     exec(command, function(error, stdout, stderr){ callback(stdout); });
 };
 
-const res = await client.query( 
+client.query( 
   Map(
     Paginate(Documents(Collection("Users"))),
     Lambda("x", Get(Var("x")))
   )
-)
-// console.log(res);
+).then(res=>{
+  console.log(res);
+})
 
 // const data = res.data;
 // data.map(x => {
