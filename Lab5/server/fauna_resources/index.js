@@ -43,7 +43,7 @@ client.query(
   const data = res.data;
   data.map(res => {
     if (res.exists) {
-      execute(`node_modules/.bin/fauna-schema-migrate -k $FAUNADB_SECRET -c tenant_${res.id} apply`, (y)=> {
+      execute(`node_modules/.bin/fauna-schema-migrate -k $FAUNADB_SECRET:tenant_${res.id}:server apply`, (y)=> {
         console.log(y)
       })
     }
