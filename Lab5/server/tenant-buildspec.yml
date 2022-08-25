@@ -7,19 +7,18 @@ phases:
     commands:
       # Install packages or any pre-reqs in this phase.
       # Upgrading SAM CLI to 1.33.0 version
-      - cd Lab5/server/fauna
-      - node -v
-      - npm install
-      - npm run dev
       - python -m pip install aws-sam-cli==1.33.0
       - sam --version
       # Installing project dependencies
-      - cd ../ProductService
+      - cd Lab5/server/ProductService
       - python -m pip install -r requirements.txt 
       - cd ../OrderService
       - python -m pip install -r requirements.txt 
-      
-
+      # Run Fauna migrations      
+      - cd ../fauna_resources
+      - node -v
+      - npm install
+      - node index.js
   pre_build:
     commands:
       # Run tests, lint scripts or any other pre-build checks.
