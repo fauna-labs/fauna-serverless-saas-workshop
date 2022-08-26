@@ -72,137 +72,15 @@ Resources:
   #       WriteCapacityUnits: 5
   #     TableName: Order-pooled
 
-  FaunaConfig:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: '/serverless-saas-fauna-workshop/faunadb/config/appConfig'
-      Description: 'Fauna env variables'
-      Type: String
-      Value: '{"domain": "db.us.fauna.com"}'
-      
-  ParameterStoreKeyAlias:
-    Type: AWS::KMS::Alias
-    Properties:
-      AliasName: 'alias/ServerlessSaasFaunaWorkshopParameterStoreKey'
-      TargetKeyId: !Ref ParameterStoreEncryptionKey
-
-  ParameterStoreEncryptionKey:
-    Type: AWS::KMS::Key
-    Properties:
-      Description: 'Encryption key for secret config values'
-      Enabled: True
-      EnableKeyRotation: False
-      KeyPolicy:
-        Version: '2012-10-17'
-        Id: 'key-default-1'
-        Statement:
-          -
-            Sid: 'Allow administration of the key & encryption of new values'
-            Effect: Allow
-            Principal:
-              AWS:
-                - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
-            Action:
-              - 'kms:Create*'
-              - 'kms:Encrypt'
-              - 'kms:Describe*'
-              - 'kms:Enable*'
-              - 'kms:List*'
-              - 'kms:Put*'
-              - 'kms:Update*'
-              - 'kms:Revoke*'
-              - 'kms:Disable*'
-              - 'kms:Get*'
-              - 'kms:Delete*'
-              - 'kms:ScheduleKeyDeletion'
-              - 'kms:CancelKeyDeletion'
-            Resource: '*'
-          -
-            Sid: 'Allow use of the key'
-            Effect: Allow
-            Principal:
-              AWS: [
-                !ImportValue Saas-Fauna-TenantManagementLambdaExecutionRoleArn, 
-                !ImportValue Saas-Fauna-TenantUserPoolLambdaExecutionRoleArn,
-                !ImportValue Saas-Fauna-CreateUserLambdaExecutionRoleArn,
-                !GetAtt ProductFunctionExecutionRole.Arn,
-                !GetAtt OrderFunctionExecutionRole.Arn
-              ]
-            Action:
-              - 'kms:Encrypt'
-              - 'kms:Decrypt'
-              - 'kms:ReEncrypt*'
-              - 'kms:GenerateDataKey*'
-              - 'kms:DescribeKey'
-            Resource: '*'  
-
-  ProductFunctionExecutionRole:
-    Type: AWS::IAM::Role     
-    Properties:
-      RoleName: saas-fauna-product-fxn-role
-      Path: '/'
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      ManagedPolicyArns: 
-        - arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy    
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-        - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
-      Policies:
-        - PolicyName: 'ProductFxnsParameterStoreAccess'
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              -
-                Effect: Allow
-                Action:
-                  - 'ssm:GetParameter*'
-                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/serverless-saas-fauna-workshop/faunadb/config'
-
-  OrderFunctionExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: saas-fauna-order-fxn-role
-      Path: '/'
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      ManagedPolicyArns: 
-        - arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy    
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-        - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
-      Policies:
-        - PolicyName: 'OrderFxnsParameterStoreAccess'
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              -
-                Effect: Allow
-                Action:
-                  - 'ssm:GetParameter*'
-                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/serverless-saas-fauna-workshop/faunadb/config'
-
   GetProductFunction:
     Type: AWS::Serverless::Function 
-    DependsOn: ProductFunctionExecutionRole 
     Properties:
       CodeUri: ProductService/
       Handler: product_service.get_product
       Runtime: python3.8  
       Tracing: Active
-      Role: !GetAtt ProductFunctionExecutionRole.Arn
+      Role: !ImportValue Saas-Fauna-ProductFunctionExecutionRoleArn
+      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-product-fxn-role
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -212,13 +90,13 @@ Resources:
   
   GetProductsFunction:
     Type: AWS::Serverless::Function 
-    DependsOn: ProductFunctionExecutionRole 
     Properties:
       CodeUri: ProductService/
       Handler: product_service.get_products
       Runtime: python3.8  
       Tracing: Active
-      Role: !GetAtt ProductFunctionExecutionRole.Arn
+      Role: !ImportValue Saas-Fauna-ProductFunctionExecutionRoleArn
+      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-product-fxn-role
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -228,13 +106,13 @@ Resources:
       
   CreateProductFunction:
     Type: AWS::Serverless::Function
-    DependsOn: ProductFunctionExecutionRole 
     Properties:
       CodeUri: ProductService/
       Handler: product_service.create_product
       Runtime: python3.8  
       Tracing: Active 
-      Role: !GetAtt ProductFunctionExecutionRole.Arn 
+      Role: !ImportValue Saas-Fauna-ProductFunctionExecutionRoleArn
+      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-product-fxn-role
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -244,13 +122,13 @@ Resources:
 
   UpdateProductFunction:
     Type: AWS::Serverless::Function
-    DependsOn: ProductFunctionExecutionRole 
     Properties:
       CodeUri: ProductService/
       Handler: product_service.update_product
       Runtime: python3.8 
       Tracing: Active
-      Role: !GetAtt ProductFunctionExecutionRole.Arn 
+      Role: !ImportValue Saas-Fauna-ProductFunctionExecutionRoleArn
+      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-product-fxn-role
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -260,13 +138,13 @@ Resources:
 
   DeleteProductFunction:
     Type: AWS::Serverless::Function
-    DependsOn: ProductFunctionExecutionRole 
     Properties:
       CodeUri: ProductService/
       Handler: product_service.delete_product
       Runtime: python3.8 
       Tracing: Active
-      Role: !GetAtt ProductFunctionExecutionRole.Arn 
+      Role: !ImportValue Saas-Fauna-ProductFunctionExecutionRoleArn
+      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-product-fxn-role
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -276,13 +154,13 @@ Resources:
                 
   GetOrdersFunction:
     Type: AWS::Serverless::Function 
-    DependsOn: OrderFunctionExecutionRole 
     Properties:
       CodeUri: OrderService/
       Handler: order_service.get_orders
       Runtime: python3.8  
       Tracing: Active
-      Role: !GetAtt OrderFunctionExecutionRole.Arn
+      Role: !ImportValue Saas-Fauna-OrderFunctionExecutionRoleArn
+      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-order-fxn-role
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -292,13 +170,13 @@ Resources:
       
   GetOrderFunction:
     Type: AWS::Serverless::Function 
-    DependsOn: OrderFunctionExecutionRole 
     Properties:
       CodeUri: OrderService/
       Handler: order_service.get_order
       Runtime: python3.8  
       Tracing: Active
-      Role: !GetAtt OrderFunctionExecutionRole.Arn
+      Role: !ImportValue Saas-Fauna-OrderFunctionExecutionRoleArn
+      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-order-fxn-role
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -308,13 +186,13 @@ Resources:
       
   CreateOrderFunction:
     Type: AWS::Serverless::Function
-    DependsOn: OrderFunctionExecutionRole 
     Properties:
       CodeUri: OrderService/
       Handler: order_service.create_order
       Runtime: python3.8  
       Tracing: Active 
-      Role: !GetAtt OrderFunctionExecutionRole.Arn 
+      Role: !ImportValue Saas-Fauna-OrderFunctionExecutionRoleArn
+      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-order-fxn-role
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -324,13 +202,13 @@ Resources:
   
   UpdateOrderFunction:
     Type: AWS::Serverless::Function
-    DependsOn: OrderFunctionExecutionRole 
     Properties:
       CodeUri: OrderService/
       Handler: order_service.update_order
       Runtime: python3.8 
       Tracing: Active
-      Role: !GetAtt OrderFunctionExecutionRole.Arn 
+      Role: !ImportValue Saas-Fauna-OrderFunctionExecutionRoleArn
+      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-order-fxn-role
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -340,13 +218,13 @@ Resources:
   
   DeleteOrderFunction:
     Type: AWS::Serverless::Function
-    DependsOn: OrderFunctionExecutionRole 
     Properties:
       CodeUri: OrderService/
       Handler: order_service.delete_order
       Runtime: python3.8 
       Tracing: Active
-      Role: !GetAtt OrderFunctionExecutionRole.Arn 
+      Role: !ImportValue Saas-Fauna-OrderFunctionExecutionRoleArn
+      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-order-fxn-role
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:

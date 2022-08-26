@@ -496,8 +496,138 @@ Resources:
           CREATE_TENANT_RESOURCE_PATH: "/tenant"
           PROVISION_TENANT_RESOURCE_PATH: "/provisioning"
           POWERTOOLS_SERVICE_NAME: "TenantRegistration.RegisterTenant"  
-  
-   
+
+
+  FaunaConfig:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: '/serverless-saas-fauna-workshop/faunadb/config/appConfig'
+      Description: 'Fauna env variables'
+      Type: String
+      Value: '{"domain": "db.us.fauna.com"}'
+      
+  ParameterStoreKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: 'alias/ServerlessSaasFaunaWorkshopParameterStoreKey'
+      TargetKeyId: !Ref ParameterStoreEncryptionKey
+
+  ParameterStoreEncryptionKey:
+    Type: AWS::KMS::Key
+    DependsOn: [
+      TenantManagementLambdaExecutionRole,
+      TenantUserPoolLambdaExecutionRole,
+      CreateUserLambdaExecutionRole,
+      ProductFunctionExecutionRole,
+      OrderFunctionExecutionRole
+    ]
+    Properties:
+      Description: 'Encryption key for secret config values'
+      Enabled: True
+      EnableKeyRotation: False
+      KeyPolicy:
+        Version: '2012-10-17'
+        Id: 'key-default-1'
+        Statement:
+          -
+            Sid: 'Allow administration of the key & encryption of new values'
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action:
+              - 'kms:Create*'
+              - 'kms:Encrypt'
+              - 'kms:Describe*'
+              - 'kms:Enable*'
+              - 'kms:List*'
+              - 'kms:Put*'
+              - 'kms:Update*'
+              - 'kms:Revoke*'
+              - 'kms:Disable*'
+              - 'kms:Get*'
+              - 'kms:Delete*'
+              - 'kms:ScheduleKeyDeletion'
+              - 'kms:CancelKeyDeletion'
+            Resource: '*'
+          -
+            Sid: 'Allow use of the key'
+            Effect: Allow
+            Principal:
+              AWS: [
+                !GetAtt TenantManagementLambdaExecutionRole.Arn,
+                !GetAtt TenantUserPoolLambdaExecutionRole.Arn,
+                !GetAtt CreateUserLambdaExecutionRole.Arn,
+                !GetAtt ProductFunctionExecutionRole.Arn,
+                !GetAtt OrderFunctionExecutionRole.Arn
+              ]
+            Action:
+              - 'kms:Encrypt'
+              - 'kms:Decrypt'
+              - 'kms:ReEncrypt*'
+              - 'kms:GenerateDataKey*'
+              - 'kms:DescribeKey'
+            Resource: '*'  
+
+
+  ProductFunctionExecutionRole:
+    Type: AWS::IAM::Role     
+    Properties:
+      RoleName: saas-fauna-product-fxn-role
+      Path: '/'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy    
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
+      Policies:
+        - PolicyName: 'ProductFxnsParameterStoreAccess'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - 'ssm:GetParameter*'
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/serverless-saas-fauna-workshop/faunadb/config'
+
+  OrderFunctionExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: saas-fauna-order-fxn-role
+      Path: '/'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy    
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
+      Policies:
+        - PolicyName: 'OrderFxnsParameterStoreAccess'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - 'ssm:GetParameter*'
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/serverless-saas-fauna-workshop/faunadb/config'
+
   
 Outputs:
   RegisterTenantLambdaExecutionRoleArn: 
@@ -506,14 +636,22 @@ Outputs:
     Value: !GetAtt TenantManagementLambdaExecutionRole.Arn
     Export:
       Name: "Saas-Fauna-TenantManagementLambdaExecutionRoleArn"
-  TenantUserPoolLambdaExecutionRoleArn:
-    Value: !GetAtt TenantUserPoolLambdaExecutionRole.Arn
+  # TenantUserPoolLambdaExecutionRoleArn:
+  #   Value: !GetAtt TenantUserPoolLambdaExecutionRole.Arn
+  #   Export:
+  #     Name: "Saas-Fauna-TenantUserPoolLambdaExecutionRoleArn"
+  # CreateUserLambdaExecutionRoleArn:
+  #   Value: !GetAtt CreateUserLambdaExecutionRole.Arn
+  #   Export:
+  #     Name: "Saas-Fauna-CreateUserLambdaExecutionRoleArn"
+  ProductFunctionExecutionRoleArn:
+    Value: !GetAtt ProductFunctionExecutionRole.Arn
     Export:
-      Name: "Saas-Fauna-TenantUserPoolLambdaExecutionRoleArn"
-  CreateUserLambdaExecutionRoleArn:
-    Value: !GetAtt CreateUserLambdaExecutionRole.Arn
+      Name: "Saas-Fauna-ProductFunctionExecutionRoleArn"
+  OrderFunctionExecutionRoleArn:
+    Value: !GetAtt OrderFunctionExecutionRole.Arn
     Export:
-      Name: "Saas-Fauna-CreateUserLambdaExecutionRoleArn"
+      Name: "Saas-Fauna-OrderFunctionExecutionRoleArn"
   RegisterTenantFunctionArn: 
     Value: !GetAtt RegisterTenantFunction.Arn
   ActivateTenantFunctionArn: 

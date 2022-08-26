@@ -24,16 +24,23 @@ class FaunaFromConfig(FaunaClient):
         print("Fauna domain = {}".format(config['FAUNA']['domain']))
         
         self.domain = config['FAUNA']['domain']
+        self.secret = config['FAUNA']['secret']
 
         FaunaClient.__init__(self,
-            domain=config['FAUNA']['domain'],
-            secret=config['FAUNA']['secret']
+            domain=self.domain,
+            secret=self.secret
         )
         
     def get_domain(self):
         return self.domain
 
-def FaunaClients(clients, tenant_id):
+    def get_secret(self):
+        return self.secret
+
+def FaunaClients(clients, tenant_id=None):
+    if tenant_id is None:
+        tenant_id = 'admin'
+
     if tenant_id in clients:
         print("Client for tenant_id {} found".format(tenant_id))
         return clients[tenant_id]
@@ -44,23 +51,26 @@ def FaunaClients(clients, tenant_id):
             admin_client = FaunaFromConfig()
             clients['admin'] = admin_client
 
-        try:        
-          print("creating client for tenant {}".format(tenant_id))
-          create_key = admin_client.query(
-            q.create_key({
-              "role": "admin",
-              "database": q.database("tenant_{}".format(tenant_id))
-            })
-          )
-          print("create_key: {}".format(create_key))
-
-          client = FaunaClient(
-              domain=admin_client.get_domain(),
-              secret=create_key['secret']
-          )
-          clients[tenant_id] = client
-        except Exception as e:
-          print("EXCEPTION {}".format(e))
+        if tenant_id == 'admin':
+            client = admin_client
+        else:
+          try:
+            # create_key = admin_client.query(
+            #   q.create_key({
+            #     "role": "admin",
+            #     "database": q.database("tenant_{}".format(tenant_id))
+            #   })
+            # )
+            # print("create_key: {}".format(create_key))
+            print("creating client for tenant {}".format(tenant_id))
+            client = FaunaClient(
+                domain=admin_client.get_domain(),
+                # secret=create_key['secret']
+                secret="{}:tenant_{}:server".format(admin_client.get_secret(), tenant_id)
+            )
+            clients[tenant_id] = client
+          except Exception as e:
+            print("EXCEPTION {}".format(e))
  
         return client
 

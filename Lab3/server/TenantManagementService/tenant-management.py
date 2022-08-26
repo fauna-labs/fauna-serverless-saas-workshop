@@ -16,10 +16,10 @@ import auth_manager
 from aws_lambda_powertools import Tracer
 tracer = Tracer()
 
-from utils import FaunaFromConfig
+from utils import FaunaClients
 from faunadb import query as q
 from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
-db = None
+clients = {}
 
 
 region = os.environ['AWS_REGION']
@@ -42,10 +42,9 @@ def create_tenant(event, context):
         #             'tenantTier': tenant_details['tenantTier'],                    
         #             'isActive': True                    
         #         }
-        #     )                    
-        global db
-        if db is None:
-            db = FaunaFromConfig()
+        #     )
+        global clients
+        db = FaunaClients(clients)
 
         tenant = db.query(
           q.let(
@@ -61,11 +60,16 @@ def create_tenant(event, context):
                       'isActive': True
                     }
                   }
-                )
+                ),
+              "tenantId": q.select(["ref", "id"], q.var("tenant")),
+              "db": q.create_database({ "name": q.concat(["tenant_", q.var("tenantId")]) })
             },
-            { "tenantId": q.select(["ref", "id"], q.var("tenant")) }
+            { "tenantId": q.var("tenantId") }
           )
         )
+
+        __create_tenantdb_resources(tenant["tenantId"])
+
     # except Exception as e:
     #     raise Exception('Error creating a new tenant', e)
     except FaunaError as e:
@@ -85,9 +89,9 @@ def get_tenants(event, context):
 
     tenants = []
     try:
-        global db
-        if db is None:
-            db = FaunaFromConfig()
+        global clients
+        db = FaunaClients(clients)
+
         results = db.query(
           q.map_(
             q.lambda_("x", 
@@ -138,10 +142,9 @@ def update_tenant(event, context):
         #             ':tenantTier': tenant_details['tenantTier']
         #         },
         #     ReturnValues="UPDATED_NEW"
-        #     )             
-        global db
-        if db is None:
-            db = FaunaFromConfig()
+        #     )
+        global clients
+        db = FaunaClients(clients)
 
         response_update = db.query(
           q.update(
@@ -189,9 +192,8 @@ def get_tenant(event, context):
         # )             
         # item = tenant_details['Item']
         # tenant_info = TenantInfo(item['tenantName'], item['tenantAddress'],item['tenantEmail'], item['tenantPhone'])
-        global db
-        if db is None:
-            db = FaunaFromConfig()
+        global clients
+        db = FaunaClients(clients)
 
         item = db.query(
           q.let(
@@ -237,10 +239,9 @@ def deactivate_tenant(event, context):
         #             ':isActive': False
         #         },
         #     ReturnValues="ALL_NEW"
-        #     )             
-        global db
-        if db is None:
-            db = FaunaFromConfig()
+        #     )
+        global clients
+        db = FaunaClients(clients)
 
         response = db.query(
           q.update(
@@ -289,10 +290,9 @@ def activate_tenant(event, context):
         #             ':isActive': True
         #         },
         #     ReturnValues="ALL_NEW"
-        #     )             
-        global db
-        if db is None:
-            db = FaunaFromConfig()
+        #     )
+        global clients
+        db = FaunaClients(clients)
 
         response = db.query(
           q.update(
@@ -344,6 +344,19 @@ def __invoke_enable_users(update_details, headers, auth, host, stage_name, invok
         raise Exception('Error occured while enabling users for the tenant', e) 
     else:
         return "Success invoking enable users"
+
+
+def __create_tenantdb_resources(tenant_id):
+    global clients
+    db = FaunaClients(clients, tenant_id)
+    result = db.query(
+        q.do(
+            q.create_collection( {"name": "order"} ),
+            q.create_collection( {"name": "product"} )
+        )
+    )
+    print(result)
+
 
 class TenantInfo:
     def __init__(self, tenant_name, tenant_address, tenant_email, tenant_phone):
