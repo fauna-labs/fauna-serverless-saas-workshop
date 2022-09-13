@@ -132,6 +132,7 @@ Resources:
       Runtime: python3.8  
       Tracing: Active
       Role: !GetAtt ProductFunctionExecutionRole.Arn
+      # Role: !ImportValue Saas-Fauna-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -151,6 +152,7 @@ Resources:
       Runtime: python3.8  
       Tracing: Active
       Role: !GetAtt ProductFunctionExecutionRole.Arn
+      # Role: !ImportValue Saas-Fauna-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -170,6 +172,7 @@ Resources:
       Runtime: python3.8  
       Tracing: Active 
       Role: !GetAtt ProductFunctionExecutionRole.Arn 
+      # Role: !ImportValue Saas-Fauna-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -189,6 +192,7 @@ Resources:
       Runtime: python3.8 
       Tracing: Active
       Role: !GetAtt ProductFunctionExecutionRole.Arn 
+      # Role: !ImportValue Saas-Fauna-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -208,6 +212,7 @@ Resources:
       Runtime: python3.8 
       Tracing: Active
       Role: !GetAtt ProductFunctionExecutionRole.Arn 
+      # Role: !ImportValue Saas-Fauna-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -266,6 +271,7 @@ Resources:
       Runtime: python3.8  
       Tracing: Active
       Role: !GetAtt OrderFunctionExecutionRole.Arn
+      # Role: !ImportValue Saas-Fauna-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -285,6 +291,7 @@ Resources:
       Runtime: python3.8  
       Tracing: Active
       Role: !GetAtt OrderFunctionExecutionRole.Arn
+      # Role: !ImportValue Saas-Fauna-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -304,6 +311,7 @@ Resources:
       Runtime: python3.8  
       Tracing: Active 
       Role: !GetAtt OrderFunctionExecutionRole.Arn 
+      # Role: !ImportValue Saas-Fauna-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -323,6 +331,7 @@ Resources:
       Runtime: python3.8 
       Tracing: Active
       Role: !GetAtt OrderFunctionExecutionRole.Arn 
+      # Role: !ImportValue Saas-Fauna-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -342,6 +351,7 @@ Resources:
       Runtime: python3.8 
       Tracing: Active
       Role: !GetAtt OrderFunctionExecutionRole.Arn 
+      # Role: !ImportValue Saas-Fauna-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -354,19 +364,26 @@ Resources:
         
   BusinessServicesAuthorizerFunction:
     Type: AWS::Serverless::Function 
+    DependsOn: UpdateTenantApiGatewayUrl
     Properties:
       CodeUri: Resources/
       Handler: tenant_authorizer.lambda_handler
       Runtime: python3.8
+      # Role: !ImportValue Serverless-SaaS-Fauna-AuthorizerExecutionRoleArn
       Role: !ImportValue Serverless-SaaS-AuthorizerExecutionRoleArn
       MemorySize: 256
       Tracing: Active
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
-        Variables:
+        Variables:        
           OPERATION_USERS_USER_POOL: !ImportValue Serverless-SaaS-CognitoOperationUsersUserPoolId
           OPERATION_USERS_APP_CLIENT: !ImportValue Serverless-SaaS-CognitoOperationUsersUserPoolClientId
+          # OPERATION_USERS_USER_POOL: !ImportValue Serverless-SaaS-Fauna-CognitoOperationUsersUserPoolId
+          # OPERATION_USERS_APP_CLIENT: !ImportValue Serverless-SaaS-Fauna-CognitoOperationUsersUserPoolClientId
+          FOO_BAR: !GetAtt UpdateTenantApiGatewayUrl.UpdateTenantAPIGatewayURLData
+          # TENANT_USER_POOL: !ImportValue Serverless-SaaS-Fauna-CognitoTenantUserPoolId
+          # TENANT_APP_CLIENT: !ImportValue Serverless-SaaS-Fauna-CognitoTenantAppClientId
           
   ApiGatewayAccessLogs:
     Type: AWS::Logs::LogGroup
