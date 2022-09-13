@@ -364,7 +364,7 @@ Resources:
         
   BusinessServicesAuthorizerFunction:
     Type: AWS::Serverless::Function 
-    DependsOn: UpdateTenantApiGatewayUrl
+    # DependsOn: UpdateTenantApiGatewayUrl
     Properties:
       CodeUri: Resources/
       Handler: tenant_authorizer.lambda_handler
@@ -381,7 +381,7 @@ Resources:
           OPERATION_USERS_APP_CLIENT: !ImportValue Serverless-SaaS-CognitoOperationUsersUserPoolClientId
           # OPERATION_USERS_USER_POOL: !ImportValue Serverless-SaaS-Fauna-CognitoOperationUsersUserPoolId
           # OPERATION_USERS_APP_CLIENT: !ImportValue Serverless-SaaS-Fauna-CognitoOperationUsersUserPoolClientId
-          FOO_BAR: !GetAtt UpdateTenantApiGatewayUrl.UpdateTenantAPIGatewayURLData
+          # FOO_BAR: !GetAtt UpdateTenantApiGatewayUrl.UpdateTenantAPIGatewayURLData
           # TENANT_USER_POOL: !ImportValue Serverless-SaaS-Fauna-CognitoTenantUserPoolId
           # TENANT_APP_CLIENT: !ImportValue Serverless-SaaS-Fauna-CognitoTenantAppClientId
           
@@ -953,7 +953,7 @@ Resources:
 
   UpdateTenantApiGatewayUrlLambdaExecutionRole:
     Type: AWS::IAM::Role
-    # DependsOn: ApiGatewayTenantApi
+    DependsOn: ApiGatewayTenantApi
     Properties:
       RoleName: !Join ['-', [!Ref TenantIdParameter, apigwurl-lambda-exec-role]]
       Path: "/"
