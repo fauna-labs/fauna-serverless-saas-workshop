@@ -17,7 +17,15 @@ Parameters:
   StageName:
     Type: String
     Default: "prod"
-    Description: "Stage Name for the api"  
+    Description: "Stage Name for the api"
+  ParameterStoreFaunaConfig:
+    Type: String
+    Default: '/serverless-saas-fauna-workshop/faunadb/config'
+    Description: "Parameter Store path where Fauna configuration and secrets are stored"
+  ParameterStoreFaunaAppConfigPublic:
+    Type: String
+    Default: '{"domain": "db.us.fauna.com"}'
+    Description: ""
 Resources:
   DynamoDBTables:
     Type: AWS::Serverless::Application
@@ -47,14 +55,16 @@ Resources:
     Properties:
       Location: nested_templates/lambdafunctions.yaml
       Parameters:
+        ParameterStoreFaunaConfig: !Ref ParameterStoreFaunaConfig
+        ParameterStoreFaunaAppConfigPublic: !Ref ParameterStoreFaunaAppConfigPublic
         CognitoUserPoolId: !GetAtt Cognito.Outputs.CognitoUserPoolId
         CognitoUserPoolClientId: !GetAtt Cognito.Outputs.CognitoUserPoolClientId                
         CognitoOperationUsersUserPoolId: !GetAtt Cognito.Outputs.CognitoOperationUsersUserPoolId
         CognitoOperationUsersUserPoolClientId: !GetAtt Cognito.Outputs.CognitoOperationUsersUserPoolClientId
-        TenantDetailsTableArn: !GetAtt DynamoDBTables.Outputs.TenantDetailsTableArn
+        # TenantDetailsTableArn: !GetAtt DynamoDBTables.Outputs.TenantDetailsTableArn
         ServerlessSaaSSettingsTableArn: !GetAtt DynamoDBTables.Outputs.ServerlessSaaSSettingsTableArn
         TenantStackMappingTableArn: !GetAtt DynamoDBTables.Outputs.TenantStackMappingTableArn
-        TenantUserMappingTableArn: !GetAtt DynamoDBTables.Outputs.TenantUserMappingTableArn
+        # TenantUserMappingTableArn: !GetAtt DynamoDBTables.Outputs.TenantUserMappingTableArn
         TenantStackMappingTableName: !GetAtt DynamoDBTables.Outputs.TenantStackMappingTableName
         TenantUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.ApplicationSite 
         
@@ -116,6 +126,7 @@ Resources:
         EnableUsersByTenantFunctionArn: !GetAtt LambdaFunctions.Outputs.EnableUsersByTenantFunctionArn          
         AuthorizerFunctionArn: !GetAtt LambdaFunctions.Outputs.SharedServicesAuthorizerFunctionArn         
         AdminApiGatewayApi: !GetAtt APIs.Outputs.AdminApiGatewayApi
+
   #setup custom resources
   CustomResources:
     Type: AWS::Serverless::Application
@@ -158,7 +169,7 @@ Outputs:
     Description: The user pool id of Admin Management userpool 
     Value: !GetAtt Cognito.Outputs.CognitoOperationUsersUserPoolId
     Export:
-      Name: "Serverless-SaaS-CognitoOperationUsersUserPoolId"  
+      Name: "SaaS-Fauna-CognitoOperationUsersUserPoolId"  
   CognitoOperationUsersUserPoolProviderURL:
     Description: The Admin Management userpool provider url
     Value: !GetAtt Cognito.Outputs.CognitoOperationUsersUserPoolProviderURL
@@ -166,19 +177,35 @@ Outputs:
     Description: The Admin Management userpool client id
     Value: !GetAtt Cognito.Outputs.CognitoOperationUsersUserPoolClientId
     Export:
-      Name: "Serverless-SaaS-CognitoOperationUsersUserPoolClientId"
+      Name: "SaaS-Fauna-CognitoOperationUsersUserPoolClientId"
   CognitoTenantUserPoolId:
     Description: The user pool id for tenant user pool
     Value: !GetAtt Cognito.Outputs.CognitoUserPoolId
     Export:
-      Name: "Serverless-SaaS-CognitoTenantUserPoolId"  
+      Name: "Serverless-SaaS-Fauna-CognitoTenantUserPoolId"
   CognitoTenantAppClientId:
     Description: The app client id for tenant user pool
     Value: !GetAtt Cognito.Outputs.CognitoUserPoolClientId
     Export:
-      Name: "Serverless-SaaS-CognitoTenantAppClientId"  
+      Name: "Serverless-SaaS-Fauna-CognitoTenantAppClientId"  
   AuthorizerExecutionRoleArn:
     Description: The Lambda authorizer execution role
     Value: !GetAtt LambdaFunctions.Outputs.AuthorizerExecutionRoleArn 
     Export:
-      Name: "Serverless-SaaS-AuthorizerExecutionRoleArn"   
+      Name: "SaaS-Fauna-AuthorizerExecutionRoleArn"
+  UpdateTenantApiGatewayUrlFunctionArn:
+    Value: !GetAtt LambdaFunctions.Outputs.UpdateTenantApiGatewayUrlFunctionArn
+    Export:
+      Name: "SaaS-Fauna-UpdateTenantApigUrlFunction"
+  GetTenantInfoFunctionArn:
+    Value: !GetAtt LambdaFunctions.Outputs.GetTenantInfoFunctionArn
+    Export:
+      Name: "SaaS-Fauna-GetTenantInfoFunction"
+  ProductFunctionExecutionRoleArn:
+    Value: !GetAtt LambdaFunctions.Outputs.ProductFunctionExecutionRole.Arn
+    Export:
+      Name: "Saas-Fauna-ProductFunctionExecutionRoleArn"
+  OrderFunctionExecutionRoleArn:
+    Value: !GetAtt LambdaFunctions.Outputs.OrderFunctionExecutionRole.Arn
+    Export:
+      Name: "Saas-Fauna-OrderFunctionExecutionRoleArn"      

@@ -21,17 +21,18 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
+stackname="serverless-saas-fauna"
 
 if [[ $server -eq 1 ]] || [[ $pipeline -eq 1 ]]; then
   echo "CI/CD pipeline code is getting deployed"
   #Create CodeCommit repo
   REGION=$(aws configure get region)
-  REPO=$(aws codecommit get-repository --repository-name aws-serverless-saas-workshop)
+  REPO=$(aws codecommit get-repository --repository-name aws-serverless-saas-fauna-workshop)
   if [[ $? -ne 0 ]]; then
-      echo "aws-serverless-saas-workshop codecommit repo is not present, will create one now"
-      CREATE_REPO=$(aws codecommit create-repository --repository-name aws-serverless-saas-workshop --repository-description "Serverless SaaS workshop repository")
+      echo "aws-serverless-saas-fauna-workshop codecommit repo is not present, will create one now"
+      CREATE_REPO=$(aws codecommit create-repository --repository-name aws-serverless-saas-fauna-workshop --repository-description "Serverless SaaS Fauna workshop repository")
       echo $CREATE_REPO
-      REPO_URL="codecommit::${REGION}://aws-serverless-saas-workshop"
+      REPO_URL="codecommit::${REGION}://aws-serverless-saas-fauna-workshop"
       git remote add cc $REPO_URL
       if [[ $? -ne 0 ]]; then
            echo "Setting url to remote cc"
@@ -68,15 +69,15 @@ if [[ $server -eq 1 ]] || [[ $bootstrap -eq 1 ]]; then
 
 fi
 
-ADMIN_SITE_URL=$(aws cloudformation describe-stacks --stack-name serverless-saas --query "Stacks[0].Outputs[?OutputKey=='AdminAppSite'].OutputValue" --output text)
-LANDING_APP_SITE_URL=$(aws cloudformation describe-stacks --stack-name serverless-saas --query "Stacks[0].Outputs[?OutputKey=='LandingApplicationSite'].OutputValue" --output text)
-APP_SITE_URL=$(aws cloudformation describe-stacks --stack-name serverless-saas --query "Stacks[0].Outputs[?OutputKey=='ApplicationSite'].OutputValue" --output text)  
+ADMIN_SITE_URL=$(aws cloudformation describe-stacks --stack-name $stackname --query "Stacks[0].Outputs[?OutputKey=='AdminAppSite'].OutputValue" --output text)
+LANDING_APP_SITE_URL=$(aws cloudformation describe-stacks --stack-name $stackname --query "Stacks[0].Outputs[?OutputKey=='LandingApplicationSite'].OutputValue" --output text)
+APP_SITE_URL=$(aws cloudformation describe-stacks --stack-name $stackname --query "Stacks[0].Outputs[?OutputKey=='ApplicationSite'].OutputValue" --output text)  
 
 if [[ $client -eq 1 ]]; then
   echo "Client code is getting deployed"
-  APP_SITE_BUCKET=$(aws cloudformation describe-stacks --stack-name serverless-saas --query "Stacks[0].Outputs[?OutputKey=='ApplicationSiteBucket'].OutputValue" --output text)
+  APP_SITE_BUCKET=$(aws cloudformation describe-stacks --stack-name $stackname --query "Stacks[0].Outputs[?OutputKey=='ApplicationSiteBucket'].OutputValue" --output text)
   
-  ADMIN_APIGATEWAYURL=$(aws cloudformation describe-stacks --stack-name serverless-saas --query "Stacks[0].Outputs[?OutputKey=='AdminApi'].OutputValue" --output text)
+  ADMIN_APIGATEWAYURL=$(aws cloudformation describe-stacks --stack-name $stackname --query "Stacks[0].Outputs[?OutputKey=='AdminApi'].OutputValue" --output text)
   
   # Admin UI and Landing UI are configured in Lab2 
   echo "Admin UI and Landing UI are configured in Lab2. Only App UI will be reconfigured in this Lab5."

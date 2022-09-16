@@ -9,14 +9,19 @@ import logger
 import utils
 import metrics_manager
 import auth_manager
-from boto3.dynamodb.conditions import Key
+# from boto3.dynamodb.conditions import Key
 from aws_lambda_powertools import Tracer
 tracer = Tracer()
 
+from utils import FaunaClients
+from faunadb import query as q
+from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
+clients = {}
+
 client = boto3.client('cognito-idp')
-dynamodb = boto3.resource('dynamodb')
-table_tenant_user_map = dynamodb.Table('ServerlessSaaS-TenantUserMapping')
-table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')
+# dynamodb = boto3.resource('dynamodb')
+# table_tenant_user_map = dynamodb.Table('ServerlessSaaS-TenantUserMapping')
+# table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')
 
 def create_tenant_admin_user(event, context):
     tenant_user_pool_id = os.environ['TENANT_USER_POOL_ID']
@@ -29,8 +34,16 @@ def create_tenant_admin_user(event, context):
     user_mgmt = UserManagement()
 
     if (tenant_details['dedicatedTenancy'] == 'true'):
-        #TODO: add code to provision new user pool
-        pass
+        user_pool_response = user_mgmt.create_user_pool(tenant_id)
+        user_pool_id = user_pool_response['UserPool']['Id']
+        logger.info (user_pool_id)
+        
+        app_client_response = user_mgmt.create_user_pool_client(user_pool_id)
+        logger.info(app_client_response)
+        app_client_id = app_client_response['UserPoolClient']['ClientId']
+        user_pool_domain_response = user_mgmt.create_user_pool_domain(user_pool_id, tenant_id)
+        
+        logger.info ("New Tenant Created")
     else:
         user_pool_id = tenant_user_pool_id
         app_client_id = tenant_app_client_id
@@ -64,13 +77,19 @@ def create_user(event, context):
     
     if (auth_manager.isSystemAdmin(user_role)):
         user_tenant_id = user_details['tenantId']
-        tenant_details = table_tenant_details.get_item( 
-            Key ={
-                'tenantId': user_tenant_id
-            }
+        # tenant_details = table_tenant_details.get_item( 
+        #     Key ={
+        #         'tenantId': user_tenant_id
+        #     }
+        # )
+        # logger.info(tenant_details)
+        # user_pool_id = tenant_details['Item']['userPoolId']    
+
+        global clients
+        db = FaunaClients(clients)
+        user_pool_id = db.query(
+          q.select(['data', 'userPoolId'], q.get(q.ref(q.collection('tenant'), user_tenant_id)))
         )
-        logger.info(tenant_details)
-        user_pool_id = tenant_details['Item']['userPoolId']    
     else:
         user_tenant_id = tenant_id
 
@@ -170,13 +189,19 @@ def get_user(event, context):
 
     if (auth_manager.isSystemAdmin(user_role)):
         user_tenant_id = event['queryStringParameters']['tenantid']
-        tenant_details = table_tenant_details.get_item( 
-            Key ={
-                'tenantId': user_tenant_id
-            }
+        # tenant_details = table_tenant_details.get_item( 
+        #     Key ={
+        #         'tenantId': user_tenant_id
+        #     }
+        # )
+        # logger.info(tenant_details)
+        # user_pool_id = tenant_details['Item']['userPoolId']   
+        global clients
+        db = FaunaClients(clients)
+        user_pool_id = db.query(
+          q.select(['data', 'userPoolId'], q.get(q.ref(q.collection('tenant'), user_tenant_id)))
         )
-        logger.info(tenant_details)
-        user_pool_id = tenant_details['Item']['userPoolId']      
+
 
     if (auth_manager.isTenantUser(user_role) and user_name != requesting_user_name):        
         logger.log_with_tenant_context(event, "Request completed as unauthorized. User can only get its information.")        
@@ -207,14 +232,19 @@ def update_user(event, context):
 
     if (auth_manager.isSystemAdmin(user_role)):
         user_tenant_id = user_details['tenantId']
-        tenant_details = table_tenant_details.get_item( 
-            Key ={
-                'tenantId': user_tenant_id
-            }
+        # tenant_details = table_tenant_details.get_item( 
+        #     Key ={
+        #         'tenantId': user_tenant_id
+        #     }
+        # )
+        # logger.info(tenant_details)
+        # user_pool_id = tenant_details['Item']['userPoolId']        
+        global clients
+        db = FaunaClients(clients)
+        user_pool_id = db.query(
+          q.select(['data', 'userPoolId'], q.get(q.ref(q.collection('tenant'), user_tenant_id)))
         )
-        logger.info(tenant_details)
-        user_pool_id = tenant_details['Item']['userPoolId']        
-    
+
     if (auth_manager.isTenantUser(user_role)):                
         logger.log_with_tenant_context(event, "Request completed as unauthorized. Only tenant admin or system admin can update user!")         
         return utils.create_unauthorized_response()
@@ -256,13 +286,18 @@ def disable_user(event, context):
     
     if (auth_manager.isSystemAdmin(user_role)):
         user_tenant_id = event['queryStringParameters']['tenantid']
-        tenant_details = table_tenant_details.get_item( 
-            Key ={
-                'tenantId': user_tenant_id
-            }
+        # tenant_details = table_tenant_details.get_item( 
+        #     Key ={
+        #         'tenantId': user_tenant_id
+        #     }
+        # )
+        # logger.info(tenant_details)        
+        # user_pool_id = tenant_details['Item']['userPoolId']        
+        global clients
+        db = FaunaClients(clients)
+        user_pool_id = db.query(
+          q.select(['data', 'userPoolId'], q.get(q.ref(q.collection('tenant'), user_tenant_id)))
         )
-        logger.info(tenant_details)
-        user_pool_id = tenant_details['Item']['userPoolId']        
     
     if (auth_manager.isTenantAdmin(user_role) or auth_manager.isSystemAdmin(user_role)):
         user_info = get_user_info(event, user_pool_id, user_name)
@@ -297,16 +332,27 @@ def disable_users_by_tenant(event, context):
     
     
     if ((auth_manager.isTenantAdmin(user_role) and tenantid_to_update == requesting_tenant_id) or auth_manager.isSystemAdmin(user_role)):
-        filtering_exp = Key('tenantId').eq(tenantid_to_update)
-        response = table_tenant_user_map.query(KeyConditionExpression=filtering_exp)
-        users = response.get('Items')
+        # filtering_exp = Key('tenantId').eq(tenantid_to_update)
+        # response = table_tenant_user_map.query(KeyConditionExpression=filtering_exp)
+        # users = response.get('Items')
         
-        for user in users:
+        # for user in users:
+        #     response = client.admin_disable_user(
+        #         Username=user['userName'],
+        #         UserPoolId=tenant_user_pool_id
+        #     )
+
+        global clients
+        db = FaunaClients(clients)
+        users = db.query(
+          q.select(['data'], q.paginate(q.match(q.index('usernames_by_tenant_id'), tenantid_to_update)))
+        )
+        for username in users:
             response = client.admin_disable_user(
-                Username=user['userName'],
+                Username=username,
                 UserPoolId=tenant_user_pool_id
             )
-            
+
         logger.info(response)
         logger.info("Request completed to disable users")
         return utils.create_success_response("Users disabled")
@@ -329,13 +375,24 @@ def enable_users_by_tenant(event, context):
     
     
     if (auth_manager.isSystemAdmin(user_role)):
-        filtering_exp = Key('tenantId').eq(tenantid_to_update)
-        response = table_tenant_user_map.query(KeyConditionExpression=filtering_exp)
-        users = response.get('Items')
+        # filtering_exp = Key('tenantId').eq(tenantid_to_update)
+        # response = table_tenant_user_map.query(KeyConditionExpression=filtering_exp)
+        # users = response.get('Items')
         
-        for user in users:
+        # for user in users:
+        #     response = client.admin_enable_user(
+        #         Username=user['userName'],
+        #         UserPoolId=tenant_user_pool_id
+        #     )
+
+        global clients
+        db = FaunaClients(clients)
+        users = db.query(
+          q.select(['data'], q.paginate(q.match(q.index('usernames_by_tenant_id'), tenantid_to_update)))
+        )
+        for username in users:
             response = client.admin_enable_user(
-                Username=user['userName'],
+                Username=username,
                 UserPoolId=tenant_user_pool_id
             )
             
@@ -374,7 +431,7 @@ class UserManagement:
                         " with username {username} and temporary password {####}"])
         email_subject = "Your temporary password for tenant UI application"  
         response = client.create_user_pool(
-            PoolName= tenant_id + '-ServerlessSaaSUserPool',
+            PoolName= tenant_id + '-ServerlessSaaSFaunaUserPool',
             AutoVerifiedAttributes=['email'],
             AccountRecoverySetting={
                 'RecoveryMechanisms': [
@@ -414,7 +471,7 @@ class UserManagement:
         user_pool_callback_url = os.environ['TENANT_USER_POOL_CALLBACK_URL']
         response = client.create_user_pool_client(
             UserPoolId= user_pool_id,
-            ClientName= 'ServerlessSaaSClient',
+            ClientName= 'ServerlessSaaSFaunaClient',
             GenerateSecret= False,
             AllowedOAuthFlowsUserPoolClient= True,
             AllowedOAuthFlows=[
@@ -443,7 +500,7 @@ class UserManagement:
 
     def create_user_pool_domain(self, user_pool_id, tenant_id):
         response = client.create_user_pool_domain(
-            Domain= tenant_id + '-serverlesssaas',
+            Domain= tenant_id + '-serverlesssaasfauna',
             UserPoolId=user_pool_id
         )
         return response
@@ -488,12 +545,25 @@ class UserManagement:
         return response
 
     def create_user_tenant_mapping(self, user_name, tenant_id):
-        response = table_tenant_user_map.put_item(
-                Item={
-                        'tenantId': tenant_id,
-                        'userName': user_name
-                    }
-                )                    
+        # response = table_tenant_user_map.put_item(
+        #         Item={
+        #                 'tenantId': tenant_id,
+        #                 'userName': user_name
+        #             }
+        #         )                    
+
+        global clients
+        db = FaunaClients(clients)
+        response = db.query(
+          q.create(
+            q.collection('tenant_user'), {
+              'data': {
+                'tenant_id': q.ref(q.collection('tenant'), tenant_id),
+                'user_name': user_name
+              }
+            }
+          )
+        )
 
         return response
 

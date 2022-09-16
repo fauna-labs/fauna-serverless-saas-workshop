@@ -28,54 +28,54 @@ Resources:
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
       TableName: ServerlessSaaS-TenantStackMapping
-  TenantDetailsTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      AttributeDefinitions:
-        - AttributeName: tenantId
-          AttributeType: S
-        - AttributeName: tenantName
-          AttributeType: S   
-      KeySchema:
-        - AttributeName: tenantId
-          KeyType: HASH
-      BillingMode: PAY_PER_REQUEST
-      GlobalSecondaryIndexes:
-        - IndexName: ServerlessSaas-TenantConfig
-          KeySchema:
-            - AttributeName: tenantName
-              KeyType: HASH
-          Projection:
-            NonKeyAttributes: 
-              - userPoolId
-              - appClientId
-              - apiGatewayUrl
-            ProjectionType: INCLUDE      
-      TableName: ServerlessSaaS-TenantDetails
-  TenantUserMappingTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      AttributeDefinitions:
-        - AttributeName: tenantId
-          AttributeType: S
-        - AttributeName: userName
-          AttributeType: S
-      KeySchema:
-        - AttributeName: tenantId
-          KeyType: HASH
-        - AttributeName: userName
-          KeyType: RANGE
-      BillingMode: PAY_PER_REQUEST
-      TableName: ServerlessSaaS-TenantUserMapping
-      GlobalSecondaryIndexes: 
-        - IndexName: UserName
-          KeySchema: 
-            - AttributeName: userName
-              KeyType: HASH
-            - AttributeName: tenantId
-              KeyType: RANGE
-          Projection:
-            ProjectionType: ALL
+  # TenantDetailsTable:
+  #   Type: AWS::DynamoDB::Table
+  #   Properties:
+  #     AttributeDefinitions:
+  #       - AttributeName: tenantId
+  #         AttributeType: S
+  #       - AttributeName: tenantName
+  #         AttributeType: S   
+  #     KeySchema:
+  #       - AttributeName: tenantId
+  #         KeyType: HASH
+  #     BillingMode: PAY_PER_REQUEST
+  #     GlobalSecondaryIndexes:
+  #       - IndexName: ServerlessSaas-TenantConfig
+  #         KeySchema:
+  #           - AttributeName: tenantName
+  #             KeyType: HASH
+  #         Projection:
+  #           NonKeyAttributes: 
+  #             - userPoolId
+  #             - appClientId
+  #             - apiGatewayUrl
+  #           ProjectionType: INCLUDE      
+  #     TableName: ServerlessSaaS-TenantDetails
+  # TenantUserMappingTable:
+  #   Type: AWS::DynamoDB::Table
+  #   Properties:
+  #     AttributeDefinitions:
+  #       - AttributeName: tenantId
+  #         AttributeType: S
+  #       - AttributeName: userName
+  #         AttributeType: S
+  #     KeySchema:
+  #       - AttributeName: tenantId
+  #         KeyType: HASH
+  #       - AttributeName: userName
+  #         KeyType: RANGE
+  #     BillingMode: PAY_PER_REQUEST
+  #     TableName: ServerlessSaaS-TenantUserMapping
+  #     GlobalSecondaryIndexes: 
+  #       - IndexName: UserName
+  #         KeySchema: 
+  #           - AttributeName: userName
+  #             KeyType: HASH
+  #           - AttributeName: tenantId
+  #             KeyType: RANGE
+  #         Projection:
+  #           ProjectionType: ALL
 Outputs:
   ServerlessSaaSSettingsTableArn: 
     Value: !GetAtt ServerlessSaaSSettingsTable.Arn
@@ -85,11 +85,11 @@ Outputs:
     Value: !GetAtt TenantStackMappingTable.Arn
   TenantStackMappingTableName: 
     Value: !Ref TenantStackMappingTable
-  TenantDetailsTableArn: 
-    Value: !GetAtt TenantDetailsTable.Arn
-  TenantDetailsTableName: 
-    Value: !Ref TenantDetailsTable
-  TenantUserMappingTableArn: 
-    Value: !GetAtt TenantUserMappingTable.Arn
-  TenantUserMappingTableName: 
-    Value: !Ref TenantUserMappingTable
+  # TenantDetailsTableArn: 
+  #   Value: !GetAtt TenantDetailsTable.Arn
+  # TenantDetailsTableName: 
+  #   Value: !Ref TenantDetailsTable
+  # TenantUserMappingTableArn: 
+  #   Value: !GetAtt TenantUserMappingTable.Arn
+  # TenantUserMappingTableName: 
+  #   Value: !Ref TenantUserMappingTable
