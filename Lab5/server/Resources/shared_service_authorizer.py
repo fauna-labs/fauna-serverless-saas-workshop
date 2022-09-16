@@ -13,10 +13,15 @@ from jose.utils import base64url_decode
 import auth_manager
 import utils
 
+from utils import FaunaClients
+from faunadb import query as q
+from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
+clients = {}
+
 region = os.environ['AWS_REGION']
 sts_client = boto3.client("sts", region_name=region)
-dynamodb = boto3.resource('dynamodb')
-table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')
+# dynamodb = boto3.resource('dynamodb')
+# table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')
 user_pool_operation_user = os.environ['OPERATION_USERS_USER_POOL']
 app_client_operation_user = os.environ['OPERATION_USERS_APP_CLIENT']
 
@@ -39,14 +44,21 @@ def lambda_handler(event, context):
         appclient_id = app_client_operation_user  
     else:
         #get tenant user pool and app client to validate jwt token against
-        tenant_details = table_tenant_details.get_item( 
-            Key ={
-                'tenantId': unauthorized_claims['custom:tenantId']
-            }
+        # tenant_details = table_tenant_details.get_item( 
+        #     Key ={
+        #         'tenantId': unauthorized_claims['custom:tenantId']
+        #     }
+        # )
+        # logger.info(tenant_details)
+        # userpool_id = tenant_details['Item']['userPoolId']
+        # appclient_id = tenant_details['Item']['appClientId']        
+        global clients
+        db = FaunaClients(clients)
+        res = db.query(
+          q.get(q.ref(q.collection('tenant'), unauthorized_claims['custom:tenantId']))
         )
-        logger.info(tenant_details)
-        userpool_id = tenant_details['Item']['userPoolId']
-        appclient_id = tenant_details['Item']['appClientId']        
+        userpool_id = res['data']['userPoolId']
+        appclient_id = res['data']['appClientId']
 
     #get keys for tenant user pool to validate
     keys_url = 'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.format(region, userpool_id)
@@ -99,23 +111,23 @@ def lambda_handler(event, context):
     #   Another option is to generate the STS token inside the lambda function itself, as mentioned in this blog post: https://aws.amazon.com/blogs/apn/isolating-saas-tenants-with-dynamically-generated-iam-policies/
     #   Finally, you can also consider creating one Authorizer per microservice in cases where you want the IAM policy specific to that service 
     
-    iam_policy = auth_manager.getPolicyForUser(user_role, utils.Service_Identifier.SHARED_SERVICES.value, tenant_id, region, aws_account_id)
-    logger.info(iam_policy)
+    # iam_policy = auth_manager.getPolicyForUser(user_role, utils.Service_Identifier.SHARED_SERVICES.value, tenant_id, region, aws_account_id)
+    # logger.info(iam_policy)
     
-    role_arn = "arn:aws:iam::{}:role/authorizer-access-role".format(aws_account_id)
+    # role_arn = "arn:aws:iam::{}:role/saas-fauna-authorizer-access-role".format(aws_account_id)
     
-    assumed_role = sts_client.assume_role(
-        RoleArn=role_arn,
-        RoleSessionName="tenant-aware-session",
-        Policy=iam_policy,
-    )
-    credentials = assumed_role["Credentials"]
+    # assumed_role = sts_client.assume_role(
+    #     RoleArn=role_arn,
+    #     RoleSessionName="tenant-aware-session",
+    #     Policy=iam_policy,
+    # )
+    # credentials = assumed_role["Credentials"]
 
     #pass sts credentials to lambda
     context = {
-        'accesskey': credentials['AccessKeyId'], # $context.authorizer.key -> value
-        'secretkey' : credentials['SecretAccessKey'],
-        'sessiontoken' : credentials["SessionToken"],
+        # 'accesskey': credentials['AccessKeyId'], # $context.authorizer.key -> value
+        # 'secretkey' : credentials['SecretAccessKey'],
+        # 'sessiontoken' : credentials["SessionToken"],
         'userName': user_name,
         'tenantId': tenant_id,
         'userPoolId': userpool_id,

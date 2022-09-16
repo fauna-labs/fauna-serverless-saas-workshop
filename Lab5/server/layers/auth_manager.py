@@ -116,8 +116,8 @@ def __getPolicyForTenantAdmin(tenant_id, sevice_identifier, region, aws_account_
                         "dynamodb:Query"               
                     ],
                     "Resource": [
-                        "arn:aws:dynamodb:{0}:{1}:table/ServerlessSaaS-TenantStackMapping".format(region, aws_account_id),
-                        "arn:aws:dynamodb:{0}:{1}:table/ServerlessSaaS-Settings".format(region, aws_account_id)
+                        "arn:aws:dynamodb:{0}:{1}:table/ServerlessSaaSFauna-TenantStackMapping".format(region, aws_account_id),
+                        "arn:aws:dynamodb:{0}:{1}:table/ServerlessSaaSFauna-Settings".format(region, aws_account_id)
                     ]
                 }
             ]

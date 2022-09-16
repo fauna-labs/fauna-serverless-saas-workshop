@@ -136,7 +136,7 @@ Resources:
       Runtime: python3.8  
       Tracing: Active
       # Role: !GetAtt ProductFunctionExecutionRole.Arn
-      Role: !ImportValue Saas-Fauna-ProductFunctionExecutionRoleArn
+      Role: !ImportValue SaaS-Fauna-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -156,7 +156,7 @@ Resources:
       Runtime: python3.8  
       Tracing: Active
       # Role: !GetAtt ProductFunctionExecutionRole.Arn
-      Role: !ImportValue Saas-Fauna-ProductFunctionExecutionRoleArn
+      Role: !ImportValue SaaS-Fauna-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -176,7 +176,7 @@ Resources:
       Runtime: python3.8  
       Tracing: Active 
       # Role: !GetAtt ProductFunctionExecutionRole.Arn 
-      Role: !ImportValue Saas-Fauna-ProductFunctionExecutionRoleArn
+      Role: !ImportValue SaaS-Fauna-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -196,7 +196,7 @@ Resources:
       Runtime: python3.8 
       Tracing: Active
       # Role: !GetAtt ProductFunctionExecutionRole.Arn 
-      Role: !ImportValue Saas-Fauna-ProductFunctionExecutionRoleArn
+      Role: !ImportValue SaaS-Fauna-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -216,7 +216,7 @@ Resources:
       Runtime: python3.8 
       Tracing: Active
       # Role: !GetAtt ProductFunctionExecutionRole.Arn 
-      Role: !ImportValue Saas-Fauna-ProductFunctionExecutionRoleArn
+      Role: !ImportValue SaaS-Fauna-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -275,7 +275,7 @@ Resources:
       Runtime: python3.8  
       Tracing: Active
       # Role: !GetAtt OrderFunctionExecutionRole.Arn
-      Role: !ImportValue Saas-Fauna-OrderFunctionExecutionRoleArn
+      Role: !ImportValue SaaS-Fauna-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -295,7 +295,7 @@ Resources:
       Runtime: python3.8  
       Tracing: Active
       # Role: !GetAtt OrderFunctionExecutionRole.Arn
-      Role: !ImportValue Saas-Fauna-OrderFunctionExecutionRoleArn
+      Role: !ImportValue SaaS-Fauna-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -315,7 +315,7 @@ Resources:
       Runtime: python3.8  
       Tracing: Active 
       # Role: !GetAtt OrderFunctionExecutionRole.Arn 
-      Role: !ImportValue Saas-Fauna-OrderFunctionExecutionRoleArn
+      Role: !ImportValue SaaS-Fauna-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -335,7 +335,7 @@ Resources:
       Runtime: python3.8 
       Tracing: Active
       # Role: !GetAtt OrderFunctionExecutionRole.Arn 
-      Role: !ImportValue Saas-Fauna-OrderFunctionExecutionRoleArn
+      Role: !ImportValue SaaS-Fauna-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -355,7 +355,7 @@ Resources:
       Runtime: python3.8 
       Tracing: Active
       # Role: !GetAtt OrderFunctionExecutionRole.Arn 
-      Role: !ImportValue Saas-Fauna-OrderFunctionExecutionRoleArn
+      Role: !ImportValue SaaS-Fauna-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -1012,7 +1012,7 @@ Resources:
     Properties:
       ServiceToken: !ImportValue SaaS-Fauna-UpdateTenantApigUrlFunction
       # TenantDetailsTableName: ServerlessSaaS-TenantDetails
-      SettingsTableName: ServerlessSaaS-Settings  
+      SettingsTableName: ServerlessSaaSFauna-Settings  
       TenantId: !Ref TenantIdParameter  
       TenantApiGatewayUrl: !Sub "https://${ApiGatewayTenantApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
       ParameterStoreFaunaConfig: !Ref ParameterStoreFaunaConfig

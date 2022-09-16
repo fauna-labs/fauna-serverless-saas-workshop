@@ -88,38 +88,49 @@ Resources:
               #   Action:
               #     - dynamodb:GetItem
               #   Resource:
-              #     - !Ref TenantDetailsTableArn    
-  # AuthorizerAccessRole:
-  #   Type: AWS::IAM::Role
-  #   DependsOn: AuthorizerExecutionRole
-  #   Properties:
-  #     RoleName: authorizer-access-role
-  #     Path: '/'
-  #     AssumeRolePolicyDocument:
-  #       Version: 2012-10-17
-  #       Statement:
-  #         - Effect: Allow
-  #           Principal:
-  #             AWS:
-  #               - !GetAtt 'AuthorizerExecutionRole.Arn'
-  #           Action:
-  #             - sts:AssumeRole       
-  #     Policies:
-  #       - PolicyName: authorizer-access-role-policy
-  #         PolicyDocument:
-  #           Version: 2012-10-17
-  #           Statement:
-  #             - Effect: Allow
-  #               Action:
-  #                 - dynamodb:BatchGetItem     
-  #                 - dynamodb:GetItem
-  #                 - dynamodb:PutItem
-  #                 - dynamodb:DeleteItem
-  #                 - dynamodb:UpdateItem
-  #                 - dynamodb:Query
-  #                 - dynamodb:Scan     
-  #               Resource:  
-  #                 - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*
+              #     - !Ref TenantDetailsTableArn
+        - PolicyName: 'AuthorizerParameterStoreAccess'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - 'ssm:GetParameter*'
+                # Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/serverless-saas-fauna-workshop/faunadb/config'
+                Resource: !Join ["", [!Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter", !Ref ParameterStoreFaunaConfig]]
+
+  AuthorizerAccessRole:
+    Type: AWS::IAM::Role
+    DependsOn: AuthorizerExecutionRole
+    Properties:
+      RoleName: saas-fauna-authorizer-access-role
+      Path: '/'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt 'AuthorizerExecutionRole.Arn'
+            Action:
+              - sts:AssumeRole       
+      Policies:
+        - PolicyName: authorizer-access-role-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:BatchGetItem     
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:Query
+                  - dynamodb:Scan     
+                Resource:  
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*
   SharedServicesAuthorizerFunction:
     Type: AWS::Serverless::Function 
     DependsOn: AuthorizerExecutionRole
@@ -754,7 +765,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - dynamodb:PutItem
-                Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ServerlessSaaS-Settings 
+                Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ServerlessSaaSFauna-Settings 
               # - Effect: Allow
               #   Action:
               #     - dynamodb:UpdateItem
@@ -845,7 +856,8 @@ Resources:
       CreateUserLambdaExecutionRole,
       ProductFunctionExecutionRole,
       OrderFunctionExecutionRole,
-      GetTenantInfoFunctionLambdaExecutionRole
+      GetTenantInfoFunctionLambdaExecutionRole,
+      AuthorizerExecutionRole
     ]
     Properties:
       Description: 'Encryption key for secret config values'
@@ -886,7 +898,8 @@ Resources:
                 !GetAtt CreateUserLambdaExecutionRole.Arn,
                 !GetAtt ProductFunctionExecutionRole.Arn,
                 !GetAtt OrderFunctionExecutionRole.Arn,
-                !GetAtt GetTenantInfoFunctionLambdaExecutionRole.Arn
+                !GetAtt GetTenantInfoFunctionLambdaExecutionRole.Arn,
+                !GetAtt AuthorizerExecutionRole.Arn
               ]
             Action:
               - 'kms:Encrypt'

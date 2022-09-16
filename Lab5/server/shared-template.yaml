@@ -202,10 +202,10 @@ Outputs:
     Export:
       Name: "SaaS-Fauna-GetTenantInfoFunction"
   ProductFunctionExecutionRoleArn:
-    Value: !GetAtt LambdaFunctions.Outputs.ProductFunctionExecutionRole.Arn
+    Value: !GetAtt LambdaFunctions.Outputs.ProductFunctionExecutionRoleArn
     Export:
-      Name: "Saas-Fauna-ProductFunctionExecutionRoleArn"
+      Name: "SaaS-Fauna-ProductFunctionExecutionRoleArn"
   OrderFunctionExecutionRoleArn:
-    Value: !GetAtt LambdaFunctions.Outputs.OrderFunctionExecutionRole.Arn
+    Value: !GetAtt LambdaFunctions.Outputs.OrderFunctionExecutionRoleArn
     Export:
-      Name: "Saas-Fauna-OrderFunctionExecutionRoleArn"      
+      Name: "SaaS-Fauna-OrderFunctionExecutionRoleArn"      
