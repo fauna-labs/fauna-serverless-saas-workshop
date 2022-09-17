@@ -100,37 +100,37 @@ Resources:
                 # Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/serverless-saas-fauna-workshop/faunadb/config'
                 Resource: !Join ["", [!Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter", !Ref ParameterStoreFaunaConfig]]
 
-  AuthorizerAccessRole:
-    Type: AWS::IAM::Role
-    DependsOn: AuthorizerExecutionRole
-    Properties:
-      RoleName: saas-fauna-authorizer-access-role
-      Path: '/'
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              AWS:
-                - !GetAtt 'AuthorizerExecutionRole.Arn'
-            Action:
-              - sts:AssumeRole       
-      Policies:
-        - PolicyName: authorizer-access-role-policy
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - dynamodb:BatchGetItem     
-                  - dynamodb:GetItem
-                  - dynamodb:PutItem
-                  - dynamodb:DeleteItem
-                  - dynamodb:UpdateItem
-                  - dynamodb:Query
-                  - dynamodb:Scan     
-                Resource:  
-                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*
+  # AuthorizerAccessRole:
+  #   Type: AWS::IAM::Role
+  #   DependsOn: AuthorizerExecutionRole
+  #   Properties:
+  #     RoleName: saas-fauna-authorizer-access-role
+  #     Path: '/'
+  #     AssumeRolePolicyDocument:
+  #       Version: 2012-10-17
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             AWS:
+  #               - !GetAtt 'AuthorizerExecutionRole.Arn'
+  #           Action:
+  #             - sts:AssumeRole       
+  #     Policies:
+  #       - PolicyName: authorizer-access-role-policy
+  #         PolicyDocument:
+  #           Version: 2012-10-17
+  #           Statement:
+  #             - Effect: Allow
+  #               Action:
+  #                 - dynamodb:BatchGetItem     
+  #                 - dynamodb:GetItem
+  #                 - dynamodb:PutItem
+  #                 - dynamodb:DeleteItem
+  #                 - dynamodb:UpdateItem
+  #                 - dynamodb:Query
+  #                 - dynamodb:Scan     
+  #               Resource:  
+  #                 - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*
   SharedServicesAuthorizerFunction:
     Type: AWS::Serverless::Function 
     DependsOn: AuthorizerExecutionRole
@@ -599,7 +599,7 @@ Resources:
                 Action:
                   - codepipeline:StartPipelineExecution
                 Resource:
-                  - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:serverless-saas-pipeline
+                  - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:serverless-saas-fauna-pipeline
               - Effect: Allow
                 Action:
                   - cloudformation:DeleteStack
@@ -784,7 +784,7 @@ Resources:
     Type: AWS::Serverless::Function
     DependsOn: UpdateTenantApiGatewayUrlLambdaExecutionRole
     Properties:
-      CodeUri: custom_resources/
+      CodeUri: ../custom_resources/
       Handler: update_tenant_apigatewayurl.handler
       Runtime: python3.8
       Role: !GetAtt UpdateTenantApiGatewayUrlLambdaExecutionRole.Arn
@@ -823,7 +823,7 @@ Resources:
   GetTenantInfoFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: custom_resources/
+      CodeUri: ../custom_resources/
       Handler: get_tenant_info.handler
       Runtime: python3.8
       Role: !GetAtt GetTenantInfoFunctionLambdaExecutionRole.Arn

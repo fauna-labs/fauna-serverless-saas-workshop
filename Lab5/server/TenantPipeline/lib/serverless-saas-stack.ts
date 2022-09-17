@@ -41,7 +41,7 @@ export class ServerlessSaaSStack extends cdk.Stack {
 
     // Pipeline creation starts
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
-      pipelineName: 'serverless-saas-pipeline',
+      pipelineName: 'serverless-saas-fauna-pipeline',
       artifactBucket: artifactsBucket
     });
 
@@ -62,7 +62,7 @@ export class ServerlessSaaSStack extends cdk.Stack {
         new codepipeline_actions.CodeCommitSourceAction({
           actionName: 'CodeCommit_Source',
           repository: codeRepo,
-          branch: 'main',
+          branch: 'fauna',
           output: sourceOutput,
           variablesNamespace: 'SourceVariables'
         }),

@@ -4,7 +4,7 @@ import os, configparser, traceback
 import logger
 # from boto3.dynamodb.conditions import Key
 from crhelper import CfnResource
-from faunadb.client import FaunaClient
+from utils import FaunaFromConfig
 from faunadb import query as q
 
 helper = CfnResource()
@@ -13,6 +13,7 @@ try:
     client = boto3.client('dynamodb')
     dynamodb = boto3.resource('dynamodb')
     ssm_client = boto3.client('ssm')
+    db = FaunaFromConfig()
 except Exception as e:
     helper.init_failure(e)
 
@@ -42,8 +43,7 @@ def do_action(event, _):
         settings_table.put_item(Item={
                     'settingName': 'apiGatewayUrl-Pooled',
                     'settingValue' : tenant_api_gateway_url                    
-                })
-        
+                })        
     else:
         # tenant_details = dynamodb.Table(tenant_details_table_name)
         # response = tenant_details.update_item(
@@ -53,38 +53,17 @@ def do_action(event, _):
         #     ':apiGatewayUrl': tenant_api_gateway_url
         #     },
         #     ReturnValues="NONE") 
-        configuration = configparser.ConfigParser()
-        config_dict = {}
-        try: 
-            param_details = ssm_client.get_parameters_by_path(
-                Path=fauna_config_path,
-                Recursive=False,
-                WithDecryption=True
-            )
-            if 'Parameters' in param_details and len(param_details.get('Parameters')) > 0:
-                for param in param_details.get('Parameters'):
-                    config_dict.update(json.loads(param.get('Value')))
 
-            configuration['FAUNA'] = config_dict
-
-            client = FaunaClient(
-              secret=configuration['FAUNA']['secret'],
-              domain=configuration['FAUNA']['domain'],
-            )
-            res = client.query(
-              q.update(
-                q.ref(q.collection('tenant'), tenant_id), 
-                {
-                  'data': {
-                    'apiGatewayUrl': tenant_api_gateway_url
-                  }
+        response = db.query(
+            q.update(
+              q.ref(q.collection('tenant'), tenant_id), 
+              {
+                'data': {
+                  'apiGatewayUrl': tenant_api_gateway_url
                 }
-              )
+              }
             )
-        except:
-            print("Encountered an error loading config from SSM.")
-            traceback.print_exc()
-
+        )
 
     helper.Data.update({"UpdateTenantAPIGatewayURLData": tenant_id})
 

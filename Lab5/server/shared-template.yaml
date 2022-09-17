@@ -127,7 +127,7 @@ Resources:
         AuthorizerFunctionArn: !GetAtt LambdaFunctions.Outputs.SharedServicesAuthorizerFunctionArn         
         AdminApiGatewayApi: !GetAtt APIs.Outputs.AdminApiGatewayApi
 
-  #setup custom resources
+  # setup custom resources
   CustomResources:
     Type: AWS::Serverless::Application
     DependsOn: APIs    

@@ -37,7 +37,7 @@ def provision_tenant(event, context):
         logger.info(response_ddb)
 
         response_codepipeline = codepipeline.start_pipeline_execution(
-            name='serverless-saas-pipeline'
+            name='serverless-saas-fauna-pipeline'
         )
 
         logger.info(response_ddb)
