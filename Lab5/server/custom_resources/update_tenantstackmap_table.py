@@ -31,7 +31,7 @@ def do_action(event, _):
     response = table_stack_mapping.put_item(
             Item={
                     'tenantId': 'pooled',
-                    'stackName' : 'stack-pooled',
+                    'stackName' : 'stack-pooled-fauna',
                     'applyLatestRelease': True,
                     'codeCommitId': ''
                 }
