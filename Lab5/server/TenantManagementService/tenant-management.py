@@ -31,7 +31,7 @@ def create_tenant(event, context):
 
     dynamodb = boto3.resource('dynamodb')
     # table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')
-    table_system_settings = dynamodb.Table('ServerlessSaaS-Settings')
+    table_system_settings = dynamodb.Table('ServerlessSaaSFauna-Settings')
 
     try:          
         # for pooled tenants the apigateway url is saving in settings during stack creation
