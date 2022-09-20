@@ -87,9 +87,9 @@ def create_tenant(event, context):
             { 'tenantId': q.var('tenantId') }
           )
         )
-    except FaunaError as e:
-        logger.error(e)
-        raise Exception('Error adding a new tenant', e)
+    except FaunaError as fe:
+        logger.error(fe)
+        raise Exception('Error adding a new tenant', fe)
     except Exception as e:
         raise Exception('Error creating a new tenant', e)
     else:
