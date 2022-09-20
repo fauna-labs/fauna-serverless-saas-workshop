@@ -16,7 +16,6 @@ phases:
       - python -m pip install -r requirements.txt 
       # Run Fauna migrations      
       - cd ../fauna_resources
-      - node -v
       - npm install
       - node index.js
   pre_build:
