@@ -54,6 +54,8 @@ def do_action(event, _):
         except:
             print("Encountered an error loading config from SSM.")
             traceback.print_exc()
+    
+    return "ZZ_pyhysical_id_tenant_{}".format(tenant_id)
 
 @helper.delete
 def do_nothing(_, __):
