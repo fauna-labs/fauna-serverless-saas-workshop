@@ -367,15 +367,15 @@ Resources:
         TenantId: !Ref TenantIdParameter
 
 
-  # GetTenantInfo: 
-  #   Type: Custom::GetTenantInfo
-  #   Properties: 
-  #     ServiceToken: !ImportValue SaaS-Fauna-GetTenantInfoFunction
-  #     TenantId: !Ref TenantIdParameter  
-  #     TenantUserPoolPooled: !ImportValue Serverless-SaaS-Fauna-CognitoTenantUserPoolId
-  #     TenantAppClientPooled: !ImportValue Serverless-SaaS-Fauna-CognitoTenantAppClientId
-  #     TenantApiGatewayUrlPooled: !Sub "https://${ApiGatewayTenantApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
-  #     ParameterStoreFaunaConfig: !Ref ParameterStoreFaunaConfig
+  GetTenantInfo: 
+    Type: Custom::GetTenantInfo
+    Properties: 
+      ServiceToken: !ImportValue SaaS-Fauna-GetTenantInfoFunction
+      TenantId: !Ref TenantIdParameter  
+      TenantUserPoolPooled: !ImportValue Serverless-SaaS-Fauna-CognitoTenantUserPoolId
+      TenantAppClientPooled: !ImportValue Serverless-SaaS-Fauna-CognitoTenantAppClientId
+      TenantApiGatewayUrlPooled: !Sub "https://${ApiGatewayTenantApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
+      ParameterStoreFaunaConfig: !Ref ParameterStoreFaunaConfig
 
   BusinessServicesAuthorizerFunction:
     Type: AWS::Serverless::Function 
@@ -394,9 +394,9 @@ Resources:
         Variables:        
           OPERATION_USERS_USER_POOL: !ImportValue SaaS-Fauna-CognitoOperationUsersUserPoolId
           OPERATION_USERS_APP_CLIENT: !ImportValue SaaS-Fauna-CognitoOperationUsersUserPoolClientId
-          # TENANT_USER_POOL: !GetAtt GetTenantInfo.userPoolId
-          # TENANT_APP_CLIENT: !GetAtt GetTenantInfo.appClientId
-          # TENANT_API_GATEWAY_URL: !GetAtt GetTenantInfo.apiGatewayUrl
+          TENANT_USER_POOL: !GetAtt GetTenantInfo.userPoolId
+          TENANT_APP_CLIENT: !GetAtt GetTenantInfo.appClientId
+          TENANT_API_GATEWAY_URL: !GetAtt GetTenantInfo.apiGatewayUrl
           
   ApiGatewayAccessLogs:
     Type: AWS::Logs::LogGroup
@@ -1012,7 +1012,6 @@ Resources:
     # DependsOn: UpdateTenantApiGatewayUrlFunction
     Properties:
       ServiceToken: !ImportValue SaaS-Fauna-UpdateTenantApigUrlFunction
-      # ServiceToken: !GetAtt UpdateTenantApiGatewayUrlFunction.Arn
       # TenantDetailsTableName: ServerlessSaaS-TenantDetails
       SettingsTableName: ServerlessSaaSFauna-Settings  
       TenantId: !Ref TenantIdParameter  
