@@ -35,7 +35,8 @@ def do_action(event, _):
                     'applyLatestRelease': True,
                     'codeCommitId': ''
                 }
-            )                  
+            )
+    print(response)
     
 @helper.delete
 def do_nothing(_, __):

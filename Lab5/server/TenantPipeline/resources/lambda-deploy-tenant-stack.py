@@ -412,6 +412,7 @@ def lambda_handler(event, context):
 
         # Get all the stacks for each tenant to be updated/created from tenant stack mapping table
         mappings = table_tenant_stack_mapping.scan()
+        print('MAPPINGS:')
         print (mappings)
         #Update/Create stacks for all tenants
         for mapping in mappings['Items']:
