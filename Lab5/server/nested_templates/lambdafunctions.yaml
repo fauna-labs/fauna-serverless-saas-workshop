@@ -857,7 +857,8 @@ Resources:
       ProductFunctionExecutionRole,
       OrderFunctionExecutionRole,
       GetTenantInfoFunctionLambdaExecutionRole,
-      AuthorizerExecutionRole
+      AuthorizerExecutionRole,
+      UpdateTenantApiGatewayUrlLambdaExecutionRole
     ]
     Properties:
       Description: 'Encryption key for secret config values'
@@ -899,7 +900,8 @@ Resources:
                 !GetAtt ProductFunctionExecutionRole.Arn,
                 !GetAtt OrderFunctionExecutionRole.Arn,
                 !GetAtt GetTenantInfoFunctionLambdaExecutionRole.Arn,
-                !GetAtt AuthorizerExecutionRole.Arn
+                !GetAtt AuthorizerExecutionRole.Arn,
+                !GetAtt UpdateTenantApiGatewayUrlLambdaExecutionRole.Arn
               ]
             Action:
               - 'kms:Encrypt'

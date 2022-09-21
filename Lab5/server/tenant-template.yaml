@@ -991,11 +991,12 @@ Resources:
   #             - Effect: Allow
   #               Action:
   #                 - dynamodb:PutItem
-  #               Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ServerlessSaaS-Settings 
+  #               Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ServerlessSaaSFauna-Settings 
   #             - Effect: Allow
   #               Action:
   #                 - dynamodb:UpdateItem
   #               Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ServerlessSaaS-TenantDetails    
+
   # UpdateTenantApiGatewayUrlFunction:
   #   Type: AWS::Serverless::Function
   #   DependsOn: UpdateTenantApiGatewayUrlLambdaExecutionRole
@@ -1011,6 +1012,7 @@ Resources:
     # DependsOn: UpdateTenantApiGatewayUrlFunction
     Properties:
       ServiceToken: !ImportValue SaaS-Fauna-UpdateTenantApigUrlFunction
+      # ServiceToken: !GetAtt UpdateTenantApiGatewayUrlFunction.Arn
       # TenantDetailsTableName: ServerlessSaaS-TenantDetails
       SettingsTableName: ServerlessSaaSFauna-Settings  
       TenantId: !Ref TenantIdParameter  
