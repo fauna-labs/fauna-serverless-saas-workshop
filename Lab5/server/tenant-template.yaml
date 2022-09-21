@@ -1006,16 +1006,16 @@ Resources:
   #     Role: !GetAtt UpdateTenantApiGatewayUrlLambdaExecutionRole.Arn
   #     Layers: 
   #         - !Ref ServerlessSaaSLayers  
-  # UpdateTenantApiGatewayUrl:
-  #   Type: Custom::UpdateTenantApiGatewayUrl
-  #   # DependsOn: UpdateTenantApiGatewayUrlFunction
-  #   Properties:
-  #     ServiceToken: !ImportValue SaaS-Fauna-UpdateTenantApigUrlFunction
-  #     # TenantDetailsTableName: ServerlessSaaS-TenantDetails
-  #     SettingsTableName: ServerlessSaaSFauna-Settings  
-  #     TenantId: !Ref TenantIdParameter  
-  #     TenantApiGatewayUrl: !Sub "https://${ApiGatewayTenantApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
-  #     ParameterStoreFaunaConfig: !Ref ParameterStoreFaunaConfig
+  UpdateTenantDetailsApiGatewayUrl:
+    Type: Custom::UpdateTenantDetailsApiGatewayUrl
+    # DependsOn: UpdateTenantApiGatewayUrlFunction
+    Properties:
+      ServiceToken: !ImportValue SaaS-Fauna-UpdateTenantApigUrlFunction
+      # TenantDetailsTableName: ServerlessSaaS-TenantDetails
+      SettingsTableName: ServerlessSaaSFauna-Settings  
+      TenantId: !Ref TenantIdParameter  
+      TenantApiGatewayUrl: !Sub "https://${ApiGatewayTenantApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
+      ParameterStoreFaunaConfig: !Ref ParameterStoreFaunaConfig
 
 Outputs:
   TenantApiGatewayId:
