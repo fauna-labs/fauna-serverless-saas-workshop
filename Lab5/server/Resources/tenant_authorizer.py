@@ -23,7 +23,7 @@ app_client_operation_user = os.environ['OPERATION_USERS_APP_CLIENT']
 
 user_pool_tenant = os.environ['TENANT_USER_POOL']
 app_client_tenant = os.environ['TENANT_APP_CLIENT']
-api_gateway_url_tenant = os.environ['TENANT_API_GATEWAY_URL']
+# api_gateway_url_tenant = os.environ['TENANT_API_GATEWAY_URL']
 
 
 def lambda_handler(event, context):
@@ -55,7 +55,7 @@ def lambda_handler(event, context):
         # apigateway_url = tenant_details['Item']['apiGatewayUrl']
         userpool_id = user_pool_tenant
         appclient_id = app_client_tenant
-        apigateway_url = api_gateway_url_tenant
+        # apigateway_url = api_gateway_url_tenant
         
 
     #get keys for tenant user pool to validate
@@ -88,10 +88,11 @@ def lambda_handler(event, context):
     policy.region = tmp[3]
     policy.stage = api_gateway_arn_tmp[1]
 
-    if (auth_manager.isSaaSProvider(user_role) == False):
-        if (isTenantAuthorizedForThisAPI(apigateway_url, api_gateway_arn_tmp[0]) == False):
-            logger.error('Unauthorized')
-            raise Exception('Unauthorized')
+    # This check is redundant because we're already validating appclient_id, which is on a per-tenant basis
+    # if (auth_manager.isSaaSProvider(user_role) == False):
+    #     if (isTenantAuthorizedForThisAPI(apigateway_url, api_gateway_arn_tmp[0]) == False):
+    #         logger.error('Unauthorized')
+    #         raise Exception('Unauthorized')
 
     #roles are not fine-grained enough to allow selectively
     policy.allowAllMethods()        
