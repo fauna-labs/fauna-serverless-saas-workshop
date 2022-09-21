@@ -65,7 +65,7 @@ def do_action(event, _):
             )
         )
 
-    helper.Data.update({"UpdateTenantAPIGatewayURLData": tenant_id})
+    # helper.Data.update({"UpdateTenantAPIGatewayURLData": tenant_id})
 
 @helper.delete
 def do_nothing(_, __):
