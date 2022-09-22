@@ -17,7 +17,7 @@ from product_models import Product
 
 
 # is_pooled_deploy = os.environ['IS_POOLED_DEPLOY']
-table_name = os.environ['PRODUCT_TABLE_NAME']
+# table_name = os.environ['PRODUCT_TABLE_NAME']
 # dynamodb = None
 
 # suffix_start = 1 

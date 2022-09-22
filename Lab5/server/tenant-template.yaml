@@ -379,7 +379,7 @@ Resources:
 
   BusinessServicesAuthorizerFunction:
     Type: AWS::Serverless::Function 
-    # DependsOn: GetTenantInfo
+    DependsOn: GetTenantInfo
     Properties:
       CodeUri: Resources/
       Handler: tenant_authorizer.lambda_handler

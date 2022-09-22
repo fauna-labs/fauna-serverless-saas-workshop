@@ -68,25 +68,34 @@ def create_tenant(event, context):
         for key in tenant_details:
           data[key] = tenant_details[key]
 
+        print("tenant_id: {}".format(tenant_id))
+        print(data)
+
         # This method has been locked down to be only called from tenant registration service
         # Note: It also has a non-standard POST behavior of UPSERTing into the collection
         global clients
         db = FaunaClients(clients)
-        tenant = db.query(
-          q.let(
-            {
-              'tenantDetails': { 'data': data },
-              'tenant': q.if_(
-                q.is_null(tenant_id),
-                q.create(q.collection('tenant'), q.var('tenantDetails') ),
-                q.update(q.ref(q.collection('tenant'), tenant_id), q.var('tenantDetails') )
-              ),
-              'tenantId': q.select(['ref', 'id'], q.var('tenant')),
-              'db': q.create_database({ 'name': q.concat(['tenant_', q.var('tenantId')]) })
-            },
-            { 'tenantId': q.var('tenantId') }
-          )
-        )
+        if tenant_id:
+            tenant = db.query(
+              q.let(
+                {
+                  'tenant': q.update(q.ref(q.collection('tenant'), tenant_id), { 'data': data } ),
+                  'tenantId': q.select(['ref', 'id'], q.var('tenant'), 0)
+                },
+                { 'tenantId': q.var('tenantId') }
+              )
+            )            
+        else:
+            tenant = db.query(
+              q.let(
+                {
+                  'tenant': q.create(q.collection('tenant'), { 'data': data } ),
+                  'tenantId': q.select(['ref', 'id'], q.var('tenant'), 0),
+                  'db': q.create_database({ 'name': q.concat(['tenant_', q.var('tenantId')]) })
+                },
+                { 'tenantId': q.var('tenantId') }
+              )
+            )
     except FaunaError as fe:
         logger.error(fe)
         raise Exception('Error adding a new tenant', fe)
@@ -379,27 +388,38 @@ def activate_tenant(event, context):
         logger.log_with_tenant_context(event, "Request completed as unauthorized. Only system admin can activate tenant!")        
         return utils.create_unauthorized_response()    
 
-# def load_tenant_config(event, context):
-#     params = event['pathParameters']
-#     tenantName = urllib.parse.unquote(params['tenantname'])
+def load_tenant_config(event, context):
+    params = event['pathParameters']
+    tenantName = urllib.parse.unquote(params['tenantname'])
 
-#     dynamodb = boto3.resource('dynamodb')
-#     table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')#TODO: read table names from env vars
+    # dynamodb = boto3.resource('dynamodb')
+    # table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')#TODO: read table names from env vars
     
-#     try:
-#         response = table_tenant_details.query(
-#             IndexName="ServerlessSaas-TenantConfig",
-#             KeyConditionExpression=Key('tenantName').eq(tenantName),
-#             ProjectionExpression="userPoolId, appClientId, apiGatewayUrl"
-#         ) 
-#     except Exception as e:
-#         raise Exception('Error getting tenant config', e)
-#     else:
-#         if (response['Count'] == 0):
-#             return utils.create_notfound_response("Tenant not found."+
-#             "Please enter exact tenant name used during tenant registration.")
-#         else:
-#             return utils.generate_response(response['Items'][0])        
+    try:
+        # response = table_tenant_details.query(
+        #     IndexName="ServerlessSaas-TenantConfig",
+        #     KeyConditionExpression=Key('tenantName').eq(tenantName),
+        #     ProjectionExpression="userPoolId, appClientId, apiGatewayUrl"
+        # ) 
+        global clients
+        db = FaunaClients(clients)
+
+        response = db.query(
+          q.map_(
+            q.lambda_('x', q.select(['data'], q.get(q.var('x')))),
+            q.select(['data'], q.paginate(q.match(q.index('tenants_by_name'), tenantName)))  
+          )
+        )
+    except Exception as e:
+        raise Exception('Error getting tenant config', e)
+    else:
+        if len(response) == 0:
+        # if (response['Count'] == 0):
+            return utils.create_notfound_response("Tenant not found."+
+            "Please enter exact tenant name used during tenant registration.")
+        else:
+            # return utils.generate_response(response['Items'][0])
+            return utils.generate_response(response[0])
 
 def __invoke_disable_users(update_details, headers, auth, host, stage_name, invoke_url):
     try:
