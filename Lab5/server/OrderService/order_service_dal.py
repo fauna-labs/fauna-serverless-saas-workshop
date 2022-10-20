@@ -15,7 +15,7 @@ import logger
 # import threading
 # from boto3.dynamodb.conditions import Key
 
-is_pooled_deploy = os.environ['IS_POOLED_DEPLOY']
+# is_pooled_deploy = os.environ['IS_POOLED_DEPLOY']
 # table_name = os.environ['ORDER_TABLE_NAME']
 # dynamodb = None
 
