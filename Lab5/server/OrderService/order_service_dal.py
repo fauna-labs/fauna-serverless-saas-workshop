@@ -51,11 +51,15 @@ def get_order(event, key):
               "orderProducts": q.map_(
                 q.lambda_(
                   "x",
-                  {
-                    "quantity": q.select(["quantity"], q.var("x")),
-                    "price": q.select(["price"], q.var("x")),
-                    "key": q.select(["data", "name"], q.get(q.select(["product"], q.var("x"))))
-                  }
+                  q.let(
+                    { "product": q.get(q.select(["product"], q.var("x"))) },
+                    {
+                      "quantity": q.select(["quantity"], q.var("x")),
+                      "price": q.select(["price"], q.var("x")),
+                      # "key": q.select(["data", "name"], q.var("product")),
+                      "productId": q.select(["ref", "id"], q.var("product"))
+                    }
+                  )
                 ),
                 q.select(["data", "orderProducts"], q.var("order"))
               )
@@ -209,10 +213,30 @@ def get_orders(event, tenantId):
           q.map_(
             q.lambda_("x", 
               q.let(
-                { "order": q.get(q.var("x")) },
+                {
+                  "order": q.get(q.var("x")),
+                  "orderProducts": q.map_(
+                    q.lambda_(
+                      "x",
+                      q.let(
+                        { "product": q.get(q.select(["product"], q.var("x"))) },
+                        {
+                          "quantity": q.select(["quantity"], q.var("x")),
+                          "price": q.select(["price"], q.var("x")),
+                          # "key": q.select(["data", "name"], q.var("product")),
+                          "productId": q.select(["ref", "id"], q.var("product"))
+                        }
+                      )
+                    ),
+                    q.select(["data", "orderProducts"], q.var("order"))
+                  )
+                },
                 q.merge(
-                  { "orderId": q.select(["ref", "id"], q.var("order")) },
-                  q.select(["data"], q.var("order"))
+                  q.select(["data"], q.var("order")),
+                  {
+                    "orderId": q.select(["ref", "id"], q.var("order")),
+                    "orderProducts": q.var("orderProducts")
+                  },
                 )
               )
             ),
