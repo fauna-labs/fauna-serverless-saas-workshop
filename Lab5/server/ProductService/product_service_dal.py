@@ -155,6 +155,7 @@ def create_product(event, payload):
           response["id"], 
           payload.sku, 
           payload.name, 
+          payload.description,
           payload.price,
           payload.quantity,
           payload.backorderedLimit,
