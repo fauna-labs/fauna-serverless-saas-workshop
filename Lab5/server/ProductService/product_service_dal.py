@@ -277,7 +277,7 @@ def get_products(event, tenantId):
               item['productId'], 
               item['sku'], 
               item['name'], 
-              item['description'], 
+              item['description'],
               item['price'],
               item['quantity'],
               item['backorderedLimit'],

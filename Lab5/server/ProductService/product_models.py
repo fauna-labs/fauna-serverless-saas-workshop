@@ -16,9 +16,9 @@ class Product:
         self.sku = sku
         self.name = name
         self.description = description
-        self.price = price,
-        self.quantity = quantity,
-        self.backorderedLimit = backorderedLimit,
+        self.price = price
+        self.quantity = quantity
+        self.backorderedLimit = backorderedLimit
         self.backordered = backordered
 
 # class Category:
