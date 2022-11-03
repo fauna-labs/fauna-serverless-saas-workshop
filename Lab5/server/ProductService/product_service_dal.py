@@ -54,7 +54,16 @@ def get_product(event, key):
             )
           )
         )
-        product = Product(item['productId'], item['sku'], item['name'], item['price'], item['category'])
+        product = Product(
+          item['productId'], 
+          item['sku'], 
+          item['name'], 
+          item['description'], 
+          item['price'], 
+          item['quantity'], 
+          item['backorderedLimit'], 
+          item['backordered']
+        )
     # except ClientError as e:
     #     logger.error(e.response['Error']['Message'])
     #     raise Exception('Error getting a product', e)
@@ -128,15 +137,28 @@ def create_product(event, payload):
                     "data": {
                       "sku": payload.sku,
                       "name": payload.name,
+                      "description": payload.description,
                       "price": payload.price,
-                      "category": payload.category
+                      "quantity": payload.quantity,
+                      "backorderedLimit": payload.backorderedLimit,
+                      "backordered": True if payload.quantity < payload.backorderedLimit else False
                     }
                   })
             },
-            { "id": q.select(["ref", "id"], q.var("result")) }
+            {
+              "id": q.select(["ref", "id"], q.var("result")),
+              "backordered": q.select(["data", "backordered"], q.var("result"))
+            }
           )
         )
-        product = Product(response["id"], payload.sku, payload.name, payload.price, payload.category)          
+        product = Product(
+          response["id"], 
+          payload.sku, 
+          payload.name, 
+          payload.price,
+          payload.quantity,
+          payload.backorderedLimit,
+          response["backordered"])
     # except ClientError as e:
     #     logger.error(e.response['Error']['Message'])
     #     raise Exception('Error adding a product', e)
@@ -170,23 +192,44 @@ def update_product(event, payload, key):
         # ReturnValues="UPDATED_NEW")
         productId = key
         tenantId = event['requestContext']['authorizer']['tenantId']  
-        product = Product(productId, payload.sku, payload.name, payload.price, payload.category)
 
         global clients
         db = FaunaClients(clients, tenantId)
 
-        db.query(
-          q.update(
-            q.ref(q.collection("product"), productId), {
-              "data": {
-                "sku": product.sku,
-                "name": product.name,
-                "price": product.price,
-                "category": product.category
-              }
+        response = db.query(
+          q.let(
+            {
+              "result": q.update(
+                q.ref(q.collection("product"), productId), {
+                  "data": {
+                    "sku": payload.sku,
+                    "name": payload.name,
+                    "description": payload.description,
+                    "price": payload.price,
+                    "quantity": payload.quantity,
+                    "backorderedLimit": payload.backorderedLimit,
+                    "backordered": True if payload.quantity < payload.backorderedLimit else False
+                  }
+                }
+              )
+            },
+            {
+              "id": q.select(["ref", "id"], q.var("result")),
+              "backordered": q.select(["data", "backordered"], q.var("result"))
             }
           )
-        )        
+        )
+        product = Product(
+          productId, 
+          payload.sku,
+          payload.name,
+          payload.description,
+          payload.price,
+          payload.quantity,
+          payload.backorderedLimit,
+          response["backordered"]
+        )
+
     # except ClientError as e:
     #     logger.error(e.response['Error']['Message'])
     #     raise Exception('Error updating a product', e)
@@ -230,7 +273,16 @@ def get_products(event, tenantId):
         )
         results = results['data']
         for item in results:
-            product = Product(item['productId'], item['sku'], item['name'], item['price'], item['category'])
+            product = Product(
+              item['productId'], 
+              item['sku'], 
+              item['name'], 
+              item['description'], 
+              item['price'],
+              item['quantity'],
+              item['backorderedLimit'],
+              item['backordered']
+            )
             products.append(product)
     except FaunaError as e:
         logger.error(e)

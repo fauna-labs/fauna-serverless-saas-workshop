@@ -59,8 +59,7 @@ def get_order(event, key):
                       "productId": q.select(["ref", "id"], q.var("product")),
                       "productName": q.select(["data", "name"], q.var("product"), ""),
                       "productSku": q.select(["data", "sku"], q.var("product"), ""),
-                      "productDescription": q.select(["data", "sku"], q.var("product"), ""),
-                      "productCategory": q.select(["data", "category"], q.var("product"), "")
+                      "productDescription": q.select(["data", "description"], q.var("product"), "")
                     }
                   )
                 ),
@@ -140,6 +139,8 @@ def create_order(event, payload):
               "result": q.create(q.collection("order"), {
                     "data": {
                       "orderName": payload.orderName,
+                      "creationDate": q.time("now"),
+                      "status": "processing",
                       "orderProducts": _format_order_products(payload.orderProducts)
                     }
                   })
@@ -187,6 +188,7 @@ def update_order(event, payload, key):
             q.ref(q.collection("order"), orderId), {
               "data": {
                 "orderName": payload.orderName,
+                "status": payload.orderStatus,
                 "orderProducts": _format_order_products(payload.orderProducts)
               }
             }
@@ -229,8 +231,7 @@ def get_orders(event, tenantId):
                           "productId": q.select(["ref", "id"], q.var("product")),
                           "productName": q.select(["data", "name"], q.var("product"), ""),
                           "productSku": q.select(["data", "sku"], q.var("product"), ""),
-                          "productDescription": q.select(["data", "sku"], q.var("product"), ""),
-                          "productCategory": q.select(["data", "category"], q.var("product"), ""),
+                          "productDescription": q.select(["data", "description"], q.var("product"), "")
                         }
                       )
                     ),

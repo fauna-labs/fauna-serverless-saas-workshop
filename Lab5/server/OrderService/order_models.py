@@ -14,12 +14,11 @@ class Order:
         self.orderName = orderName
         self.orderProducts = orderProducts
 
-class  OrderProduct:
-
-    def __init__(self, productId, price, quantity):
-        self.productId = productId
-        self.price = price
-        self.quantity = quantity
+# class  OrderProduct:
+#     def __init__(self, productId, price, quantity):
+#         self.productId = productId
+#         self.price = price
+#         self.quantity = quantity
 
 
 
