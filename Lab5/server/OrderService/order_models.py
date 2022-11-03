@@ -9,9 +9,11 @@ class Order:
     #     self.key = shardId + ':' +  orderId
     #     self.orderName = orderName
     #     self.orderProducts = orderProducts
-    def __init__(self, orderId, orderName, orderProducts):
+    def __init__(self, orderId, orderName, orderCreated, orderStatus, orderProducts):
         self.orderId = orderId
         self.orderName = orderName
+        self.orderCreated = orderCreated
+        self.orderStatus = orderStatus
         self.orderProducts = orderProducts
 
 # class  OrderProduct:

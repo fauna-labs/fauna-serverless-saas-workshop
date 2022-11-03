@@ -66,14 +66,17 @@ def get_order(event, key):
                 q.select(["data", "orderProducts"], q.var("order"))
               )
             },
-            {
-              "orderId": q.select(["ref", "id"], q.var("order")),
-              "orderName": q.select(["data", "orderName"], q.var("order")),
-              "orderProducts": q.var("orderProducts")
-            }
+            q.merge(
+              q.select(["data"], q.var("order")),
+              {
+                "orderId": q.select(["ref", "id"], q.var("order")),
+                "creationDate": q.to_string(q.select(["data", "creationDate"], q.var("order"))),
+                "orderProducts": q.var("orderProducts")
+              },
+            )
           )
         )
-        order = Order(item['orderId'], item['orderName'], item['orderProducts'])
+        order = Order(item['orderId'], item['orderName'], item['creationDate'], item['status'], item['orderProducts'])
     # except ClientError as e:
     #     logger.error(e.response['Error']['Message'])
     #     raise Exception('Error getting a order', e)
@@ -145,10 +148,13 @@ def create_order(event, payload):
                     }
                   })
             },
-            { "id": q.select(["ref", "id"], q.var("result")) }
+            {
+              "id": q.select(["ref", "id"], q.var("result")),
+              "creationDate": q.to_string(q.select(["data", "creationDate"], q.var("result")))
+            }
           )
         )
-        order = Order(response["id"], payload.orderName, payload.orderProducts)        
+        order = Order(response["id"], payload.orderName, response['creationDate'], 'processing', payload.orderProducts)
     # except ClientError as e:
     #     logger.error(e.response['Error']['Message'])
     #     raise Exception('Error adding a order', e)
@@ -178,22 +184,32 @@ def update_order(event, payload, key):
         # ReturnValues="UPDATED_NEW")
         orderId = key
         tenantId = event['requestContext']['authorizer']['tenantId']
-        order = Order(orderId, payload.orderName, payload.orderProducts)
 
         global clients
         db = FaunaClients(clients, tenantId)
 
-        db.query(
-          q.update(
-            q.ref(q.collection("order"), orderId), {
-              "data": {
-                "orderName": payload.orderName,
-                "status": payload.orderStatus,
-                "orderProducts": _format_order_products(payload.orderProducts)
-              }
+        response = db.query(
+          q.let(
+            {
+              "update": q.update(
+                q.ref(q.collection("order"), orderId), {
+                  "data": {
+                    "orderName": payload.orderName,
+                    "status": payload.orderStatus,
+                    "orderProducts": _format_order_products(payload.orderProducts)
+                  }
+                }
+              )
+            },
+            {
+              "id": orderId,
+              "status": q.select(["data", "status"], q.var("update")),
+              "creationDate": q.to_string(q.select(["data", "creationDate"], q.var("update")))
             }
           )
-        )        
+        )
+        order = Order(orderId, payload.orderName, response['creationDate'], response['status'], payload.orderProducts)
+
     # except ClientError as e:
     #     logger.error(e.response['Error']['Message'])
     #     raise Exception('Error updating a order', e)
@@ -242,6 +258,7 @@ def get_orders(event, tenantId):
                   q.select(["data"], q.var("order")),
                   {
                     "orderId": q.select(["ref", "id"], q.var("order")),
+                    "creationDate": q.to_string(q.select(["data", "creationDate"], q.var("order"))),
                     "orderProducts": q.var("orderProducts")
                   },
                 )
@@ -252,7 +269,7 @@ def get_orders(event, tenantId):
         )
         results = results['data']
         for item in results:
-            order = Order(item['orderId'], item['orderName'], item['orderProducts'])
+            order = Order(item['orderId'], item['orderName'], item['creationDate'], item['status'], item['orderProducts'])
             get_all_products_response.append(order)        
     # except ClientError as e:
     #     logger.error("Error getting all orders")
