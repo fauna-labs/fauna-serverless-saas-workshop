@@ -646,12 +646,8 @@ Outputs:
   #     Name: "Saas-Fauna-CreateUserLambdaExecutionRoleArn"
   ProductFunctionExecutionRoleArn:
     Value: !GetAtt ProductFunctionExecutionRole.Arn
-    Export:
-      Name: "Saas-Fauna-ProductFunctionExecutionRoleArn"
   OrderFunctionExecutionRoleArn:
     Value: !GetAtt OrderFunctionExecutionRole.Arn
-    Export:
-      Name: "Saas-Fauna-OrderFunctionExecutionRoleArn"
   RegisterTenantFunctionArn: 
     Value: !GetAtt RegisterTenantFunction.Arn
   ActivateTenantFunctionArn: 

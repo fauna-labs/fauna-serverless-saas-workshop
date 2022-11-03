@@ -1,4 +1,4 @@
-aws-lambda-powertools
+aws-lambda-powertools[Tracer,Logger,Metrics]
 simplejson
 jsonpickle
 faunadb

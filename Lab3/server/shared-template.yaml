@@ -144,3 +144,11 @@ Outputs:
     Value: !GetAtt Cognito.Outputs.CognitoUserPoolClientId
     Export:
       Name: "Serverless-SaaS-Fauna-CognitoTenantAppClientId"
+  ProductFunctionExecutionRoleArn:
+    Value: !GetAtt LambdaFunctions.Outputs.ProductFunctionExecutionRoleArn
+    Export:
+      Name: "SaaS-Fauna-ProductFunctionExecutionRoleArn"
+  OrderFunctionExecutionRoleArn:
+    Value: !GetAtt LambdaFunctions.Outputs.OrderFunctionExecutionRoleArn
+    Export:
+      Name: "SaaS-Fauna-OrderFunctionExecutionRoleArn"

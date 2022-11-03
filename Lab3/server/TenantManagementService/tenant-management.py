@@ -3,14 +3,14 @@
 
 import os
 import json
-import boto3
-from boto3.dynamodb.conditions import Key
-import urllib.parse
+# import boto3
+# from boto3.dynamodb.conditions import Key
+# import urllib.parse
 import utils
-from botocore.exceptions import ClientError
+# from botocore.exceptions import ClientError
 import logger
 import requests
-import metrics_manager
+# import metrics_manager
 import auth_manager
 
 from aws_lambda_powertools import Tracer
@@ -355,8 +355,6 @@ def __create_tenantdb_resources(tenant_id):
             q.create_collection( {"name": "product"} )
         )
     )
-    print(result)
-
 
 class TenantInfo:
     def __init__(self, tenant_name, tenant_address, tenant_email, tenant_phone):

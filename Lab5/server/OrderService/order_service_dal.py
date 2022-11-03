@@ -56,8 +56,11 @@ def get_order(event, key):
                     {
                       "quantity": q.select(["quantity"], q.var("x")),
                       "price": q.select(["price"], q.var("x")),
-                      # "key": q.select(["data", "name"], q.var("product")),
-                      "productId": q.select(["ref", "id"], q.var("product"))
+                      "productId": q.select(["ref", "id"], q.var("product")),
+                      "productName": q.select(["data", "name"], q.var("product"), ""),
+                      "productSku": q.select(["data", "sku"], q.var("product"), ""),
+                      "productDescription": q.select(["data", "sku"], q.var("product"), ""),
+                      "productCategory": q.select(["data", "category"], q.var("product"), "")
                     }
                   )
                 ),
@@ -223,8 +226,11 @@ def get_orders(event, tenantId):
                         {
                           "quantity": q.select(["quantity"], q.var("x")),
                           "price": q.select(["price"], q.var("x")),
-                          # "key": q.select(["data", "name"], q.var("product")),
-                          "productId": q.select(["ref", "id"], q.var("product"))
+                          "productId": q.select(["ref", "id"], q.var("product")),
+                          "productName": q.select(["data", "name"], q.var("product"), ""),
+                          "productSku": q.select(["data", "sku"], q.var("product"), ""),
+                          "productDescription": q.select(["data", "sku"], q.var("product"), ""),
+                          "productCategory": q.select(["data", "category"], q.var("product"), ""),
                         }
                       )
                     ),
