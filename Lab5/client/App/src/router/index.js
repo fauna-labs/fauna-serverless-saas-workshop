@@ -18,6 +18,11 @@ export default createRouter({
       path: '/products',
       component: () => import('@/views/Products.vue'),
       name: 'products'
-    }
+    },
+    {
+      path: '/orders',
+      component: () => import('@/views/Orders.vue'),
+      name: 'orders'
+    }    
   ],
 })

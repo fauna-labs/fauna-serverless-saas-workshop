@@ -1,5 +1,5 @@
 <template>
-    <div class="max-w-full -mt-0 bg-white shadow rounded" v-if="width>0">
+    <div class="max-w-full -mt-0" v-if="width>0">
       <div class="bg-gray-200 rounded h-1" role="progressbar" 
         :aria-valuenow="width" 
         aria-valuemin="0"
@@ -15,12 +15,12 @@ export default {
   name: 'progress-bar',
   data() {
     return {
-      width: 3
+      width: 0
     }
   },
   methods: {
     progress() {
-      for(let i=0; i<10; i++) {
+      for(let i=1; i<10; i++) {
         setTimeout(
           () => { this.width=(i+1)*10; },
           i*1000 + 1
@@ -29,8 +29,17 @@ export default {
     },
   },
   mounted() {
-    this.width=3;
-    this.progress();
+    console.log('M O U N T E D');
+    const comp = this;
+    setTimeout(
+      () => {
+        console.log('after timeout');
+        comp.width=1;
+        comp.progress();
+      },
+      800,
+      comp
+    );
   }
 }
 </script>
