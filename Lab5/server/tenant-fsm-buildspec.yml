@@ -16,7 +16,7 @@ phases:
       # Use Build phase to build your artifacts (compile, etc.)
 
       # Run Fauna migrations      
-      - cd ../fauna_resources
+      - cd Lab5/server/fauna_resources
       - npm install
       - node index.js
 
