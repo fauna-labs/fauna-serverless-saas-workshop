@@ -14,6 +14,71 @@ import codebuild = require('@aws-cdk/aws-codebuild');
 import { Function, Runtime, AssetCode } from '@aws-cdk/aws-lambda'
 import { PolicyStatement } from "@aws-cdk/aws-iam"
 
+export class FaunaMigrationsStack extends cdk.Stack {
+  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id, props);
+
+    const artifactsBucket = new s3.Bucket(this, "FSMArtifactsBucket");
+
+    // Pipeline creation starts
+    const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
+      pipelineName: 'fauna-migrations-pipeline',
+      artifactBucket: artifactsBucket
+    });
+
+    // Import existing CodeCommit sam-app repository
+    const codeRepo = codecommit.Repository.fromRepositoryName(
+      this,
+      'AppRepository', 
+      'aws-serverless-saas-fauna-workshop' 
+    );
+
+    // Declare source code as an artifact
+    const sourceOutput = new codepipeline.Artifact();
+
+    // Add source stage to pipeline
+    pipeline.addStage({
+      stageName: 'Source',
+      actions: [
+        new codepipeline_actions.CodeCommitSourceAction({
+          actionName: 'CodeCommit_Source',
+          repository: codeRepo,
+          branch: 'fauna',
+          output: sourceOutput,
+          variablesNamespace: 'SourceVariables'
+        }),
+      ],
+    });
+
+    // Declare build output as artifacts
+    const buildOutput = new codepipeline.Artifact();
+
+    //Declare a new CodeBuild project
+    const buildProject = new codebuild.PipelineProject(this, 'Build', {
+      buildSpec : codebuild.BuildSpec.fromSourceFilename("Lab5/server/tenant-fsm-buildspec.yml"),
+      environment: { buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_2 },
+      // environmentVariables: {
+      //   'PACKAGE_BUCKET': {
+      //     value: artifactsBucket.bucketName
+      //   }
+      // }
+    });
+
+    // Add the build stage to our pipeline
+    pipeline.addStage({
+      stageName: 'Build',
+      actions: [
+        new codepipeline_actions.CodeBuildAction({
+          actionName: 'Run-FSM',
+          project: buildProject,
+          input: sourceOutput,
+          outputs: [buildOutput],
+        }),
+      ],
+    });
+
+  }
+}
 
 export class ServerlessSaaSStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {

@@ -602,6 +602,11 @@ Resources:
                   - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:serverless-saas-fauna-pipeline
               - Effect: Allow
                 Action:
+                  - codepipeline:StartPipelineExecution
+                Resource:
+                  - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:fauna-migrations-pipeline
+              - Effect: Allow
+                Action:
                   - cloudformation:DeleteStack
                 Resource: "*"                        
   ProvisionTenantFunction:

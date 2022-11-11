@@ -61,9 +61,9 @@ def register_tenant(event, context):
         create_tenant_response = __create_or_update_tenant(tenant_details, headers, auth, host, stage_name)
         logger.info (create_tenant_response)
 
-        if (tenant_details['dedicatedTenancy'].upper() == 'TRUE'):
-            provision_tenant_response = __provision_tenant(tenant_details, headers, auth, host, stage_name)
-            logger.info(provision_tenant_response)
+        # if (tenant_details['dedicatedTenancy'].upper() == 'TRUE'):
+        provision_tenant_response = __provision_tenant(tenant_details, headers, auth, host, stage_name)
+        logger.info(provision_tenant_response)
 
         
     except Exception as e:
