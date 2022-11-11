@@ -69,6 +69,10 @@
         </div>
       </div>
     </div>  
+    <Order 
+      v-if="addOrUpdateOrder" 
+      @exit-order="orderAdded"
+      :order="selectedOrder"/>    
   </div>
 </template>
 
@@ -76,19 +80,22 @@
 import CartItem from '../components/CartItem.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import Button from '@/components/Button.vue';
-
+import Order from '@/components/Order.vue';
 
 export default {
   name: 'orders',
   components: {
     CartItem,
     ProgressBar,
-    Button
+    Button,
+    Order
   },
   data() {
     return {
       orders: [],
-      progress: false
+      progress: false,
+      selectedOrder: null,
+      addOrUpdateOrder: false
     }
   },
   computed: {
@@ -111,7 +118,7 @@ export default {
       this.progress = true;
 
       fetch(
-        `${import.meta.env.VITE_API_GATEWAY_URL}/orders`, {
+        `${this.$store.state.apiGatewayUrl}/orders`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${this.accessToken}`,
@@ -155,9 +162,22 @@ export default {
     tbd() {
       alert('nothing to see yet');
     },
+    orderAdded() {
+      this.addOrUpdateOrder = false;
+      this.loadMyOrders();
+    },
     showAddOrder() {
-
+      if (this.progress) {
+        return;
+      }
+      this.selectedOrder = null;
+      this.addOrUpdateOrder = true;
+    },
+    viewOrder(order) {
+      this.addOrUpdateOrder = true;
+      this.selectedOrder = order;
     }
+
   }
 }
 </script>

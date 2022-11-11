@@ -15,7 +15,7 @@
               <p class="text-gray-400">To add a new product, fill in the form and click Save</p>
             </div>
 
-            <div class="mt-5 col-span-4 md:col-span-3">
+            <div class="mt-5 col-span-4 md:col-span-3 dark:text-gray-500">
               <form @submit.prevent="addOrUpdateProduct">
                 <div class="shadow sm:overflow-hidden sm:rounded-md">
                   <div class="space-y-6 bg-white px-4 py-5 sm:p-6">
@@ -72,7 +72,10 @@
                   </div>
                   <ProgressBar v-if="progress"/>
                   <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
-                    <Button label="Save" :inactive="progress" class="text-sm"/>
+                    <div class="flex flex-row justify-end gap-2">
+                      <Button label="Cancel" :inactive="progress" class="text-sm" @click="exit"/>
+                      <Button label="Save" :inactive="progress" class="text-sm"/>
+                    </div>
                   </div>
                 </div>
               </form>
@@ -111,7 +114,6 @@ export default {
     product: Object
   },
   mounted() {
-    console.log('M O U N T E D', this.product);
     if (this.product) {
       this.updateMode = true;
       this.productName = this.product.name;
@@ -137,10 +139,9 @@ export default {
       if (!accessToken) {
         return;
       }
-
       this.progress = true;
 
-      this.url = `${import.meta.env.VITE_API_GATEWAY_URL}/product`;
+      this.url = `${this.$store.state.apiGatewayUrl}/product`;
       this.apimethod = 'POST';
       if (this.updateMode) {
         this.url += `/${this.product.productId}`;

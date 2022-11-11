@@ -29,15 +29,13 @@ export default {
     },
   },
   mounted() {
-    console.log('M O U N T E D');
     const comp = this;
     setTimeout(
       () => {
-        console.log('after timeout');
         comp.width=1;
         comp.progress();
       },
-      800,
+      600,
       comp
     );
   }

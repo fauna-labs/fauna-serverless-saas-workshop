@@ -14,30 +14,44 @@
           <div class="-space-y-px rounded-md shadow-sm">
             <div class="py-4">
               <label for="tenant" class="sr-only">tenant</label>
-              <input id="tenant" name="tenant" type="text" autocomplete="tenant" required
+              <input id="tenant" name="tenant" type="text" autocomplete="tenant"
+                required :disabled="setNewPasswordFlow"
                 class="relative block w-full appearance-none rounded-none rounded border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                 placeholder="tenant"
                 v-model="tenant">
             </div>
             <div>
               <label for="username" class="sr-only">Username</label>
-              <input id="username" name="username" type="text" autocomplete="username" required
+              <input id="username" name="username" type="text" autocomplete="username" 
+                required :disabled="setNewPasswordFlow"
                 class="relative block w-full appearance-none rounded-none rounded-t-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                 placeholder="username"
                 v-model="username">
             </div>
-            <div>
+            <div v-if="!setNewPasswordFlow">
               <label for="password" class="sr-only">Password</label>
-              <input id="password" name="password" type="password" autocomplete="current-password" required
+              <input id="password" name="password" type="password" autocomplete="current-password"
+                required :disabled="setNewPasswordFlow"
                 class="relative block w-full appearance-none rounded-none rounded-b-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                placeholder="******"
+                placeholder="Password"
                 v-model="password">
             </div>
+          </div>
+
+          <div v-if="setNewPasswordFlow" class="py-1">
+            <p class="m-2 text-sm max-w-xs">Password reset required. Please provide a new password below and click Submit.</p>
+            <label for="newPassword" class="sr-only">New password</label>
+            <input id="newPassword" name="newPassword" type="password" autocomplete="new-password"
+              required
+              class="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+              placeholder="New password"
+              v-model="newPassword">
           </div>
 
           <div class="flex items-center justify-between">
             <div class="flex items-center">
               <input id="remember-me" name="remember-me" type="checkbox"
+                :disabled="setNewPasswordFlow"
                 class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
               <label for="remember-me" class="ml-2 block text-sm text-gray-900">Remember me |&nbsp;</label>
             </div>
@@ -48,20 +62,7 @@
           </div>
 
           <div>
-            <!-- <button 
-                class="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-              <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                <svg class="h-5 w-5 text-indigo-500 group-hover:text-indigo-400" xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fill-rule="evenodd"
-                    d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
-                    clip-rule="evenodd" />
-                </svg>
-              </span>
-              Sign in
-            </button> -->
-            <Button label="Sign in" full :inactive="loggingIn"
+            <Button :label='setNewPasswordFlow ? "Submit" : "Sign in"' full :inactive="loggingIn"
               icon="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
             />
           </div>
@@ -90,8 +91,11 @@ export default {
       tenant: null,
       username: null,
       password: null,
+      newPassword: null,
       loggingIn: false,
-      sessionUserAttributes: null
+      sessionUserAttributes: null,
+      cognitoUser: null,
+      setNewPasswordFlow: false
     }
   },
   methods: {
@@ -116,6 +120,11 @@ export default {
 
       // const testUser = 'tenant-admin-343451862763044944';
 
+      if (this.setNewPasswordFlow) {
+        this.handleNewPassword();
+        return;
+      }
+
       const tenantDetails = await this.getTenant();
       if (!tenantDetails.userPoolId || !tenantDetails.appClientId) {
         alert(tenantDetails.message);
@@ -123,12 +132,14 @@ export default {
         return;
       }
 
+      this.$store.commit('setApiGatewayUrl', tenantDetails.apiGatewayUrl);
+
       const poolData = {
         UserPoolId: tenantDetails.userPoolId,
         ClientId: tenantDetails.appClientId,
       };
       const userPool = new CognitoUserPool(poolData);
-      const cognitoUser = new CognitoUser({ 
+      this.cognitoUser = new CognitoUser({ 
         Username: this.username,
         Pool: userPool,
       });
@@ -136,7 +147,7 @@ export default {
           Username: this.username,
           Password: this.password,
       });
-      cognitoUser.authenticateUser(authenticationDetails, {
+      this.cognitoUser.authenticateUser(authenticationDetails, {
         onSuccess: data => {
           this.$auth.setAccessToken(data.idToken);
           this.$store.commit("hideLogin");
@@ -147,17 +158,31 @@ export default {
           alert(err);
         },
 
-        newPasswordRequired: function(userAttributes, requiredAttributes) {
-            delete userAttributes.email_verified;
-            this.sessionUserAttributes = userAttributes;
+        newPasswordRequired: (userAttributes, requiredAttributes) => {   
+          delete userAttributes.email_verified;       
+          this.sessionUserAttributes = {
+            // ...userAttributes
+          }
+          this.setNewPasswordFlow = true;
         }
       });
 
       this.loggingIn = false;
 
+    },
+    handleNewPassword() {
+      this.cognitoUser.completeNewPasswordChallenge(this.newPassword, this.sessionUserAttributes, {
+        onSuccess: (result) => {
+          this.$auth.setAccessToken(result.idToken);
+          this.$store.commit("hideLogin");
+          this.setNewPasswordFlow = false;
+        },
+        onFailure: (err) => {
+          alert(err);
+          this.setNewPasswordFlow = false;
+        }
+      });
     }
-
-
   }
 }
 </script>

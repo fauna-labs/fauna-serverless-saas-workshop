@@ -14,8 +14,6 @@ const authStateHelper = (app, options) => {
   }
 
   const getAccessToken = ()=>{
-    console.log('getAccessToken');
-
     const token = store.state.accessToken;
 
     if (!token) {

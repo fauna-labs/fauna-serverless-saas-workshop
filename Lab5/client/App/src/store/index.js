@@ -10,6 +10,7 @@ export default createStore({
   state: {
     accessToken: null,
     loggedInName: null,
+    apiGatewayUrl: null,
     showLogin: false,
     skip: false,
   },
@@ -20,6 +21,9 @@ export default createStore({
     },
     setLoggedInName(state, name) {
       state.loggedInName = name;
+    },
+    setApiGatewayUrl(state, url) {
+      state.apiGatewayUrl = url;
     },
     logout(state) {
       state.accessToken = null;

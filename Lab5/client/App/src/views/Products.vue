@@ -31,21 +31,11 @@
             <table class="min-w-full">
               <thead class="border-b dark:border-gray-300">
                 <tr>
-                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">
-                    Name
-                  </th>
-                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">
-                    Price
-                  </th>
-                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">
-                    SKU
-                  </th>
-                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">
-                    Quantity stock
-                  </th>
-                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">
-                    Backordered Limit
-                  </th>
+                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Name</th>
+                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Price</th>
+                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">SKU</th>
+                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Quantity stock</th>
+                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Backordered Limit</th>
                 </tr>
               </thead>
               <tbody>
@@ -120,7 +110,7 @@ export default {
       this.progress = true;
 
       fetch(
-        `${import.meta.env.VITE_API_GATEWAY_URL}/products`, {
+        `${this.$store.state.apiGatewayUrl}/products`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${this.accessToken}`,
