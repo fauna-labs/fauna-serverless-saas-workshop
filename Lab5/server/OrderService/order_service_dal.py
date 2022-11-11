@@ -137,21 +137,104 @@ def create_order(event, payload):
         db = FaunaClients(clients, tenantId)
 
         response = db.query(
+          # q.let(
+          #   {
+          #     "result": q.create(q.collection("order"), {
+          #           "data": {
+          #             "orderName": payload.orderName,
+          #             "creationDate": q.time("now"),
+          #             "status": "processing",
+          #             "orderProducts": _format_order_products(payload.orderProducts)
+          #           }
+          #         })
+          #   },
+          #   {
+          #     "id": q.select(["ref", "id"], q.var("result")),
+          #     "creationDate": q.to_string(q.select(["data", "creationDate"], q.var("result")))
+          #   }
+          # )
           q.let(
             {
-              "result": q.create(q.collection("order"), {
-                    "data": {
-                      "orderName": payload.orderName,
-                      "creationDate": q.time("now"),
-                      "status": "processing",
-                      "orderProducts": _format_order_products(payload.orderProducts)
+              'products': q.map_(
+                q.lambda_(
+                  'requestedProduct',
+                  q.let(
+                    {
+                      'requestedQuantity': q.select(['quantity'], q.var('requestedProduct')),
+                      'product': q.get(
+                        q.ref(
+                          q.collection('products'), 
+                          q.select('productId', q.var('requestedProduct'))
+                        )
+                      ),
+                      'currentQuantity': q.select(['data', 'quantity'], q.var('product')),
+                      'backorderedLimit': q.select(['data', 'backorderedLimit'], q.var('product')),
+                      'updatedQuantity': q.subtract(q.var('currentQuantity'), q.var('requestedQuantity')),
+                    },
+                    {
+                      'ref': q.select('ref', q.var('product')),
+                      'price': q.select(['data', 'price'], q.var('product')),
+                      'name': q.select(['data', 'name'], q.var('product')),
+                      'requestedQuantity': q.var('requestedQuantity'),
+                      'updatedQuantity': q.var('updatedQuantity'),
+                      'backorderedLimit': q.var('backorderedLimit'),
+                      'backordered': q.lt(q.var('updatedQuantity'), q.var('backorderedLimit')) # if remaining stock < backorderedLimit, then backordered = True
                     }
-                  })
+                  )
+                ),
+                payload.orderProducts
+              )
             },
-            {
-              "id": q.select(["ref", "id"], q.var("result")),
-              "creationDate": q.to_string(q.select(["data", "creationDate"], q.var("result")))
-            }
+            q.do(
+              # for each product, check if stocked quantity is sufficient to fulfill the order
+              q.foreach(
+                q.var('products'),
+                q.lambda_(
+                  'product',
+                  q.if_(
+                    q.lt(q.var('updatedQuantity'), 0), # if updatedQuantity < 0 then abort
+                    q.abort(
+                      q.concat([
+                        'Stock quantity for Product [',
+                        q.select(['name'], q.var('product')),
+                        '] not enough – requested at [',
+                        q.to_string(q.time('now')),
+                        ']'
+                      ])
+                    ),
+                    # else
+                    # adjust the products' quantity by subtracting quantity requested
+                    # if remaining stock < backorderedLimit, then set backordered = True
+                    q.update(q.select('ref', q.var('product')), {
+                      'data': {
+                        'quantity': q.var('updatedQuantity'),
+                        'backordered': q.var('backordered')
+                      }
+                    })
+                  )
+                )
+              ),
+              q.let(
+                {
+                  'orderProducts': q.map_(
+                    q.lambda_('product', {
+                      'product': q.select('ref', q.var('product')),
+                      'quantity': q.select('requestedQuantity', q.var('product')),
+                      'price': q.select('price', q.var('product'))
+                    }),
+                    q.var('products')
+                  )
+                },
+                q.create(q.collection('order'), {
+                  'data': {
+                    'orderName': payload.orderName,
+                    'creationDate': q.time('now'),
+                    'status': 'processing',
+                    'orderProducts': q.var('orderProducts')
+                  }
+                })
+              )
+            )
           )
         )
         order = Order(response["id"], payload.orderName, response['creationDate'], 'processing', payload.orderProducts)
@@ -160,7 +243,7 @@ def create_order(event, payload):
     #     raise Exception('Error adding a order', e)
     except FaunaError as e:
         logger.error(e)
-        raise Exception('Error adding a order', e)        
+        raise Exception('Error adding a order', e)
     else:
         logger.info("PutItem succeeded:")
         return order

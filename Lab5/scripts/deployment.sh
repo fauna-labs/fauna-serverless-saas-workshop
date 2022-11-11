@@ -45,7 +45,7 @@ if [[ $server -eq 1 ]] || [[ $pipeline -eq 1 ]]; then
   cd ../server/TenantPipeline/
   npm install && npm run build 
   cdk bootstrap  
-  cdk deploy --require-approval never
+  cdk deploy * --require-approval never
 
   cd ../../scripts
 
