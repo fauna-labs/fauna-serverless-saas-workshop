@@ -223,16 +223,20 @@ def create_order(event, payload):
                       'price': q.select('price', q.var('product'))
                     }),
                     q.var('products')
-                  )
+                  ),
+                  'result': q.create(q.collection('order'), {
+                      'data': {
+                        'orderName': payload.orderName,
+                        'creationDate': q.time('now'),
+                        'status': 'processing',
+                        'orderProducts': q.var('orderProducts')
+                      }
+                    })
                 },
-                q.create(q.collection('order'), {
-                  'data': {
-                    'orderName': payload.orderName,
-                    'creationDate': q.time('now'),
-                    'status': 'processing',
-                    'orderProducts': q.var('orderProducts')
-                  }
-                })
+                {
+                  'id': q.select(['ref', 'id'], q.var('result')),
+                  'creationDate': q.to_string(q.select(['data', 'creationDate'], q.var('result')))
+                }
               )
             )
           )
