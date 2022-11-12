@@ -126,6 +126,7 @@ def create_order(event, payload):
     
     # order = Order(shardId, str(uuid.uuid4()), payload.orderName, payload.orderProducts)
 
+    response = None
     try:
         # response = table.put_item(Item={
         # 'shardId':shardId,
@@ -239,24 +240,25 @@ def create_order(event, payload):
     #     logger.error(e.response['Error']['Message'])
     #     raise Exception('Error adding a order', e)
     except FaunaError as e:
-        logger.error(e)
-        err = {
-          'errors': []
-        }
-        err_type = type(e)
-        if err_type == Unauthorized:
-            err['errors'].append({ 'code': 'Unauthorized' })
-        elif err_type == NotFound:
-            err['errors'].append({ 'code': 'Not found' })
-        elif err_type == BadRequest:
-            err['errors'].append({
-              'code': 'Aborted',
-              'description': e.args[0]
-            })
-        else:
-            err['errors'].append({ 'code': 'Other' })
+        # logger.error(e)
+        # err = {
+        #   'errors': []
+        # }
+        # err_type = type(e)
+        # if err_type == Unauthorized:
+        #     err['errors'].append({ 'code': 'Unauthorized' })
+        # elif err_type == NotFound:
+        #     err['errors'].append({ 'code': 'Not found' })
+        # elif err_type == BadRequest:
+        #     err['errors'].append({
+        #       'code': 'Aborted',
+        #       'description': e.args[0]
+        #     })
+        # else:
+        #     err['errors'].append({ 'code': 'Other' })
 
-        return err
+        # return err
+        raise e
     else:
         logger.info("PutItem succeeded:")
         order = Order(response["id"], payload.orderName, response['creationDate'], 'processing', payload.orderProducts)

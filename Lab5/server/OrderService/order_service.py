@@ -32,10 +32,14 @@ def create_order(event, context):
 
     logger.log_with_tenant_context(event, "Request received to create a order")
     payload = json.loads(event['body'], object_hook=lambda d: SimpleNamespace(**d))
-    order = order_service_dal.create_order(event, payload)
-    logger.log_with_tenant_context(event, "Request completed to create a order")
-    metrics_manager.record_metric(event, "OrderCreated", "Count", 1)
-    return utils.generate_response(order)
+    try:
+      order = order_service_dal.create_order(event, payload)
+      logger.log_with_tenant_context(event, "Request completed to create a order")
+      metrics_manager.record_metric(event, "OrderCreated", "Count", 1)
+      return utils.generate_response(order)
+    except Exception as e:
+      return utils.generate_error_response(e)
+    
     
 @tracer.capture_lambda_handler
 def update_order(event, context):
