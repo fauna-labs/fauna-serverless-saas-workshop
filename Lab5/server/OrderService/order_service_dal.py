@@ -126,7 +126,6 @@ def create_order(event, payload):
     
     # order = Order(shardId, str(uuid.uuid4()), payload.orderName, payload.orderProducts)
 
-    response = None
     try:
         # response = table.put_item(Item={
         # 'shardId':shardId,
@@ -162,12 +161,7 @@ def create_order(event, payload):
                   q.let(
                     {
                       'requestedQuantity': q.select(['quantity'], q.var('requestedProduct')),
-                      'product': q.get(
-                        q.ref(
-                          q.collection('product'), 
-                          q.select('productId', q.var('requestedProduct'))
-                        )
-                      ),
+                      'product': q.get(q.select(['product'], q.var('requestedProduct'))),
                       'currentQuantity': q.select(['data', 'quantity'], q.var('product')),
                       'backorderedLimit': q.select(['data', 'backorderedLimit'], q.var('product')),
                       'updatedQuantity': q.subtract(q.var('currentQuantity'), q.var('requestedQuantity')),
@@ -183,7 +177,7 @@ def create_order(event, payload):
                     }
                   )
                 ),
-                payload.orderProducts
+                _format_order_products(payload.orderProducts)
               )
             },
             q.do(
