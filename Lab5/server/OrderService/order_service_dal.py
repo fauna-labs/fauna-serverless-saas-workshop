@@ -182,7 +182,7 @@ def create_order(event, payload):
                     }
                   )
                 ),
-                payload['orderProducts']
+                payload.orderProducts
               )
             },
             q.do(
@@ -220,7 +220,7 @@ def create_order(event, payload):
                   ),
                   'result': q.create(q.collection('order'), {
                       'data': {
-                        'orderName': payload['orderName'],
+                        'orderName': payload.orderName,
                         'creationDate': q.time('now'),
                         'status': 'processing',
                         'orderProducts': q.var('orderProducts')
