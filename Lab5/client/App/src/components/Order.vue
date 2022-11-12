@@ -210,16 +210,25 @@ export default {
         this.url += `/${this.product.productId}`;
         this.apimethod = 'PUT';
       }
-      const res = await fetch(
-        this.url, {
-        method: this.apimethod,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
-        },
-        body: JSON.stringify(newOrder)        
-      });
+      try {
+        const res = await fetch(
+          this.url, {
+          method: this.apimethod,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+          },
+          body: JSON.stringify(newOrder)        
+        });
+        if (!res.ok) {
+          alert(await res.text());
+          this.progress = false;
+          return;
+        }
+      } catch(e) {
+        console.log(e)
+      }
       this.exit();
     }
   }
