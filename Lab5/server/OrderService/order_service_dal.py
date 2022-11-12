@@ -235,7 +235,6 @@ def create_order(event, payload):
             )
           )
         )
-        order = Order(response["id"], payload.orderName, response['creationDate'], 'processing', payload.orderProducts)
     # except ClientError as e:
     #     logger.error(e.response['Error']['Message'])
     #     raise Exception('Error adding a order', e)
@@ -260,6 +259,7 @@ def create_order(event, payload):
         return err
     else:
         logger.info("PutItem succeeded:")
+        order = Order(response["id"], payload.orderName, response['creationDate'], 'processing', payload.orderProducts)
         return order
 
 def update_order(event, payload, key):
