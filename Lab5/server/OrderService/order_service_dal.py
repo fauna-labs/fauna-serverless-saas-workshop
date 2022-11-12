@@ -112,7 +112,7 @@ def delete_order(event, key):
     #     raise Exception('Error deleting a order', e)
     except FaunaError as e:
         logger.error(e)
-        raise Exception('Error deleting a order', e)        
+        raise Exception('Error deleting a order', e)
     else:
         logger.info("DeleteItem succeeded:")
         return response
@@ -163,7 +163,7 @@ def create_order(event, payload):
                       'requestedQuantity': q.select(['quantity'], q.var('requestedProduct')),
                       'product': q.get(
                         q.ref(
-                          q.collection('products'), 
+                          q.collection('product'), 
                           q.select('productId', q.var('requestedProduct'))
                         )
                       ),
@@ -182,37 +182,31 @@ def create_order(event, payload):
                     }
                   )
                 ),
-                payload.orderProducts
+                payload['orderProducts']
               )
             },
             q.do(
               # for each product, check if stocked quantity is sufficient to fulfill the order
               q.foreach(
-                q.var('products'),
                 q.lambda_(
                   'product',
                   q.if_(
-                    q.lt(q.var('updatedQuantity'), 0), # if updatedQuantity < 0 then abort
+                    q.lt(q.select(['updatedQuantity'], q.var('product')), 0), # if updatedQuantity < 0 then abort
                     q.abort(
-                      q.concat([
-                        'Stock quantity for Product [',
-                        q.select(['name'], q.var('product')),
-                        '] not enough – requested at [',
-                        q.to_string(q.time('now')),
-                        ']'
-                      ])
+                      q.concat(['Stock quantity for Product [', q.select(['name'], q.var('product')), '] not enough'])
                     ),
                     # else
                     # adjust the products' quantity by subtracting quantity requested
                     # if remaining stock < backorderedLimit, then set backordered = True
                     q.update(q.select('ref', q.var('product')), {
                       'data': {
-                        'quantity': q.var('updatedQuantity'),
-                        'backordered': q.var('backordered')
+                        'quantity': q.select(['updatedQuantity'], q.var('product')),
+                        'backordered': q.select(['backordered'], q.var('product'))
                       }
                     })
                   )
-                )
+                ),
+                q.var('products')
               ),
               q.let(
                 {
@@ -226,7 +220,7 @@ def create_order(event, payload):
                   ),
                   'result': q.create(q.collection('order'), {
                       'data': {
-                        'orderName': payload.orderName,
+                        'orderName': payload['orderName'],
                         'creationDate': q.time('now'),
                         'status': 'processing',
                         'orderProducts': q.var('orderProducts')
@@ -247,7 +241,23 @@ def create_order(event, payload):
     #     raise Exception('Error adding a order', e)
     except FaunaError as e:
         logger.error(e)
-        raise Exception('Error adding a order', e)
+        err = {
+          'errors': []
+        }
+        err_type = type(e)
+        if err_type == Unauthorized:
+            err['errors'].append({ 'code': 'Unauthorized' })
+        elif err_type == NotFound:
+            err['errors'].append({ 'code': 'Not found' })
+        elif err_type == BadRequest:
+            err['errors'].append({
+              'code': 'Aborted',
+              'description': e.args[0]
+            })
+        else:
+            err['errors'].append({ 'code': 'Other' })
+
+        return err
     else:
         logger.info("PutItem succeeded:")
         return order
