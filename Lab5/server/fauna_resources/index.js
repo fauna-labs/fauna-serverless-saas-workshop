@@ -2,9 +2,12 @@ require('dotenv').config();
 const exec = require('child_process').exec;
 const faunadb = require('faunadb');
 
+const args = process.argv.slice(2);
+const FAUNA_API_KEY = args[0];
+
 const client = new faunadb.Client({
-  secret: process.env.FAUNADB_SECRET,
-  domain: process.env.FAUNADB_DOMAIN
+  // secret: process.env.FAUNADB_SECRET
+  secret: FAUNA_API_KEY
 });
 
 const q = faunadb.query;
@@ -43,7 +46,7 @@ client.query(
   const data = res.data;
   data.map(res => {
     if (res.exists) {
-      execute(`node_modules/.bin/fauna-schema-migrate -k $FAUNADB_SECRET:tenant_${res.id}:server apply`, (y)=> {
+      execute(`node_modules/.bin/fauna-schema-migrate -k ${FAUNA_API_KEY}:tenant_${res.id}:server apply`, (y)=> {
         console.log(y)
       })
     }

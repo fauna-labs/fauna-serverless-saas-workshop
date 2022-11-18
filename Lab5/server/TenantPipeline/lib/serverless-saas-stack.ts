@@ -57,11 +57,11 @@ export class FaunaMigrationsStack extends cdk.Stack {
     const buildProject = new codebuild.PipelineProject(this, 'Build', {
       buildSpec : codebuild.BuildSpec.fromSourceFilename("Lab5/server/tenant-fsm-buildspec.yml"),
       environment: { buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_2 },
-      // environmentVariables: {
-      //   'PACKAGE_BUCKET': {
-      //     value: artifactsBucket.bucketName
-      //   }
-      // }
+      environmentVariables: {
+        'FAUNA_API_KEY': {
+          value: process.env.FAUNA_API_KEY
+        }
+      }
     });
 
     // Add the build stage to our pipeline
