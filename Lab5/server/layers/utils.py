@@ -11,7 +11,7 @@ from enum import Enum
 
 import os, configparser, traceback
 from faunadb.client import FaunaClient
-from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
+from faunadb.errors import Unauthorized, NotFound
 
 
 FAUNA_CONFIG_PATH = os.environ['FAUNA_CONFIG_PATH']
@@ -175,6 +175,7 @@ def generate_response(inputObject):
         },
         "body": encode_to_json_object(inputObject),
     }
+
 
 def generate_error_response(err):
     err_type = type(err)

@@ -10,6 +10,8 @@ from enum import Enum
 
 import os, configparser, traceback
 from faunadb.client import FaunaClient
+from faunadb.errors import Unauthorized, NotFound
+
 
 FAUNA_CONFIG_PATH = os.environ['FAUNA_CONFIG_PATH']
 boto_client = boto3.client('ssm')
@@ -43,6 +45,30 @@ def generate_response(inputObject):
         },
         "body": encode_to_json_object(inputObject),
     }
+
+
+def generate_error_response(err):
+    err_type = type(err)
+    if err_type == Unauthorized:
+        code = 401
+    elif err_type == NotFound:
+        code = 404        
+    else:
+        code = 400
+
+    response = {
+        "statusCode": code,
+        "headers": {
+            "Access-Control-Allow-Headers" : "Content-Type, Origin, X-Requested-With, Accept, Authorization, Access-Control-Allow-Methods, Access-Control-Allow-Headers, Access-Control-Allow-Origin",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PUT"
+        }
+    }
+    if code == 400:
+      response['body'] = err.args[0]
+
+    return response  
+    
 
 def  encode_to_json_object(inputObject):
     jsonpickle.set_encoder_options('simplejson', use_decimal=True, sort_keys=True)

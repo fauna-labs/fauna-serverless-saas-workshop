@@ -25,15 +25,15 @@ from product_models import Product
 
 from utils import FaunaClients
 from faunadb import query as q
-from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
+from faunadb.errors import FaunaError
 clients = {}
 
 def get_product(event, key):
     # table = __get_dynamodb_table(event, dynamodb)
     
     try:
-        # shardId = key.split(":")[0]
-        # productId = key.split(":")[1] 
+        # shardId = key.split(':')[0]
+        # productId = key.split(':')[1] 
         # logger.log_with_tenant_context(event, shardId)
         # logger.log_with_tenant_context(event, productId)
         # response = table.get_item(Key={'shardId': shardId, 'productId': productId})
@@ -47,39 +47,30 @@ def get_product(event, key):
 
         item = db.query(
           q.let(
-            { "product": q.get(q.ref(q.collection("product"), productId)) },
+            { 'product': q.get(q.ref(q.collection('product'), productId)) },
             q.merge(
-              q.select(["data"], q.var("product")),
-              { "productId":  q.select(["ref", "id"], q.var("product")) }
+              q.select(['data'], q.var('product')),
+              { 'productId':  q.select(['ref', 'id'], q.var('product')) }
             )
           )
         )
-        product = Product(
-          item['productId'], 
-          item['sku'], 
-          item['name'], 
-          item['description'], 
-          item['price'], 
-          item['quantity'], 
-          item['backorderedLimit'], 
-          item['backordered']
-        )
+        product = Product(item['productId'], item['sku'], item['name'], item['description'], item['price'], item['quantity'], item['backorderedLimit'], item['backordered'])
     # except ClientError as e:
     #     logger.error(e.response['Error']['Message'])
     #     raise Exception('Error getting a product', e)
     except FaunaError as e:
         logger.error(e)
-        raise Exception('Error getting a product', e)    
+        raise e
     else:
-        logger.info("GetItem succeeded:"+ str(product))
+        logger.info('GetItem succeeded:'+ str(product))
         return product
 
 def delete_product(event, key):
     # table = __get_dynamodb_table(event, dynamodb)
     
     try:
-        # shardId = key.split(":")[0]
-        # productId = key.split(":")[1] 
+        # shardId = key.split(':')[0]
+        # productId = key.split(':')[1] 
         # response = table.delete_item(Key={'shardId':shardId, 'productId': productId})
         productId = key
         tenantId = event['requestContext']['authorizer']['tenantId']
@@ -89,9 +80,9 @@ def delete_product(event, key):
 
         response = db.query(
           q.select(
-            ["ref", "id"],
+            ['ref', 'id'],
             q.delete(
-              q.ref(q.collection("product"), productId)
+              q.ref(q.collection('product'), productId)
             )
           )
         )        
@@ -100,9 +91,9 @@ def delete_product(event, key):
     #     raise Exception('Error deleting a product', e)
     except FaunaError as e:
         logger.error(e)
-        raise Exception('Error deleting a product', e)    
+        raise e
     else:
-        logger.info("DeleteItem succeeded:")
+        logger.info('DeleteItem succeeded:')
         return response
 
 
@@ -111,7 +102,7 @@ def create_product(event, payload):
     # table = __get_dynamodb_table(event, dynamodb)
     
     # suffix = random.randrange(suffix_start, suffix_end)
-    # shardId = tenantId+"-"+str(suffix)
+    # shardId = tenantId+'-'+str(suffix)
 
     # product = Product(shardId, str(uuid.uuid4()), payload.sku,payload.name, payload.price, payload.category)
     
@@ -133,56 +124,48 @@ def create_product(event, payload):
         response = db.query(
           q.let(
             {
-              "result": q.create(q.collection("product"), {
-                    "data": {
-                      "sku": payload.sku,
-                      "name": payload.name,
-                      "description": payload.description,
-                      "price": payload.price,
-                      "quantity": payload.quantity,
-                      "backorderedLimit": payload.backorderedLimit,
-                      "backordered": True if payload.quantity < payload.backorderedLimit else False
+              'result': q.create(q.collection('product'), {
+                    'data': {
+                      'sku': payload.sku,
+                      'name': payload.name,
+                      'description': payload.description,
+                      'price': payload.price,
+                      'quantity': payload.quantity,
+                      'backorderedLimit': payload.backorderedLimit,
+                      'backordered': True if payload.quantity < payload.backorderedLimit else False
                     }
                   })
             },
             {
-              "id": q.select(["ref", "id"], q.var("result")),
-              "backordered": q.select(["data", "backordered"], q.var("result"))
+              'id': q.select(['ref', 'id'], q.var('result')),
+              'backordered': q.select(['data', 'backordered'], q.var('result'))
             }
           )
         )
-        product = Product(
-          response["id"], 
-          payload.sku, 
-          payload.name, 
-          payload.description,
-          payload.price,
-          payload.quantity,
-          payload.backorderedLimit,
-          response["backordered"])
+        product = Product(response['id'], payload.sku, payload.name, payload.description, payload.price, payload.quantity, payload.backorderedLimit, response['backordered'])
     # except ClientError as e:
     #     logger.error(e.response['Error']['Message'])
     #     raise Exception('Error adding a product', e)
     except FaunaError as e:
         logger.error(e)
-        raise Exception('Error adding a product', e)  
+        raise e
     else:
-        logger.info("PutItem succeeded:")
+        logger.info('PutItem succeeded:')
         return product
 
 def update_product(event, payload, key):
     # table = __get_dynamodb_table(event, dynamodb)
     
     try:
-        # shardId = key.split(":")[0]
-        # productId = key.split(":")[1] 
+        # shardId = key.split(':')[0]
+        # productId = key.split(':')[1] 
         # logger.log_with_tenant_context(event, shardId)
         # logger.log_with_tenant_context(event, productId)
 
         # product = Product(shardId,productId,payload.sku, payload.name, payload.price, payload.category)
 
         # response = table.update_item(Key={'shardId':product.shardId, 'productId': product.productId},
-        # UpdateExpression="set sku=:sku, #n=:productName, price=:price, category=:category",
+        # UpdateExpression='set sku=:sku, #n=:productName, price=:price, category=:category',
         # ExpressionAttributeNames= {'#n':'name'},
         # ExpressionAttributeValues={
         #     ':sku': product.sku,
@@ -190,7 +173,7 @@ def update_product(event, payload, key):
         #     ':price': product.price,
         #     ':category': product.category
         # },
-        # ReturnValues="UPDATED_NEW")
+        # ReturnValues='UPDATED_NEW')
         productId = key
         tenantId = event['requestContext']['authorizer']['tenantId']  
 
@@ -200,45 +183,36 @@ def update_product(event, payload, key):
         response = db.query(
           q.let(
             {
-              "result": q.update(
-                q.ref(q.collection("product"), productId), {
-                  "data": {
-                    "sku": payload.sku,
-                    "name": payload.name,
-                    "description": payload.description,
-                    "price": payload.price,
-                    "quantity": payload.quantity,
-                    "backorderedLimit": payload.backorderedLimit,
-                    "backordered": True if payload.quantity < payload.backorderedLimit else False
+              'result': q.update(
+                q.ref(q.collection('product'), productId), {
+                  'data': {
+                    'sku': payload.sku,
+                    'name': payload.name,
+                    'description': payload.description,
+                    'price': payload.price,
+                    'quantity': payload.quantity,
+                    'backorderedLimit': payload.backorderedLimit,
+                    'backordered': True if payload.quantity < payload.backorderedLimit else False
                   }
                 }
               )
             },
             {
-              "id": q.select(["ref", "id"], q.var("result")),
-              "backordered": q.select(["data", "backordered"], q.var("result"))
+              'id': q.select(['ref', 'id'], q.var('result')),
+              'backordered': q.select(['data', 'backordered'], q.var('result'))
             }
           )
         )
-        product = Product(
-          productId, 
-          payload.sku,
-          payload.name,
-          payload.description,
-          payload.price,
-          payload.quantity,
-          payload.backorderedLimit,
-          response["backordered"]
-        )
+        product = Product(productId, payload.sku, payload.name, payload.description, payload.price, payload.quantity, payload.backorderedLimit, response['backordered'])
 
     # except ClientError as e:
     #     logger.error(e.response['Error']['Message'])
     #     raise Exception('Error updating a product', e)
     except FaunaError as e:
         logger.error(e)
-        raise Exception('Error updating a product', e)
+        raise e
     else:
-        logger.info("UpdateItem succeeded:")
+        logger.info('UpdateItem succeeded:')
         return product        
 
 def get_products(event, tenantId):    
@@ -250,7 +224,7 @@ def get_products(event, tenantId):
     #     logger.error(e.response['Error']['Message'])
     #     raise Exception('Error getting all products', e)
     # else:
-    #     logger.info("Get products succeeded")
+    #     logger.info('Get products succeeded')
     #     return get_all_products_response
     products =[]
     try:
@@ -260,36 +234,27 @@ def get_products(event, tenantId):
 
         results = db.query(
           q.map_(
-            q.lambda_("x", 
+            q.lambda_('x', 
               q.let(
-                { "product": q.get(q.var("x")) },
+                { 'product': q.get(q.var('x')) },
                 q.merge(
-                  { "productId": q.select(["ref", "id"], q.var("product")) },
-                  q.select(["data"], q.var("product"))
+                  { 'productId': q.select(['ref', 'id'], q.var('product')) },
+                  q.select(['data'], q.var('product'))
                 )
               )
             ),
-            q.paginate(q.documents(q.collection("product")))
+            q.paginate(q.documents(q.collection('product')))
           )
         )
         results = results['data']
         for item in results:
-            product = Product(
-              item['productId'], 
-              item['sku'], 
-              item['name'], 
-              item['description'],
-              item['price'],
-              item['quantity'],
-              item['backorderedLimit'],
-              item['backordered']
-            )
+            product = Product(item['productId'], item['sku'], item['name'], item['description'], item['price'], item['quantity'], item['backorderedLimit'], item['backordered'])
             products.append(product)
     except FaunaError as e:
         logger.error(e)
-        raise Exception('Error getting all products', e)
+        raise e
     else:
-        logger.info("Get products succeeded")
+        logger.info('Get products succeeded')
         return products    
 
 # def __query_all_partitions(tenantId,get_all_products_response, table):

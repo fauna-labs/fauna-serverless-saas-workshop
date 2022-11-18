@@ -12,40 +12,59 @@ def get_order(event, context):
     logger.info("Request received to get a order")
     params = event['pathParameters']
     orderId = params['id']
-    order = order_service_dal.get_order(event, orderId)
+    try:
+        order = order_service_dal.get_order(event, orderId)
 
-    logger.info("Request completed to get a order")
-    
-    return utils.generate_response(order)
-    
+        logger.info("Request completed to get a order")
+        
+        return utils.generate_response(order)
+    except Exception as e:
+        return utils.generate_error_response(e)
+
+
 def create_order(event, context):  
     logger.info("Request received to create a order")
     payload = json.loads(event['body'], object_hook=lambda d: SimpleNamespace(**d))
-    order = order_service_dal.create_order(event, payload)
-    logger.info("Request completed to create a order")
-    return utils.generate_response(order)
-    
+    try:
+        order = order_service_dal.create_order(event, payload)
+        logger.info("Request completed to create a order")
+        return utils.generate_response(order)
+    except Exception as e:
+        return utils.generate_error_response(e)
+
+
 def update_order(event, context):    
     logger.info("Request received to update a order")
     payload = json.loads(event['body'], object_hook=lambda d: SimpleNamespace(**d))
     params = event['pathParameters']
     orderId = params['id']
-    order = order_service_dal.update_order(event, payload, orderId)
-    logger.info("Request completed to update a order")     
-    return utils.generate_response(order)
+    try:
+        order = order_service_dal.update_order(event, payload, orderId)
+        logger.info("Request completed to update a order")     
+        return utils.generate_response(order)
+    except Exception as e:
+        return utils.generate_error_response(e)
+
 
 def delete_order(event, context):
     logger.info("Request received to delete a order")
     params = event['pathParameters']
     orderId = params['id']
-    response = order_service_dal.delete_order(event, orderId)
-    logger.info("Request completed to delete a order")
-    return utils.create_success_response("Successfully deleted the order")
+    try:
+        response = order_service_dal.delete_order(event, orderId)
+        logger.info("Request completed to delete a order")
+        return utils.create_success_response("Successfully deleted the order")
+    except Exception as e:
+        return utils.generate_error_response(e)
+
 
 def get_orders(event, context):
     logger.info("Request received to get all orders")
-    response = order_service_dal.get_orders(event)
-    logger.info("Request completed to get all orders")
-    return utils.generate_response(response)
+    try:
+        response = order_service_dal.get_orders(event)
+        logger.info("Request completed to get all orders")
+        return utils.generate_response(response)
+    except Exception as e:
+        return utils.generate_error_response(e)
 
   
