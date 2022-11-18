@@ -69,7 +69,7 @@ export class FaunaMigrationsStack extends cdk.Stack {
       stageName: 'Build',
       actions: [
         new codepipeline_actions.CodeBuildAction({
-          actionName: 'Run-FSM',
+          actionName: 'Run-Fauna-Schema-Migrate',
           project: buildProject,
           input: sourceOutput,
           outputs: [buildOutput],
