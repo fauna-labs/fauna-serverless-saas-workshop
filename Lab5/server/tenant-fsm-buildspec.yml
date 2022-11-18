@@ -18,6 +18,7 @@ phases:
       # Run Fauna migrations      
       - cd Lab5/server/fauna_resources
       - npm install
+      - echo "FAUNADB: $FAUNA_API_KEY"
       - node index.js $FAUNA_API_KEY
 
   post_build:
