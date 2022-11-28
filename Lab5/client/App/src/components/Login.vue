@@ -12,7 +12,28 @@
         <form class="mt-8 space-y-6" @submit.prevent="login">
           <input type="hidden" name="remember" value="true">
           <div class="-space-y-px rounded-md shadow-sm">
-            <div class="py-4">
+
+            <div class="grid grid-cols-2 pb-4">
+              <div class="form-check">
+                <input class="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300 bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
+                  type="radio"
+                  name="flexRadioDefault"
+                  id="flexRadioDefault1"
+                  v-model="adminApp" :value="true">
+                <label class="form-check-label inline-block text-gray-800" for="flexRadioDefault1">Admin app</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300 bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
+                  type="radio"
+                  name="flexRadioDefault"
+                  id="flexRadioDefault2"
+                  v-model="adminApp" :value="false"
+                  checked>
+                <label class="form-check-label inline-block text-gray-800" for="flexRadioDefault2">Tenant app</label>
+              </div>
+            </div>
+
+            <div class="py-4" v-if="!adminApp">
               <label for="tenant" class="sr-only">tenant</label>
               <input id="tenant" name="tenant" type="text" autocomplete="tenant"
                 required :disabled="setNewPasswordFlow"
@@ -56,7 +77,7 @@
               <label for="remember-me" class="ml-2 block text-sm text-gray-900">Remember me |&nbsp;</label>
             </div>
 
-            <div class="text-sm">
+            <div class="text-sm" @click="tbd">
               <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500">Forgot your password?</a>
             </div>
           </div>
@@ -66,6 +87,9 @@
               icon="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
             />
           </div>
+          <div class="text-sm">
+            Don't have an account?&nbsp;<a href="#" @click="signup" class="font-medium text-indigo-600 hover:text-indigo-500">Signup&nbsp;</a>now
+          </div>          
         </form>
         <ProgressBar v-if="loggingIn"/>
       </div>      
@@ -88,6 +112,7 @@ export default {
   },
   data() {
     return {
+      adminApp: false,
       tenant: null,
       username: null,
       password: null,
@@ -105,7 +130,7 @@ export default {
     },
     async getTenant() {
       const res = await fetch(
-        `${import.meta.env.VITE_REG_API_GATEWAY_URL}/tenant/init/${this.tenant}`, {
+        `${import.meta.env.VITE_ADMIN_API_GATEWAY_URL}/tenant/init/${this.tenant}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -125,19 +150,27 @@ export default {
         return;
       }
 
-      const tenantDetails = await this.getTenant();
-      if (!tenantDetails.userPoolId || !tenantDetails.appClientId) {
-        alert(tenantDetails.message);
-        this.loggingIn = false;
-        return;
+      let poolData;
+
+      if (this.adminApp) {
+        poolData = {
+          UserPoolId: import.meta.env.VITE_ADMIN_USERPOOL_ID,
+          ClientId: import.meta.env.VITE_ADMIN_APPCLIENTID
+        };
+      } else {
+        const tenantDetails = await this.getTenant();
+        if (!tenantDetails.userPoolId || !tenantDetails.appClientId) {
+          alert(tenantDetails.message);
+          this.loggingIn = false;
+          return;
+        }
+        this.$store.commit('setApiGatewayUrl', tenantDetails.apiGatewayUrl);
+        poolData = {
+          UserPoolId: tenantDetails.userPoolId,
+          ClientId: tenantDetails.appClientId,
+        };
       }
 
-      this.$store.commit('setApiGatewayUrl', tenantDetails.apiGatewayUrl);
-
-      const poolData = {
-        UserPoolId: tenantDetails.userPoolId,
-        ClientId: tenantDetails.appClientId,
-      };
       const userPool = new CognitoUserPool(poolData);
       this.cognitoUser = new CognitoUser({ 
         Username: this.username,
@@ -182,6 +215,13 @@ export default {
           this.setNewPasswordFlow = false;
         }
       });
+    },
+    tbd() {
+      alert('Functionality not implemented yet');
+    },
+    signup() {
+      this.$store.commit('hideLogin');
+      this.$router.push('/register');
     }
   }
 }

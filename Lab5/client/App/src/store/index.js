@@ -8,16 +8,32 @@ const vuexLocal = new VuexPersistence({
 
 export default createStore({
   state: {
+    alertMessage: null,
     accessToken: null,
     loggedInName: null,
     apiGatewayUrl: null,
     showLogin: false,
     skip: false,
+    sysAdmin: false,
+    tenantAdmin: false,
+    role: null
   },
   mutations: {
     RESTORE_MUTATION: vuexLocal.RESTORE_MUTATION,
+    setAlert(state, message) {
+      state.alertMessage = message;
+    },
     setAccessToken(state, token) {
       state.accessToken = token;
+    },
+    setRole(state, value) {
+      state.role = value
+    },
+    setTenantAdminFlag(state, value) {
+      state.tenantAdmin = value;
+    },
+    setSysAdminFlag(state, value) {
+      state.sysAdmin = value;
     },
     setLoggedInName(state, name) {
       state.loggedInName = name;

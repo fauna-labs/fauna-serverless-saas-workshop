@@ -2,7 +2,7 @@
   <div class="flex flex-col h-screen overflow-auto pa-0 bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-800 dark:text-white">
     
     <div class="px-4 py-2">
-      <h2 class="text-3xl font-semibold">Products</h2>
+      <h2 class="text-3xl font-semibold">Tenants</h2>
       <div class="flex flex-row text-sm pt-4">
         <div class="relative grow">
           <span class="absolute inset-y-0 left-0 flex items-center pl-3">
@@ -18,7 +18,7 @@
             placeholder="Search" />
         </div>
         <div class="relative ml-2">
-          <Button label="Add Product" :inactive="progress" @click="showAddProduct"/>
+          <Button label="Provision Tenant" :inactive="progress" @click="showAddTenant"/>
         </div>
       </div>
     </div>
@@ -32,10 +32,9 @@
               <thead class="border-b dark:border-gray-300">
                 <tr>
                   <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Name</th>
-                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Price</th>
-                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">SKU</th>
-                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Quantity stock</th>
-                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Backordered Limit</th>
+                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Id</th>
+                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Plan</th>
+                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -44,24 +43,18 @@
                     <ProgressBar v-if="progress" />
                   </td>
                 </tr>
-                <tr class="border-b dark:border-gray-600" v-for="p in products" :key="p.productId">                  
+                <tr class="border-b dark:border-gray-600" v-for="t in tenants" :key="t.tenantId">                  
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <a href="#" @click="viewProduct(p)">
+                      <a href="#" @click="viewTenant(t)">
                         <div class="flex flex-col">
-                          <div>{{ p.name }}</div>
-                          <div class="text-xs font-light mt-1">{{ p.description }}</div>
+                          <div>{{ t.tenantName }}</div>
+                          <div class="text-xs font-light mt-1">{{ t.tenantAddress }}</div>
                         </div>
                       </a>
                     </td>
-                  <td class="text-sm font-light px-6 py-4 whitespace-nowrap">{{ p.price }}</td>
-                  <td class="text-sm font-light px-6 py-4 whitespace-nowrap">{{ p.sku }}</td>
-                  <td class="text-sm font-light px-6 py-4 whitespace-nowrap">
-                    <div class="flex flex-col">
-                      <div>{{ p.quantity }}</div>
-                      <div class="text-xs text-red-500 font-light mt-1" v-if="p.backordered">(Backordered)</div>
-                    </div>
-                  </td>
-                  <td class="text-sm font-light px-6 py-4 whitespace-nowrap">{{ p.backorderedLimit }}</td>
+                  <td class="text-sm font-light px-6 py-4 whitespace-nowrap">{{ t.tenantId }}</td>
+                  <td class="text-sm font-light px-6 py-4 whitespace-nowrap">{{ t.tenantTier }}</td>
+                  <td class="text-sm font-light px-6 py-4 whitespace-nowrap">{{ t.isActive ? 'Active' : 'Inactive' }}</td>
                 </tr>
               </tbody>
             </table>
@@ -69,31 +62,32 @@
         </div>
       </div>
     </div>
-    <Product 
-      v-if="addOrUpdateProduct" 
-      @exit-add-product="productAdded"
-      :product="selectedProduct"/>
+    <Tenant 
+      v-if="addOrUpdateTenant" 
+      @tenant-added="tenantAdded"
+      @exit-add-tenant="canceled"
+      :tenant="selectedTenant"/>
   </div>
 </template>
 
 <script>
 import ProgressBar from '@/components/ProgressBar.vue';
-import Product from '@/components/Product.vue';
+import Tenant from '@/components/Tenant.vue';
 import Button from '@/components/Button.vue';
 
 export default {
-  name: 'products',
+  name: 'tenants',
   components: {
     ProgressBar,
-    Product,
+    Tenant,
     Button
   },
   data() {
     return {
-      addOrUpdateProduct: false,
-      products: [],
+      addOrUpdateTenant: false,
+      tenants: [],
       progress: false,
-      selectedProduct: null
+      selectedTenant: null
     }
   },
   computed: {
@@ -102,7 +96,7 @@ export default {
     }
   },
   methods: {
-    async listProducts() {
+    async listTenants() {
       if (!this.accessToken) {
         return;
       }
@@ -110,7 +104,7 @@ export default {
       this.progress = true;
 
       fetch(
-        `${this.$store.state.apiGatewayUrl}/products`, {
+        `${import.meta.env.VITE_ADMIN_API_GATEWAY_URL}/tenants`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${this.accessToken}`,
@@ -125,7 +119,7 @@ export default {
           }
         })
         .then(data => {
-          this.products = data;
+          this.tenants = data;
           this.progress = false;
         })
         .catch(e => {
@@ -134,31 +128,30 @@ export default {
         })
 
     },
-    productAdded() {
-      this.addOrUpdateProduct = false;
-      this.listProducts();
+    tenantAdded() {
+      this.addOrUpdateTenant = false;
+      this.listTenants();
     },
-    showAddProduct() {
+    canceled() {
+      this.addOrUpdateTenant = false;
+    },
+    showAddTenant() {
       if (this.progress) {
         return;
       }
-      this.selectedProduct = null;
-      this.addOrUpdateProduct = true;
+      this.selectedTenant = null;
+      this.addOrUpdateTenant = true;
     },
-    viewProduct(product) {
-      this.addOrUpdateProduct = true;
-      this.selectedProduct = product;
+    viewTenant(product) {
+      this.addOrUpdateTenant = true;
+      this.selectedTenant = product;
     }
   },
   mounted() {
-    if (this.$store.state.sysAdmin) {
-      this.$router.push('/');
-      return;
-    }
-    this.listProducts();
+    this.listTenants();
   },
   watch: {
-    accessToken: "listProducts"
+    accessToken: "listTenants"
   }
 }
 </script>

@@ -1,5 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '@/views/Home.vue'
+import Products from '@/views/Products.vue'
+import Orders from '@/views/Orders.vue'
+import Tenants from '@/views/Tenants.vue'
+import Users from '@/views/Users.vue'
+import Registration from '@/views/Registration.vue'
 
 export default createRouter({
   history: createWebHistory(),
@@ -10,19 +15,29 @@ export default createRouter({
       name: 'home'
     },
     {
-      path: '/about',
-      component: () => import('@/views/About.vue'),
-      name: 'about'
+      path: '/register',
+      component: Registration,
+      name: 'registration'
+    },
+    {
+      path: '/users',
+      component: Users,
+      name: 'users'
     },
     {
       path: '/products',
-      component: () => import('@/views/Products.vue'),
+      component: Products,
       name: 'products'
     },
     {
       path: '/orders',
-      component: () => import('@/views/Orders.vue'),
+      component: Orders,
       name: 'orders'
-    }    
+    },
+    {
+      path: '/tenants',
+      component: Tenants,
+      name: 'tenants'
+    }      
   ],
 })

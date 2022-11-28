@@ -104,6 +104,10 @@ export default {
     }
   },
   mounted() {
+    if (this.$store.state.sysAdmin) {
+      this.$router.push('/');
+      return;
+    }
     this.loadMyOrders();
   },
   watch: {

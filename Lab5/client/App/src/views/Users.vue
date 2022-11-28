@@ -2,7 +2,7 @@
   <div class="flex flex-col h-screen overflow-auto pa-0 bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-800 dark:text-white">
     
     <div class="px-4 py-2">
-      <h2 class="text-3xl font-semibold">Products</h2>
+      <h2 class="text-3xl font-semibold">Users</h2>
       <div class="flex flex-row text-sm pt-4">
         <div class="relative grow">
           <span class="absolute inset-y-0 left-0 flex items-center pl-3">
@@ -18,7 +18,7 @@
             placeholder="Search" />
         </div>
         <div class="relative ml-2">
-          <Button label="Add Product" :inactive="progress" @click="showAddProduct"/>
+          <Button label="Add User" :inactive="progress" @click="showAddUser"/>
         </div>
       </div>
     </div>
@@ -31,37 +31,31 @@
             <table class="min-w-full">
               <thead class="border-b dark:border-gray-300">
                 <tr>
-                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Name</th>
-                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Price</th>
-                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">SKU</th>
-                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Quantity stock</th>
-                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Backordered Limit</th>
+                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Username</th>
+                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Email</th>
+                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Role</th>
+                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Created Date</th>
+                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Status</th>
+                  <th scope="col" class="text-sm font-medium px-6 py-4 text-left">Enabled</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td colspan="5">
+                  <td colspan="6">
                     <ProgressBar v-if="progress" />
                   </td>
                 </tr>
-                <tr class="border-b dark:border-gray-600" v-for="p in products" :key="p.productId">                  
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <a href="#" @click="viewProduct(p)">
-                        <div class="flex flex-col">
-                          <div>{{ p.name }}</div>
-                          <div class="text-xs font-light mt-1">{{ p.description }}</div>
-                        </div>
-                      </a>
-                    </td>
-                  <td class="text-sm font-light px-6 py-4 whitespace-nowrap">{{ p.price }}</td>
-                  <td class="text-sm font-light px-6 py-4 whitespace-nowrap">{{ p.sku }}</td>
-                  <td class="text-sm font-light px-6 py-4 whitespace-nowrap">
-                    <div class="flex flex-col">
-                      <div>{{ p.quantity }}</div>
-                      <div class="text-xs text-red-500 font-light mt-1" v-if="p.backordered">(Backordered)</div>
-                    </div>
+                <tr class="border-b dark:border-gray-600" v-for="u in users" :key="u.user_name">                  
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <a href="#" @click="viewUser(u)">
+                      <div>{{ u.user_name }}</div>
+                    </a>
                   </td>
-                  <td class="text-sm font-light px-6 py-4 whitespace-nowrap">{{ p.backorderedLimit }}</td>
+                  <td class="text-sm font-light px-6 py-4 whitespace-nowrap">{{ u.email }}</td>
+                  <td class="text-sm font-light px-6 py-4 whitespace-nowrap">{{ u.user_role }}</td>
+                  <td class="text-sm font-light px-6 py-4 whitespace-nowrap">{{ new Date(u.created).toLocaleDateString('en-us', { year:"numeric", month:"short", day:"numeric"}) }}</td>
+                  <td class="text-sm font-light px-6 py-4 whitespace-nowrap">{{ u.status }}</td>
+                  <td class="text-sm font-light px-6 py-4 whitespace-nowrap">{{ u.enabled }}</td>
                 </tr>
               </tbody>
             </table>
@@ -69,31 +63,31 @@
         </div>
       </div>
     </div>
-    <Product 
-      v-if="addOrUpdateProduct" 
-      @exit-add-product="productAdded"
-      :product="selectedProduct"/>
+    <User 
+      v-if="addOrdUpdateUser" 
+      @exit-add-user="userAdded"
+      :user="selectedUser"/>
   </div>
 </template>
 
 <script>
 import ProgressBar from '@/components/ProgressBar.vue';
-import Product from '@/components/Product.vue';
+import User from '@/components/User.vue';
 import Button from '@/components/Button.vue';
 
 export default {
-  name: 'products',
+  name: 'users',
   components: {
     ProgressBar,
-    Product,
+    User,
     Button
   },
   data() {
     return {
-      addOrUpdateProduct: false,
-      products: [],
+      addOrdUpdateUser: false,
+      users: [],
       progress: false,
-      selectedProduct: null
+      selectedUser: null
     }
   },
   computed: {
@@ -102,7 +96,7 @@ export default {
     }
   },
   methods: {
-    async listProducts() {
+    async listUsers() {
       if (!this.accessToken) {
         return;
       }
@@ -110,7 +104,7 @@ export default {
       this.progress = true;
 
       fetch(
-        `${this.$store.state.apiGatewayUrl}/products`, {
+        `${import.meta.env.VITE_ADMIN_API_GATEWAY_URL}/users`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${this.accessToken}`,
@@ -125,7 +119,7 @@ export default {
           }
         })
         .then(data => {
-          this.products = data;
+          this.users = data;
           this.progress = false;
         })
         .catch(e => {
@@ -134,31 +128,27 @@ export default {
         })
 
     },
-    productAdded() {
-      this.addOrUpdateProduct = false;
-      this.listProducts();
+    userAdded() {
+      this.addOrdUpdateUser = false;
+      this.listUsers();
     },
-    showAddProduct() {
+    showAddUser() {
       if (this.progress) {
         return;
       }
-      this.selectedProduct = null;
-      this.addOrUpdateProduct = true;
+      this.selectedUser = null;
+      this.addOrdUpdateUser = true;
     },
-    viewProduct(product) {
-      this.addOrUpdateProduct = true;
-      this.selectedProduct = product;
+    viewUser(user) {
+      this.addOrdUpdateUser = true;
+      this.selectedUser = user;
     }
   },
   mounted() {
-    if (this.$store.state.sysAdmin) {
-      this.$router.push('/');
-      return;
-    }
-    this.listProducts();
+    this.listUsers();
   },
   watch: {
-    accessToken: "listProducts"
+    accessToken: "listUsers"
   }
 }
 </script>
