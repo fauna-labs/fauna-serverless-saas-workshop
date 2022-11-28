@@ -143,8 +143,6 @@ export default {
     async login() {
       this.loggingIn = true;    
 
-      // const testUser = 'tenant-admin-343451862763044944';
-
       if (this.setNewPasswordFlow) {
         this.handleNewPassword();
         return;
