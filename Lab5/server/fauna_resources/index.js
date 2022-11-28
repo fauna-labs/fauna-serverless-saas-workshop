@@ -6,13 +6,11 @@ const args = process.argv.slice(2);
 const FAUNA_API_KEY = args[0];
 
 const client = new faunadb.Client({
-  // secret: process.env.FAUNADB_SECRET
   secret: FAUNA_API_KEY
 });
 
 const q = faunadb.query;
 const { Map, Paginate, Documents, Collection, 
-  Match, Index, 
   Lambda, Let, Get, Var, Select,
   Concat, Exists, Database 
 } = q;
