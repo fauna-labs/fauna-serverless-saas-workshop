@@ -80,10 +80,8 @@ class Fauna(FaunaClient):
     @classmethod
     def from_config(cls, config):
         print("Loading config and creating new db...")
-        print("Fauna domain = {}".format(config['FAUNA']['domain']))
         return cls(
-            secret=config['FAUNA']['secret'],
-            domain=config['FAUNA']['domain']
+            secret=config['FAUNA']['secret']
         )
 
 # https://aws.amazon.com/blogs/compute/sharing-secrets-with-aws-lambda-using-aws-systems-manager-parameter-store/

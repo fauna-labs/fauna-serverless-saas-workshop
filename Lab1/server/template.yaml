@@ -6,6 +6,18 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   Lab1 - Basic Serverless Application
 
+Parameters:
+  StageName:
+    Type: String
+    Default: "prod"
+    Description: "Stage Name for the api"
+  StackName:
+    Type: String
+    Default: "serverless-saas-fauna-workshop-lab1"
+  FaunadbApiKey:
+    Type: String
+    Default: "secret"
+
 Globals:
   Function:
     Timeout: 29
@@ -14,75 +26,16 @@ Globals:
     Environment:
         Variables:
           LOG_LEVEL: DEBUG
-          FAUNA_CONFIG_PATH: '/serverless-saas-workshop/faunadb/config'
-
-Parameters:
-  StageName:
-    Type: String
-    Default: "prod"
-    Description: "Stage Name for the api"
+          FAUNA_CONFIG_PATH: !Sub '/${StackName}/faunadb/config'
     
 Resources: 
   FaunaConfig:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: '/serverless-saas-workshop/faunadb/config/appConfig'
+      Name: !Sub '/${StackName}/faunadb/config/appConfig'
       Description: 'Fauna env variables'
       Type: String
-      Value: '{"domain": "db.us.fauna.com"}'
-      
-  ParameterStoreKeyAlias:
-    Type: AWS::KMS::Alias
-    Properties:
-      AliasName: 'alias/ParameterStoreKey'
-      TargetKeyId: !Ref ParameterStoreEncryptionKey
-
-  ParameterStoreEncryptionKey:
-    Type: AWS::KMS::Key
-    Properties:
-      Description: 'Encryption key for secret config values'
-      Enabled: True
-      EnableKeyRotation: False
-      KeyPolicy:
-        Version: '2012-10-17'
-        Id: 'key-default-1'
-        Statement:
-          -
-            Sid: 'Allow administration of the key & encryption of new values'
-            Effect: Allow
-            Principal:
-              AWS:
-                - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
-            Action:
-              - 'kms:Create*'
-              - 'kms:Encrypt'
-              - 'kms:Describe*'
-              - 'kms:Enable*'
-              - 'kms:List*'
-              - 'kms:Put*'
-              - 'kms:Update*'
-              - 'kms:Revoke*'
-              - 'kms:Disable*'
-              - 'kms:Get*'
-              - 'kms:Delete*'
-              - 'kms:ScheduleKeyDeletion'
-              - 'kms:CancelKeyDeletion'
-            Resource: '*'
-          -
-            Sid: 'Allow use of the key'
-            Effect: Allow
-            Principal:
-              AWS: [
-                !GetAtt ProductFunctionExecutionRole.Arn, 
-                !GetAtt OrderFunctionExecutionRole.Arn
-              ]
-            Action:
-              - 'kms:Encrypt'
-              - 'kms:Decrypt'
-              - 'kms:ReEncrypt*'
-              - 'kms:GenerateDataKey*'
-              - 'kms:DescribeKey'
-            Resource: '*'
+      Value: !Sub '{"secret": "${FaunadbApiKey}"}'
 
   ServerlessSaaSLayers:
     Type: AWS::Serverless::LayerVersion
@@ -125,8 +78,7 @@ Resources:
                 Effect: Allow
                 Action:
                   - 'ssm:GetParameter*'
-                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/serverless-saas-workshop/faunadb/config'
-
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${StackName}/faunadb/config'
              
   GetProductFunction:
     Type: AWS::Serverless::Function 
@@ -231,8 +183,7 @@ Resources:
                 Effect: Allow
                 Action:
                   - 'ssm:GetParameter*'
-                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/serverless-saas-workshop/faunadb/config'
-
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${StackName}/faunadb/config'
                 
   GetOrdersFunction:
     Type: AWS::Serverless::Function 
@@ -312,7 +263,7 @@ Resources:
   ApiGatewayAccessLogs:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /aws/api-gateway/access-logs-serverless-saas-workshop-lab1-api
+      LogGroupName: !Sub '/aws/api-gateway/access-logs-${StackName}-api'
       RetentionInDays: 30
   ApiGatewayApi:
     Type: AWS::Serverless::Api
@@ -330,7 +281,7 @@ Resources:
       DefinitionBody:
         openapi: 3.0.1
         info:
-          title: 'serverless-saas-workshop-lab1'
+          title: !Ref StackName
         basePath: !Join ['', ['/', !Ref StageName]]
         schemes:
           - https
@@ -860,7 +811,7 @@ Resources:
     Properties:
       DistributionConfig:
         CustomErrorResponses:
-        # Needed to support angular routing
+        # Needed to support SPA routing
         - ErrorCode: 403 
           ResponseCode: 200
           ResponsePagePath: '/index.html'
