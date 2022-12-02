@@ -81,7 +81,7 @@ if [[ $server -eq 1 ]]; then
     --stack-name=$stackname \
     --parameter-overrides FaunadbApiKey=$faunaApiKey
 
-  cd ../../scripts
+  cd ../scripts
 fi
 
 if [[ $client -eq 1 ]]; then
