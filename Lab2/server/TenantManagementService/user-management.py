@@ -15,9 +15,6 @@ from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
 db = None
 
 client = boto3.client('cognito-idp')
-# dynamodb = boto3.resource('dynamodb')
-# table_tenant_user_map = dynamodb.Table('ServerlessSaaS-TenantUserMapping')
-# table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')
 
 user_pool_id = os.environ['TENANT_USER_POOL_ID']
 
@@ -111,8 +108,7 @@ def get_users(event, context):
             user_info.user_name = user["Username"]
             users.append(user_info)                    
     
-        return utils.generate_response(users)
-   
+    return utils.generate_response(users)
 
 def get_user(event, context):
     user_name = event['pathParameters']['username']  
@@ -169,15 +165,6 @@ def disable_users_by_tenant(event, context):
     logger.info(event)    
     
     tenantid_to_update = event['tenantid']
-    
-    # filtering_exp = Key('tenantId').eq(tenantid_to_update)
-    # response = table_tenant_user_map.query(KeyConditionExpression=filtering_exp)
-    # users = response.get('Items')
-    # for user in users:
-    #     response = client.admin_disable_user(
-    #         Username=user['userName'],
-    #         UserPoolId=user_pool_id
-    #     )
 
     global db
     if db is None:
@@ -203,15 +190,6 @@ def enable_users_by_tenant(event, context):
     
     tenantid_to_update = event['tenantid']
     
-    # filtering_exp = Key('tenantId').eq(tenantid_to_update)
-    # response = table_tenant_user_map.query(KeyConditionExpression=filtering_exp)
-    # users = response.get('Items')
-    
-    # for user in users:
-    #     response = client.admin_enable_user(
-    #         Username=user['userName'],
-    #         UserPoolId=user_pool_id
-    #     )
     global db
     if db is None:
         db = FaunaFromConfig()
@@ -287,13 +265,6 @@ class UserManagement:
         return response
 
     def create_user_tenant_mapping(self, user_name, tenant_id):
-        # response = table_tenant_user_map.put_item(
-        #         Item={
-        #                 'tenantId': tenant_id,
-        #                 'userName': user_name
-        #             }
-        #         )                    
-
         global db
         if db is None:
             db = FaunaFromConfig()

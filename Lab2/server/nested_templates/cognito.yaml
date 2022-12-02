@@ -73,7 +73,7 @@ Resources:
   CognitoUserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
-      Domain: !Join ["-", [pooledtenant-serverlesssaas-fauna,!Ref "AWS::AccountId"]]
+      Domain: !Sub 'pooledtenant-svls-saas-wkshp-${AWS::AccountId}'
       UserPoolId: !Ref CognitoUserPool
 
 
@@ -137,7 +137,7 @@ Resources:
   CognitoOperationUsersUserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
-      Domain: !Join ["-", [operationsusers-serverlesssaas-fauna,!Ref "AWS::AccountId"]]
+      Domain: !Sub 'operationsusers-svls-saas-wkshp-${AWS::AccountId}'
       UserPoolId: !Ref CognitoOperationUsersUserPool
   CognitoAdminUserGroup:
     Type: AWS::Cognito::UserPoolGroup

@@ -11,35 +11,21 @@ from botocore.exceptions import ClientError
 import logger
 import requests
 
-from utils import FaunaFromConfig
+from utils import FaunaClients
 from faunadb import query as q
 from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
-db = None
 
 region = os.environ['AWS_REGION']
 
-# dynamodb = boto3.resource('dynamodb')
-# table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')
+clients = {}
 
 #This method has been locked down to be only called from tenant registration service
 def create_tenant(event, context):
     tenant_details = json.loads(event['body'])
 
     try:
-        # response = table_tenant_details.put_item(
-        #     Item={
-        #             'tenantId': tenant_details['tenantId'],
-        #             'tenantName' : tenant_details['tenantName'],
-        #             'tenantAddress': tenant_details['tenantAddress'],
-        #             'tenantEmail': tenant_details['tenantEmail'],
-        #             'tenantPhone': tenant_details['tenantPhone'],
-        #             'tenantTier': tenant_details['tenantTier'],                    
-        #             'isActive': True                    
-        #         }
-        #     )
-        global db
-        if db is None:
-            db = FaunaFromConfig()
+        global clients
+        db = FaunaClients(clients)
 
         tenant = db.query(
           q.let(
@@ -55,35 +41,26 @@ def create_tenant(event, context):
                       'isActive': True
                     }
                   }
-                )
+                ),
+              "tenantId": q.select(["ref", "id"], q.var("tenant")),
+              "db": q.create_database({ "name": q.concat(["tenant_", q.var("tenantId")]) })
             },
-            { "tenantId": q.select(["ref", "id"], q.var("tenant")) }
+            { "tenantId": q.var("tenantId") }
           )
         )
-    # except Exception as e:
-    #     raise Exception('Error creating a new tenant', e)
+        __create_tenantdb_resources(tenant["tenantId"])
+
     except FaunaError as e:
         logger.error(e)
-        raise Exception('Error adding a new tenant', e)
+        raise Exception('Error creating a new tenant', e)
     else:
-        # return utils.create_success_response("Tenant Created")
         return utils.generate_response(tenant)
 
 def get_tenants(event, context):
-    # try:
-    #   response = table_tenant_details.scan()
-    # except Exception as e:
-    #     logger.error(e)
-    #     raise Exception('Error getting all tenants', e)
-    # else:
-    #     return utils.generate_response(response['Items'])    
-
     tenants = []
     try:
-        global db
-        if db is None:
-            db = FaunaFromConfig()
-        print("DOMAIN = {}".format(db.get_domain()))
+        global clients
+        db = FaunaClients(clients)
         results = db.query(
           q.map_(
             q.lambda_("x", 
@@ -109,26 +86,10 @@ def update_tenant(event, context):
     
     tenant_details = json.loads(event['body'])
     tenant_id = event['pathParameters']['tenantid']
-    logger.info("Request received to update tenant")
-    
-    # response_update = table_tenant_details.update_item(
-    #     Key={
-    #         'tenantId': tenant_id,
-    #     },
-    #     UpdateExpression="set tenantName = :tenantName, tenantAddress = :tenantAddress, tenantEmail = :tenantEmail, tenantPhone = :tenantPhone, tenantTier=:tenantTier",
-    #     ExpressionAttributeValues={
-    #             ':tenantName' : tenant_details['tenantName'],
-    #             ':tenantAddress': tenant_details['tenantAddress'],
-    #             ':tenantEmail': tenant_details['tenantEmail'],
-    #             ':tenantPhone': tenant_details['tenantPhone'],
-    #             ':tenantTier': tenant_details['tenantTier']                
-    #         },
-    #     ReturnValues="UPDATED_NEW"
-    #     )             
+    logger.info("Request received to update tenant")        
 
-    global db
-    if db is None:
-        db = FaunaFromConfig()
+    global clients
+    db = FaunaClients(clients)
 
     response_update = db.query(
       q.update(
@@ -149,28 +110,14 @@ def update_tenant(event, context):
     logger.info("Request completed to update tenant")
     return utils.create_success_response("Tenant Updated")    
 
+
 # TODO: Implement the below method
 def get_tenant(event, context):
     tenant_id = event['pathParameters']['tenantid']    
     logger.info("Request received to get tenant details")
-    
-    # tenant_details = table_tenant_details.get_item(
-    #     Key={
-    #         'tenantId': tenant_id,
-    #     },
-    #     AttributesToGet=[
-    #         'tenantName',
-    #         'tenantAddress',
-    #         'tenantEmail',
-    #         'tenantPhone'
-    #     ]    
-    # )             
-    # item = tenant_details['Item']
-    # tenant_info = TenantInfo(item['tenantName'], item['tenantAddress'],item['tenantEmail'], item['tenantPhone'])
 
-    global db
-    if db is None:
-        db = FaunaFromConfig()
+    global clients
+    db = FaunaClients(clients)
 
     item = db.query(
       q.let(
@@ -198,19 +145,8 @@ def deactivate_tenant(event, context):
     
     logger.info("Request received to deactivate tenant")
 
-    # response = table_tenant_details.update_item(
-    #     Key={
-    #         'tenantId': tenant_id,
-    #     },
-    #     UpdateExpression="set isActive = :isActive",
-    #     ExpressionAttributeValues={
-    #             ':isActive': False
-    #         },
-    #     ReturnValues="ALL_NEW"
-    # )
-    global db
-    if db is None:
-        db = FaunaFromConfig()
+    global clients
+    db = FaunaClients(clients)
 
     response = db.query(
       q.update(
@@ -237,20 +173,9 @@ def activate_tenant(event, context):
     tenant_id = event['pathParameters']['tenantid']
     
     logger.info("Request received to activate tenant")
-
-    # response = table_tenant_details.update_item(
-    #     Key={
-    #         'tenantId': tenant_id,
-    #     },
-    #     UpdateExpression="set isActive = :isActive",
-    #     ExpressionAttributeValues={
-    #             ':isActive': True
-    #         },
-    #     ReturnValues="ALL_NEW"
-    # )             
-    global db
-    if db is None:
-        db = FaunaFromConfig()
+       
+    global clients
+    db = FaunaClients(clients)
 
     response = db.query(
       q.update(
@@ -295,6 +220,18 @@ def __invoke_enable_users(headers, auth, host, stage_name, invoke_url, tenant_id
         raise Exception('Error occured while enabling users for the tenant', e) 
     else:
         return "Success invoking enable users"
+
+
+def __create_tenantdb_resources(tenant_id):
+    global clients
+    db = FaunaClients(clients, tenant_id)
+    result = db.query(
+        q.do(
+            q.create_collection( {"name": "order"} ),
+            q.create_collection( {"name": "product"} )
+        )
+    )
+
 
 class TenantInfo:
     def __init__(self, tenant_name, tenant_address, tenant_email, tenant_phone):

@@ -44,12 +44,14 @@ Parameters:
     Type: String
   AuthorizerFunctionArn:
     Type: String
+  StackName:
+    Type: String
   
 Resources:
   ApiGatewayCloudWatchLogRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub saas-fauna-apigateway-cloudwatch-publish-role
+      RoleName: !Sub svls-saas-wkshp-apigateway-cloudwatch-publish-role
       Path: "/"
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
@@ -70,7 +72,7 @@ Resources:
   AdminApiGatewayAccessLogs:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/api-gateway/access-logs-serverless-saas-fauna-admin-api
+      LogGroupName: !Sub /aws/api-gateway/access-logs-${StackName}-admin-api
       RetentionInDays: 30
   AdminApiGatewayApi:
     Type: AWS::Serverless::Api
@@ -138,7 +140,7 @@ Resources:
       DefinitionBody:
         openapi: 3.0.1
         info:
-          title: !Join ["", ["serverless-saas-fauna-admin-api-", !Ref "AWS::Region"]]
+          title: !Sub '${StackName}-admin-api'
         basePath: !Join ["", ["/", !Ref StageName]]
         schemes:
           - https

@@ -13,11 +13,10 @@ Parameters:
   CognitoUserPoolId: 
     Type: String
   CognitoUserPoolClientId: 
-    Type: String  
-  # TenantDetailsTableArn:
-  #   Type: String
-  # TenantUserMappingTableArn:
-  #   Type: String  
+    Type: String
+  StackName:
+    Type: String
+
 Globals:
   Function:
     Timeout: 29
@@ -27,16 +26,16 @@ Globals:
       Variables:
         LOG_LEVEL: DEBUG        
         POWERTOOLS_METRICS_NAMESPACE: "ServerlessSaaS"
-        FAUNA_CONFIG_PATH: '/serverless-saas-fauna-workshop/faunadb/config'
+        FAUNA_CONFIG_PATH: !Sub '/${StackName}/faunadb/config'
         
 Resources:
   FaunaConfig:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: '/serverless-saas-fauna-workshop/faunadb/config/appConfig'
+      Name: !Sub '/${StackName}/faunadb/config/appConfig'
       Description: 'Fauna env variables'
       Type: String
-      Value: '{"domain": "db.us.fauna.com"}'
+      Value: '{"exampleKey1": "value1"}'
       
   ParameterStoreKeyAlias:
     Type: AWS::KMS::Alias
@@ -96,7 +95,7 @@ Resources:
   ServerlessSaaSLayers:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      LayerName: serverless-saas-fauna-dependencies
+      LayerName: !Sub '${StackName}-dependencies'
       Description: Utilities for project
       ContentUri: ../layers/
       CompatibleRuntimes:
@@ -110,7 +109,7 @@ Resources:
   AuthorizerExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: saas-fauna-authorizer-execution-role
+      RoleName: svls-saas-wkshp-authorizer-execution-role
       Path: '/'
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -162,7 +161,7 @@ Resources:
   TenantUserPoolLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub saas-fauna-tenant-usrpool-lambda-exe-role
+      RoleName: svls-saas-wkshp-tenant-usrpool-lambda-exe-role
       Path: "/"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -205,12 +204,12 @@ Resources:
                 Effect: Allow
                 Action:
                   - 'ssm:GetParameter*'
-                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/serverless-saas-fauna-workshop/faunadb/config'
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${StackName}/faunadb/config'
 
   CreateUserLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub saas-fauna-create-usr-lambda-exe-role
+      RoleName: svls-saas-wkshp-create-usr-lambda-exe-role
       Path: "/"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -252,7 +251,7 @@ Resources:
                 Effect: Allow
                 Action:
                   - 'ssm:GetParameter*'
-                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/serverless-saas-fauna-workshop/faunadb/config'
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${StackName}/faunadb/config'
 
   CreateTenantAdminUserFunction:
     Type: AWS::Serverless::Function
@@ -388,7 +387,7 @@ Resources:
   TenantManagementLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub saas-fauna-tenant-mgmt-lambda-exe-role
+      RoleName: svls-saas-wkshp-tenant-mgmt-lambda-exe-role
       Path: "/"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -404,20 +403,6 @@ Resources:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
       Policies:
-      #   - PolicyName: !Sub create-tenant-execution-policy-${AWS::Region}
-      #     PolicyDocument:
-      #       Version: 2012-10-17
-      #       Statement:
-      #         - Effect: Allow
-      #           Action:
-      #             - dynamodb:PutItem
-      #             - dynamodb:GetItem
-      #             - dynamodb:UpdateItem
-      #             - dynamodb:Scan
-      #             - dynamodb:Query
-      #           Resource:
-      #             - !Ref TenantDetailsTableArn  
-      #             - !Join ["", [!Ref TenantDetailsTableArn, '/index/*']]      
         - PolicyName: 'TenantFxnsParameterStoreAccess'
           PolicyDocument:
             Version: '2012-10-17'
@@ -426,7 +411,7 @@ Resources:
                 Effect: Allow
                 Action:
                   - 'ssm:GetParameter*'
-                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/serverless-saas-fauna-workshop/faunadb/config'
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${StackName}/faunadb/config'
 
   CreateTenantFunction:
     Type: AWS::Serverless::Function
@@ -521,7 +506,7 @@ Resources:
   RegisterTenantLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub saas-fauna-tenant-reg-lambda-exe-role
+      RoleName: svls-saas-wkshp-tenant-reg-lambda-exe-role
       Path: "/"
       AssumeRolePolicyDocument:
         Version: 2012-10-17

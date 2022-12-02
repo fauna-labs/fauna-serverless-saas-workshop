@@ -21,22 +21,10 @@ def register_tenant(event, context):
     try:
         tenant_details = json.loads(event['body'])
 
-        # tenant_id = uuid.uuid1().hex
-        # tenant_details['tenantId'] = tenant_id
-        # logger.info(tenant_details)
-
         stage_name = event['requestContext']['stage']
         host = event['headers']['Host']
         auth = utils.get_auth(host, region)
         headers = utils.get_headers(event)
-
-        # create_user_response = __create_tenant_admin_user(tenant_details, headers, auth, host, stage_name)        
-        # logger.info (create_user_response)
-
-        # tenant_details['tenantAdminUserName'] = create_user_response['message']['tenantAdminUserName']
-
-        # create_tenant_response = __create_tenant(tenant_details, headers, auth, host, stage_name)
-        # logger.info (create_tenant_response)
 
         create_tenant_response = __create_tenant(tenant_details, headers, auth, host, stage_name)
         tenant_details['tenantId'] = create_tenant_response['tenantId']

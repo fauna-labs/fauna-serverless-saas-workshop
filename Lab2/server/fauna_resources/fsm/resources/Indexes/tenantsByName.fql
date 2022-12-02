@@ -1,0 +1,10 @@
+CreateIndex({
+  name: "tenants_by_name",
+  unique: true,
+  source: Collection("tenant"),
+  terms: [
+    {
+      field: ["data", "tenantName"]
+    }
+  ]
+})

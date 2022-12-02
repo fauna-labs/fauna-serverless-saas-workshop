@@ -1,25 +1,13 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT-0
 
-# import os
-# import boto3
-# from botocore.exceptions import ClientError
-# import uuid
 from order_models import Order
-# import json
-# import utils
-# from types import SimpleNamespace
 import logger
-# import random
-
 from utils import FaunaFromConfig
 from faunadb import query as q
 from faunadb.errors import FaunaError
 db = None
 
-# table_name = os.environ['ORDER_TABLE_NAME']
-# dynamodb = boto3.resource('dynamodb')
-# table = dynamodb.Table(table_name)
 
 def get_order(event, orderId):
     

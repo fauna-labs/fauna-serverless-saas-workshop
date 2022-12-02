@@ -1,23 +1,13 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT-0
 
-# import os
-# import boto3
-# from botocore.exceptions import ClientError
 import uuid
 import logger
-
 from product_models import Product
-# from types import SimpleNamespace
-# from boto3.dynamodb.conditions import Key
-
 from utils import FaunaFromConfig
 from faunadb import query as q
 from faunadb.errors import FaunaError
 
-# table_name = os.environ['PRODUCT_TABLE_NAME']
-# dynamodb = boto3.resource('dynamodb')
-# table = dynamodb.Table(table_name)
 
 db = None
 

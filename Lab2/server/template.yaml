@@ -17,14 +17,13 @@ Parameters:
   StageName:
     Type: String
     Default: "prod"
-    Description: "Stage Name for the api"  
-Resources:
-  # DynamoDBTables:
-  #   Type: AWS::Serverless::Application
-  #   Properties:
-  #     Location: nested_templates/tables.yaml
+    Description: "Stage Name for the api"
+  StackName:
+    Type: String
+    Default: "serverless-saas-workshop"
 
-  #Create cloudfront and s3 for UI Cde
+Resources:
+  #Create cloudfront and s3 for UI
   UserInterface:
     Type: AWS::Serverless::Application
     Properties:
@@ -38,7 +37,7 @@ Resources:
       Parameters:
         AdminEmailParameter: !Ref AdminEmailParameter
         SystemAdminRoleNameParameter: !Ref SystemAdminRoleNameParameter
-        AdminUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.AdminAppSite
+        AdminUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.ApplicationSite
         
   LambdaFunctions:
     Type: AWS::Serverless::Application
@@ -50,8 +49,7 @@ Resources:
         CognitoUserPoolClientId: !GetAtt Cognito.Outputs.CognitoUserPoolClientId                
         CognitoOperationUsersUserPoolId: !GetAtt Cognito.Outputs.CognitoOperationUsersUserPoolId
         CognitoOperationUsersUserPoolClientId: !GetAtt Cognito.Outputs.CognitoOperationUsersUserPoolClientId
-        # TenantDetailsTableArn: !GetAtt DynamoDBTables.Outputs.TenantDetailsTableArn
-        # TenantUserMappingTableArn: !GetAtt DynamoDBTables.Outputs.TenantUserMappingTableArn
+        StackName: !Ref StackName
         
   APIs:
     Type: AWS::Serverless::Application
@@ -77,7 +75,8 @@ Resources:
         CreateUserFunctionArn: !GetAtt LambdaFunctions.Outputs.CreateUserFunctionArn
         DisableUsersByTenantFunctionArn: !GetAtt LambdaFunctions.Outputs.DisableUsersByTenantFunctionArn
         EnableUsersByTenantFunctionArn: !GetAtt LambdaFunctions.Outputs.EnableUsersByTenantFunctionArn                  
-        AuthorizerFunctionArn: !GetAtt LambdaFunctions.Outputs.SharedServicesAuthorizerFunctionArn  
+        AuthorizerFunctionArn: !GetAtt LambdaFunctions.Outputs.SharedServicesAuthorizerFunctionArn
+        StackName: !Ref StackName
         
   APIGatewayLambdaPermissions:
     Type: AWS::Serverless::Application
@@ -109,18 +108,12 @@ Outputs:
   AdminApi:
     Description: "API Gateway endpoint URL for Admin API"
     Value: !Join ["", ["https://", !GetAtt APIs.Outputs.AdminApiGatewayApi, ".execute-api.", !Ref "AWS::Region", ".amazonaws.com/", !Ref StageName, "/"]]
-  AdminSiteBucket:
-    Description: The S3 Bucket that will contain the static assets for the tenant administration application
-    Value: !GetAtt UserInterface.Outputs.AdminBucket
-  AdminAppSite:
-    Description: The name of the CloudFront url for Admin Management site
-    Value: !GetAtt UserInterface.Outputs.AdminAppSite
-  LandingApplicationSiteBucket:
-    Description: The S3 Bucket that will contain the static assets for the landing application
-    Value: !GetAtt UserInterface.Outputs.LandingAppBucket
-  LandingApplicationSite:
-    Description: The name of the CloudFront url for Landing site
-    Value: !GetAtt UserInterface.Outputs.LandingApplicationSite
+  ApplicationSiteBucket:
+    Description: The S3 Bucket that will contain the static assets for the tenant application
+    Value: !GetAtt UserInterface.Outputs.AppBucket
+  ApplicationSite:
+    Description: The name of the CloudFront url for Tenant Management site
+    Value: !GetAtt UserInterface.Outputs.ApplicationSite
   CognitoOperationUsersUserPoolProviderURL:
     Description: The Admin Management userpool provider url
     Value: !GetAtt Cognito.Outputs.CognitoOperationUsersUserPoolProviderURL
