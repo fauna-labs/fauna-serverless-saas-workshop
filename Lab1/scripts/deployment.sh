@@ -79,7 +79,7 @@ if [[ $server -eq 1 ]]; then
   sam deploy --config-file samconfig.toml \
     --region=$REGION \
     --stack-name=$stackname \
-    --parameter-overrides FaunadbApiKey=$faunaApiKey
+    --parameter-overrides FaunadbApiKey=$faunaApiKey StackName=$stackname
 
   cd ../scripts
 fi

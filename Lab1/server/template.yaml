@@ -13,7 +13,7 @@ Parameters:
     Description: "Stage Name for the api"
   StackName:
     Type: String
-    Default: "serverless-saas-fauna-workshop-lab1"
+    Default: "workshop-lab1"
   FaunadbApiKey:
     Type: String
     Default: "secret"
