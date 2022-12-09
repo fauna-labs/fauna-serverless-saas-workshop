@@ -41,12 +41,15 @@ cp .env ../../Lab5/scripts/
 
 if [[ $server -eq 1 ]]; then
   echo "Migrate Fauna database resources"
-  cd ../server/fauna_resources
+  cd fauna_resources
   npm install
   node index.js $faunaApiKey
-
-  echo "Server code is getting deployed"
   cd ..
+fi
+
+if [[ $server -eq 1 ]]; then
+  echo "Server code is getting deployed"
+  cd ../server
 
   REGION=$(aws configure get region)
   DEFAULT_SAM_S3_BUCKET=$(grep s3_bucket samconfig.toml|cut -d'=' -f2 | cut -d \" -f2)
