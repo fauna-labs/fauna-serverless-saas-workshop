@@ -34,7 +34,7 @@ def create_tenant(event, context):
     table_system_settings = dynamodb.Table('ServerlessSaaSFauna-Settings')
 
     try:          
-        # for pooled tenants the apigateway url is saving in settings during stack creation
+        # for pooled tenants the apigateway url is saved in settings during stack creation
         # update from there during tenant creation
         if(tenant_details['dedicatedTenancy'].lower()!= 'true'):
             settings_response = table_system_settings.get_item(

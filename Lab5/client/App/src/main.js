@@ -8,5 +8,5 @@ import auth from './auth';
 createApp(App)
 .use(router)
 .use(store)
-.use(auth, { foo: "bar" })
+.use(auth)
 .mount('#app')

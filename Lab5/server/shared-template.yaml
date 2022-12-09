@@ -24,7 +24,7 @@ Parameters:
     Description: "Parameter Store path where Fauna configuration and secrets are stored"
   ParameterStoreFaunaAppConfigPublic:
     Type: String
-    Default: '{"domain": "db.us.fauna.com"}'
+    Default: '{"domain": "db.fauna.com"}'
     Description: ""
 Resources:
   DynamoDBTables:
@@ -46,7 +46,9 @@ Resources:
       Parameters:
         AdminEmailParameter: !Ref AdminEmailParameter
         SystemAdminRoleNameParameter: !Ref SystemAdminRoleNameParameter
-        AdminUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.AdminAppSite
+        # AdminUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.AdminAppSite
+        # TenantUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.ApplicationSite
+        AdminUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.ApplicationSite
         TenantUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.ApplicationSite
         
   LambdaFunctions:
@@ -147,18 +149,18 @@ Outputs:
   AdminApi:
     Description: "API Gateway endpoint URL for Admin API"
     Value: !Join ["", ["https://", !GetAtt APIs.Outputs.AdminApiGatewayApi, ".execute-api.", !Ref "AWS::Region", ".amazonaws.com/", !Ref StageName, "/"]]
-  AdminSiteBucket:
-    Description: The S3 Bucket that will contain the static assets for the tenant administration application
-    Value: !GetAtt UserInterface.Outputs.AdminBucket
-  AdminAppSite:
-    Description: The name of the CloudFront url for Admin Management site
-    Value: !GetAtt UserInterface.Outputs.AdminAppSite
-  LandingApplicationSiteBucket:
-    Description: The S3 Bucket that will contain the static assets for the landing application
-    Value: !GetAtt UserInterface.Outputs.LandingAppBucket
-  LandingApplicationSite:
-    Description: The name of the CloudFront url for Landing site
-    Value: !GetAtt UserInterface.Outputs.LandingApplicationSite
+  # AdminSiteBucket:
+  #   Description: The S3 Bucket that will contain the static assets for the tenant administration application
+  #   Value: !GetAtt UserInterface.Outputs.AdminBucket
+  # AdminAppSite:
+  #   Description: The name of the CloudFront url for Admin Management site
+  #   Value: !GetAtt UserInterface.Outputs.AdminAppSite
+  # LandingApplicationSiteBucket:
+  #   Description: The S3 Bucket that will contain the static assets for the landing application
+  #   Value: !GetAtt UserInterface.Outputs.LandingAppBucket
+  # LandingApplicationSite:
+  #   Description: The name of the CloudFront url for Landing site
+  #   Value: !GetAtt UserInterface.Outputs.LandingApplicationSite
   ApplicationSiteBucket:
     Description: The S3 Bucket that will contain the static assets for the tenant application
     Value: !GetAtt UserInterface.Outputs.AppBucket

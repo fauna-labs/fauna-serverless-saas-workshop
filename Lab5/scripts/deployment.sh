@@ -21,7 +21,22 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-stackname="serverless-saas-fauna"
+export $(grep -v '^#' .env | xargs)
+
+stackname=$STACK_NAME
+faunaApiKey=$FAUNA_API_KEY
+
+if [[ -z "$stackname" ]]; then
+    echo "Please provide a stack name by supplying a value for STACK_NAME in the .env file" 
+    echo "Note: Invoke script without parameters to know the list of script parameters"
+    exit 1  
+fi
+
+if [[ -z "$faunaApiKey" ]]; then
+    echo "Please provide a value for FAUNA_API_KEY in the .env file" 
+    echo "Note: Invoke script without parameters to know the list of script parameters"
+    exit 1  
+fi
 
 if [[ $server -eq 1 ]] || [[ $pipeline -eq 1 ]]; then
   echo "CI/CD pipeline code is getting deployed"
@@ -52,8 +67,17 @@ if [[ $server -eq 1 ]] || [[ $pipeline -eq 1 ]]; then
 fi
 
 if [[ $server -eq 1 ]] || [[ $bootstrap -eq 1 ]]; then
-  echo "Bootstrap server code is getting deployed"
+  echo "Migrate Fauna database resources"
+  cd ../server/fauna_adminApp_resources
+  npm install
+  node index.js $faunaApiKey
+  cd ../../scripts
+fi
+
+if [[ $server -eq 1 ]] || [[ $bootstrap -eq 1 ]]; then
+  echo "Server code is getting deployed"
   cd ../server
+
   REGION=$(aws configure get region)
   echo "Validating server code using pylint"
   python3 -m pylint -E -d E0401 $(find . -iname "*.py" -not -path "./.aws-sam/*" -not -path "./TenantPipeline/node_modules/*")
@@ -69,21 +93,16 @@ if [[ $server -eq 1 ]] || [[ $bootstrap -eq 1 ]]; then
 
 fi
 
-ADMIN_SITE_URL=$(aws cloudformation describe-stacks --stack-name $stackname --query "Stacks[0].Outputs[?OutputKey=='AdminAppSite'].OutputValue" --output text)
-LANDING_APP_SITE_URL=$(aws cloudformation describe-stacks --stack-name $stackname --query "Stacks[0].Outputs[?OutputKey=='LandingApplicationSite'].OutputValue" --output text)
 APP_SITE_URL=$(aws cloudformation describe-stacks --stack-name $stackname --query "Stacks[0].Outputs[?OutputKey=='ApplicationSite'].OutputValue" --output text)  
 
 if [[ $client -eq 1 ]]; then
   echo "Client code is getting deployed"
   APP_SITE_BUCKET=$(aws cloudformation describe-stacks --stack-name $stackname --query "Stacks[0].Outputs[?OutputKey=='ApplicationSiteBucket'].OutputValue" --output text)
-  
   ADMIN_APIGATEWAYURL=$(aws cloudformation describe-stacks --stack-name $stackname --query "Stacks[0].Outputs[?OutputKey=='AdminApi'].OutputValue" --output text)
-  
-  # Admin UI and Landing UI are configured in Lab2 
-  echo "Admin UI and Landing UI are configured in Lab2. Only App UI will be reconfigured in this Lab5."
+  ADMIN_APPCLIENTID=$(aws cloudformation describe-stacks --stack-name $stackname --query "Stacks[0].Outputs[?OutputKey=='CognitoOperationUsersUserPoolClientId'].OutputValue" --output text)
+  ADMIN_USERPOOL_ID=$(aws cloudformation describe-stacks --stack-name $stackname --query "Stacks[0].Outputs[?OutputKey=='CognitoOperationUsersUserPoolId'].OutputValue" --output text)
   
   # Configuring app UI 
-
   echo "aws s3 ls s3://$APP_SITE_BUCKET"
   aws s3 ls s3://$APP_SITE_BUCKET 
   if [ $? -ne 0 ]; then
@@ -91,21 +110,14 @@ if [[ $client -eq 1 ]]; then
       exit 1
   fi
 
-  cd ../client/Application
+  cd ../client/App
 
   echo "Configuring environment for App Client"
 
-  cat << EoF > ./src/environments/environment.prod.ts
-  export const environment = {
-    production: true,
-    regApiGatewayUrl: '$ADMIN_APIGATEWAYURL'
-  };
-EoF
-  cat << EoF > ./src/environments/environment.ts
-  export const environment = {
-    production: true,
-    regApiGatewayUrl: '$ADMIN_APIGATEWAYURL'
-  };
+  cat << EoF > .env
+  VITE_ADMIN_API_GATEWAY_URL='$ADMIN_APIGATEWAYURL'
+  VITE_ADMIN_APPCLIENTID='$ADMIN_APPCLIENTID'
+  VITE_ADMIN_USERPOOL_ID='$ADMIN_USERPOOL_ID'
 EoF
 
   npm install --legacy-peer-deps && npm run build
@@ -122,7 +134,5 @@ EoF
 
 fi
 
-echo "Admin site URL: https://$ADMIN_SITE_URL"
-echo "Landing site URL: https://$LANDING_APP_SITE_URL"
 echo "App site URL: https://$APP_SITE_URL"
   

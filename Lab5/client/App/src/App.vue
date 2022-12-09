@@ -4,10 +4,10 @@
     <div class="flex flex-col w-64 h-screen px-4 py-8">
       <div class="ml-4 flex lg:ml-0">
         <a href="#">
-          <span class="sr-only">Workflow</span>
-          <img class="h-8 w-auto"
-            src="https://images.ctfassets.net/po4qc9xpmpuh/7itYmeRxmVGIXwwGWHrQU3/42f3e7fa7d39fab5b6222f6199f0203c/Fauna_Logo.svg"
-            alt="">
+          <span class="sr-only">Menu</span>
+          <h1 v-if="isSysAdmin" class="text-3xl h-8 px-4">Admin App</h1>
+          <h1 v-else class="text-3xl h-8 px-4">Tenant App</h1>
+          <!-- <img class="h-8 w-auto" src="" alt=""> -->
         </a>
       </div>
 
@@ -91,11 +91,8 @@
           </a>
         </nav>
 
-        <div class="flex items-center px-4 -mx-2" v-if="loggedInName">
-          <img class="object-cover mx-2 rounded-full h-9 w-9"
-            src="https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80"
-            alt="avatar" />
-          <h4 class="mx-2 font-medium text-gray-800 dark:text-gray-200 hover:underline">{{loggedInName}}</h4>
+        <div v-if="loggedInName">
+          <Schmoe :title="loggedInName"/>
         </div>
       </div>
     </div>
@@ -137,11 +134,13 @@
 
 <script>
 import Login from '@/components/Login.vue';
+import Schmoe from '@/components/Schmoe.vue';
 
 export default {
   name: 'App',
   components: {
-    Login
+    Login,
+    Schmoe
   },
   data() {
     return {
@@ -161,7 +160,7 @@ export default {
       return this.$store.state.sysAdmin;
     },
     isAdmin() {
-      return this.$store.state.role.toUpperCase().includes('ADMIN');
+      return this.$store.state.role && this.$store.state.role.toUpperCase().includes('ADMIN');
     }
   },
   methods: {

@@ -35,8 +35,8 @@ const authStateHelper = (app, options) => {
     store.commit('setAccessToken', idToken.jwtToken);
     store.commit('setLoggedInName', idToken.payload.email);
     store.commit('setRole', idToken.payload['custom:userRole']);
-    store.commit('setTenantAdminFlag', idToken.payload['custom:userRole'].toUpperCase() == 'TENANTADMIN');
-    store.commit('setSysAdminFlag', idToken.payload['custom:userRole'].toUpperCase() == 'SYSTEMADMIN');
+    store.commit('setTenantAdminFlag', idToken.payload['custom:userRole'] && idToken.payload['custom:userRole'].toUpperCase() == 'TENANTADMIN');
+    store.commit('setSysAdminFlag', idToken.payload['custom:userRole'] && idToken.payload['custom:userRole'].toUpperCase() == 'SYSTEMADMIN');
   }
 
   instance = {

@@ -6,13 +6,14 @@
         @click.self="exit">
         <div class="max-w-xl">
           <div class="grid grid-cols-4 col-span-3 gap-6 bg-gray-200 pl-4 pr-3 py-3 rounded-lg shadow-xl">
+            
             <div class="col-span-3 md:col-span-1" v-if="updateMode">
               <h2 class="mt-6 text-xl font-bold tracking-tight text-gray-800">Update User</h2>
-              <p class="text-gray-400">Update the values and click Save</p>
+              <p class="text-gray-400 py-2">Update the values and click Save</p>
             </div>
             <div class="col-span-3 md:col-span-1" v-else>
               <h2 class="mt-6 text-xl font-bold tracking-tight text-gray-800">Add User</h2>
-              <p class="text-gray-400">To add a new user, fill in the form and click Save</p>
+              <p class="text-gray-400 py-2">To add a new user, fill in the form and click Save</p>
             </div>
 
             <div class="mt-5 col-span-4 md:col-span-3 dark:text-gray-500">
@@ -108,6 +109,7 @@ export default {
       progress: false,
       username: null,
       email: null,
+      seed: null,
       createdDate: null,
       modifiedDate: null,
       status: null,
@@ -135,7 +137,10 @@ export default {
     }
   },
   mounted() {
+    console.log('mounted')
     if (this.user) {
+      this.seed = this.user.email;
+
       this.updateMode = true;
       this.username = this.user.user_name;
       this.email = this.user.email;

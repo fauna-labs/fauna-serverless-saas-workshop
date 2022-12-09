@@ -17,25 +17,21 @@ from faunadb.errors import Unauthorized, NotFound
 FAUNA_CONFIG_PATH = os.environ['FAUNA_CONFIG_PATH']
 boto_client = boto3.client('ssm')
 
+
 class FaunaFromConfig(FaunaClient):
     def __init__(self):
         config = load_config()
         print("Loading config and creating new Fauna client...")
-        print("Fauna domain = {}".format(config['FAUNA']['domain']))
         
-        self.domain = config['FAUNA']['domain']
         self.secret = config['FAUNA']['secret']
 
         FaunaClient.__init__(self,
-            domain=self.domain,
             secret=self.secret
         )
-        
-    def get_domain(self):
-        return self.domain
 
     def get_secret(self):
         return self.secret
+
 
 def FaunaClients(clients, tenant_id=None):
     if tenant_id is None:
@@ -55,17 +51,8 @@ def FaunaClients(clients, tenant_id=None):
             client = admin_client
         else:
           try:
-            # create_key = admin_client.query(
-            #   q.create_key({
-            #     "role": "admin",
-            #     "database": q.database("tenant_{}".format(tenant_id))
-            #   })
-            # )
-            # print("create_key: {}".format(create_key))
             print("creating client for tenant {}".format(tenant_id))
             client = FaunaClient(
-                domain=admin_client.get_domain(),
-                # secret=create_key['secret']
                 secret="{}:tenant_{}:server".format(admin_client.get_secret(), tenant_id)
             )
             clients[tenant_id] = client
@@ -74,7 +61,7 @@ def FaunaClients(clients, tenant_id=None):
  
         return client
 
-# https://aws.amazon.com/blogs/compute/sharing-secrets-with-aws-lambda-using-aws-systems-manager-parameter-store/
+
 def load_config():
     configuration = configparser.ConfigParser()
     config_dict = {}
@@ -94,6 +81,7 @@ def load_config():
     finally:
         configuration['FAUNA'] = config_dict
         return configuration
+
 
 class TenantTier(Enum):
     PLATINUM    = "Platinum"

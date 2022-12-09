@@ -5,8 +5,7 @@
     <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all p-4">
       <div class="w-full max-w-md space-y-8">
         <div>
-          <img class="mx-auto h-8 w-auto" src="https://images.ctfassets.net/po4qc9xpmpuh/7itYmeRxmVGIXwwGWHrQU3/42f3e7fa7d39fab5b6222f6199f0203c/Fauna_Logo.svg"
-            alt="Fauna">
+          <!-- <img class="mx-auto h-8 w-auto" src="" alt=""> -->
           <h2 class="mt-6 text-center text-2xl font-bold tracking-tight text-gray-900">Sign in to your account</h2>
         </div>
         <form class="mt-8 space-y-6" @submit.prevent="login">
@@ -156,17 +155,30 @@ export default {
           ClientId: import.meta.env.VITE_ADMIN_APPCLIENTID
         };
       } else {
-        const tenantDetails = await this.getTenant();
-        if (!tenantDetails.userPoolId || !tenantDetails.appClientId) {
-          alert(tenantDetails.message);
-          this.loggingIn = false;
-          return;
+        // This condition happens from Lab5 onwards
+        // - There is no "tenant" field in the login screen
+        if (this.tenant && this.tenant.length > 0) {
+          const tenantDetails = await this.getTenant();
+          if (!tenantDetails.userPoolId || !tenantDetails.appClientId) {
+            alert(tenantDetails.message);
+            this.loggingIn = false;
+            return;
+          }
+          this.$store.commit('setApiGatewayUrl', tenantDetails.apiGatewayUrl);
+          poolData = {
+            UserPoolId: tenantDetails.userPoolId,
+            ClientId: tenantDetails.appClientId,
+          };
+        } else { 
+          // This condition occurs prior to Lab5
+          // - All users belong to pooled resources so we don't need to look it up
+          //   and instead just store in env variables
+          this.$store.commit('setApiGatewayUrl', import.meta.env.VITE_APP_API_GATEWAY_URL);
+          poolData = {
+            UserPoolId: import.meta.env.VITE_APP_USERPOOL_ID,
+            ClientId: import.meta.env.VITE_APP_APPCLIENTID
+          };
         }
-        this.$store.commit('setApiGatewayUrl', tenantDetails.apiGatewayUrl);
-        poolData = {
-          UserPoolId: tenantDetails.userPoolId,
-          ClientId: tenantDetails.appClientId,
-        };
       }
 
       const userPool = new CognitoUserPool(poolData);
