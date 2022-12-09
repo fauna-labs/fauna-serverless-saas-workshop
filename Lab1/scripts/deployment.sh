@@ -46,9 +46,12 @@ if [[ $server -eq 1 ]]; then
   cd ../server/fauna_resources
   npm install
   node index.js $faunaApiKey
+  cd ../../scripts
+fi
 
+if [[ $server -eq 1 ]]; then
   echo "Server code is getting deployed"
-  cd ..
+  cd ../server
   REGION=$(aws configure get region)
 
   DEFAULT_SAM_S3_BUCKET=$(grep s3_bucket samconfig.toml|cut -d'=' -f2 | cut -d \" -f2)
