@@ -41,7 +41,7 @@ cp .env ../../Lab5/scripts/
 
 if [[ $server -eq 1 ]]; then
   echo "Migrate Fauna database resources"
-  cd ../server/fauna_resources
+  cd ../server/fauna_adminApp_resources
   npm install
   node index.js $faunaApiKey
   cd ../../scripts

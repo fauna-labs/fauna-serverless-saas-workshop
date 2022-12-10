@@ -35,6 +35,7 @@ Resources:
     Properties:
       Location: nested_templates/cognito.yaml
       Parameters:
+        StackName: !Ref StackName
         AdminEmailParameter: !Ref AdminEmailParameter
         SystemAdminRoleNameParameter: !Ref SystemAdminRoleNameParameter
         AdminUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.ApplicationSite

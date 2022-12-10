@@ -6,6 +6,8 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   Template to setup cognito as part of bootstrap
 Parameters:
+  StackName:
+    Type: String
   AdminEmailParameter:
     Type: String
     Description: "Enter system admin email address"
@@ -19,7 +21,7 @@ Resources:
   CognitoUserPool:
     Type: "AWS::Cognito::UserPool"
     Properties:
-      UserPoolName: PooledTenant-ServerlessSaaSFaunaUserPool
+      UserPoolName: !Sub 'PooledTenant-${StackName}-UserPool'
       AutoVerifiedAttributes:
         - "email"
       AccountRecoverySetting:
@@ -49,7 +51,7 @@ Resources:
   CognitoUserPoolClient:
     Type: "AWS::Cognito::UserPoolClient"
     Properties:
-      ClientName: ServerlessSaaSFaunaClient
+      ClientName: !Sub '${StackName}-Client'
       GenerateSecret: false
       UserPoolId: !Ref CognitoUserPool
       AllowedOAuthFlowsUserPoolClient: True
@@ -80,7 +82,7 @@ Resources:
   CognitoOperationUsersUserPool:
     Type: "AWS::Cognito::UserPool"
     Properties:
-      UserPoolName: OperationUsers-ServerlessSaaSFaunaUserPool
+      UserPoolName: !Sub 'OperationUsers-${StackName}-UserPool'
       AutoVerifiedAttributes:
         - "email"
       AccountRecoverySetting:
@@ -113,7 +115,7 @@ Resources:
   CognitoOperationUsersUserPoolClient:
     Type: "AWS::Cognito::UserPoolClient"
     Properties:
-      ClientName: ServerlessSaaSFaunaOperationUsersPoolClient
+      ClientName: !Sub '${StackName}-OperationUsersPoolClient'
       GenerateSecret: false
       UserPoolId: !Ref CognitoOperationUsersUserPool
       AllowedOAuthFlowsUserPoolClient: True
