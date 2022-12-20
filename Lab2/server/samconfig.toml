@@ -2,9 +2,9 @@ version = 0.1
 [default]
 [default.deploy]
 [default.deploy.parameters]
-stack_name = "serverless-saas-fauna"
+stack_name = "serverless-saas-wkshp"
 s3_bucket = "sam-bootstrap-bucket-e6426b54-f90d-46e8-9e26-225ab27aff67"
-s3_prefix = "serverless-saas-fauna"
+s3_prefix = "serverless-saas-wkshp"
 region = "us-west-2"
 confirm_changeset = false
 capabilities = "CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND"
