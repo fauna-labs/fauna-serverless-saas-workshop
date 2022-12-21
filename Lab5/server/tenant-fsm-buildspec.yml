@@ -6,6 +6,8 @@ phases:
   install:    
     commands:
       # Install packages or any pre-reqs in this phase.
+      - cd Lab5/server/fauna_resources
+      - npm install
 
   pre_build:
     commands:
@@ -16,8 +18,6 @@ phases:
       # Use Build phase to build your artifacts (compile, etc.)
 
       # Run Fauna migrations      
-      - cd Lab5/server/fauna_resources
-      - npm install
       - node index.js $FAUNA_API_KEY
 
   post_build:
