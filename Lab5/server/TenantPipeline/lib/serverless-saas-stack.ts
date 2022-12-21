@@ -23,7 +23,7 @@ export class FaunaMigrationsStack extends cdk.Stack {
 
     // Pipeline creation starts
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
-      pipelineName: `${process.env.STACK_NAME}-pipeline`,
+      pipelineName: 'fauna-migration-stack-pipeline',
       artifactBucket: artifactsBucket
     });
 
@@ -59,8 +59,8 @@ export class FaunaMigrationsStack extends cdk.Stack {
       buildSpec : codebuild.BuildSpec.fromSourceFilename("Lab5/server/tenant-fsm-buildspec.yml"),
       environment: { buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_2 },
       environmentVariables: {
-        'PACKAGE_BUCKET': {
-          value: artifactsBucket.bucketName
+        'FAUNA_API_KEY': {
+          value: process.env.FAUNA_API_KEY
         }
       }
     });
@@ -109,7 +109,7 @@ export class ServerlessSaaSStack extends cdk.Stack {
 
     // Pipeline creation starts
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
-      pipelineName: `${process.env.STACK_NAME}-pipeline`,
+      pipelineName: 'serverless-stack-workshop-pipeline',
       artifactBucket: artifactsBucket
     });
 

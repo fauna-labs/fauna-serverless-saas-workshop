@@ -16,24 +16,21 @@ phases:
       - python -m pip install -r requirements.txt 
   pre_build:
     commands:
+      # Run Fauna migrations      
+      - cd ../fauna_resources
+      - npm install
+      - node index.js
       # Run tests, lint scripts or any other pre-build checks.
       - cd ..
       - export PYTHONPATH=./ProductService/
       # unit tests needs to be fixed. Commenting for now
       #- python -m pytest tests/unit/ProductService-test_handler.py
-
   build:
     commands:
       # Use Build phase to build your artifacts (compile, etc.)
       - sam build -t tenant-template.yaml
-
   post_build:
     commands:
-      # Run Fauna migrations      
-      - cd ./fauna_resources
-      - npm install
-      - node index.js
-
       # Use Post-Build for notifications, git tags, upload artifacts to S3
       - sam package --s3-bucket $PACKAGE_BUCKET --output-template-file packaged.yaml
 
