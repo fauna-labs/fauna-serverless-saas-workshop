@@ -5,7 +5,7 @@ import { ServerlessSaaSStack, FaunaMigrationsStack } from '../lib/serverless-saa
 
 const app = new cdk.App();
 
-new ServerlessSaaSStack(app, 'serverless-saas-fauna-pipeline');
+new ServerlessSaaSStack(app, 'svls-saas-wkshp-pipeline');
 
 new FaunaMigrationsStack(app, 'fauna-migrations-pipeline');
 

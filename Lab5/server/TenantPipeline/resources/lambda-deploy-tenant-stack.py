@@ -3,24 +3,19 @@
 
 from boto3.session import Session
 
+import os
 import json
 import boto3
 import zipfile
 import tempfile
 import botocore
 import traceback
-import time
-
-
-
-print('Loading function')
 
 cf = boto3.client('cloudformation')
 code_pipeline = boto3.client('codepipeline')
 dynamodb = boto3.resource('dynamodb')
-table_tenant_stack_mapping = dynamodb.Table('ServerlessSaaSFauna-TenantStackMapping')
-# table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')
-# table_tenant_settings = dynamodb.Table('ServerlessSaaS-Settings')
+STACK_NAME = os.environ['STACK_NAME']
+table_tenant_stack_mapping = dynamodb.Table('{}-TenantStackMapping'.format(STACK_NAME))
 
 
 def find_artifact(artifacts, name):
@@ -40,6 +35,7 @@ def find_artifact(artifacts, name):
             return artifact
             
     raise Exception('Input artifact named "{0}" not found in event'.format(name))
+
 
 def get_template_url(s3, artifact, file_in_zip):
     """Gets the template artifact
@@ -61,10 +57,8 @@ def get_template_url(s3, artifact, file_in_zip):
     """
     tmp_file = tempfile.NamedTemporaryFile()
     bucket = artifact['location']['s3Location']['bucketName']
-    print(bucket)
 
     key = artifact['location']['s3Location']['objectKey']
-    print(key)    
     with tempfile.NamedTemporaryFile() as tmp_file:
         s3.download_file(bucket, key, tmp_file.name)
         with zipfile.ZipFile(tmp_file.name, 'r') as zip:
@@ -73,7 +67,6 @@ def get_template_url(s3, artifact, file_in_zip):
             template_url =''.join(['https://', bucket,'.s3.amazonaws.com/',file_in_zip])
             return template_url  
 
-            
    
 def update_stack(stack, template_url, params):
     """Start a CloudFormation stack update
@@ -100,6 +93,7 @@ def update_stack(stack, template_url, params):
         else:
             raise Exception('Error updating CloudFormation stack "{0}"'.format(stack), e)
 
+
 def stack_exists(stack):
     """Check if a stack exists or not
     
@@ -123,6 +117,7 @@ def stack_exists(stack):
         else:
             raise e
 
+
 def create_stack(stack, template_url, params):
     """Starts a new CloudFormation stack creation
     
@@ -133,8 +128,13 @@ def create_stack(stack, template_url, params):
     Throws:
         Exception: Any exception thrown by .create_stack()
     """
-    cf.create_stack(StackName=stack, TemplateURL=template_url, Capabilities=['CAPABILITY_NAMED_IAM', 'CAPABILITY_AUTO_EXPAND'], Parameters=params)
+    cf.create_stack(
+      StackName=stack, 
+      TemplateURL=template_url, 
+      Capabilities=['CAPABILITY_NAMED_IAM', 'CAPABILITY_AUTO_EXPAND'], 
+      Parameters=params)
  
+
 def get_stack_status(stack):
     """Get the status of an existing CloudFormation stack
     
@@ -151,6 +151,7 @@ def get_stack_status(stack):
     stack_description = cf.describe_stacks(StackName=stack)
     return stack_description['Stacks'][0]['StackStatus']
   
+
 def put_job_success(job, message):
     """Notify CodePipeline of a successful job
     
@@ -166,6 +167,7 @@ def put_job_success(job, message):
     print(message)
     code_pipeline.put_job_success_result(jobId=job)
   
+
 def put_job_failure(job, message):
     """Notify CodePipeline of a failed job
     
@@ -181,6 +183,7 @@ def put_job_failure(job, message):
     print(message)
     code_pipeline.put_job_failure_result(jobId=job, failureDetails={'message': message, 'type': 'JobFailed'})
  
+
 def continue_job_later(job, message):
     """Notify CodePipeline of a continuing job
     
@@ -204,6 +207,7 @@ def continue_job_later(job, message):
     print('Putting job continuation')
     print(message)
     code_pipeline.put_job_success_result(jobId=job, continuationToken=continuation_token)
+
 
 def start_update_or_create(job_id, stack, template_url, params):
     """Starts the stack update or create process
@@ -242,6 +246,7 @@ def start_update_or_create(job_id, stack, template_url, params):
         # stack to be created.
         continue_job_later(job_id, 'Stack create started') 
 
+
 def check_stack_update_status(job_id, stack):
     """Monitor an already-running CloudFormation update/create
     
@@ -269,6 +274,7 @@ def check_stack_update_status(job_id, stack):
         # then the stack update/create has failed so end the job with
         # a failed result.
         put_job_failure(job_id, 'Update failed: ' + status)
+
 
 def get_user_params(job_data):
     """Decodes the JSON user parameters and validates the required properties.
@@ -307,6 +313,7 @@ def get_user_params(job_data):
     
     return decoded_parameters
     
+
 def setup_s3_client(job_data):
     """Creates an S3 client
     
@@ -333,6 +340,7 @@ def setup_s3_client(job_data):
     # return session.client('s3')
     return boto3.client('s3')
 
+
 def get_tenant_params(tenantId):
     """Get tenant details to be supplied to Cloud formation
 
@@ -347,16 +355,18 @@ def get_tenant_params(tenantId):
     param_tenantid['ParameterKey'] = 'TenantIdParameter'
     param_tenantid['ParameterValue'] = tenantId
     params.append(param_tenantid)
+    param_stack_name = {}
+    param_stack_name['ParameterKey'] = 'StackName'
+    param_stack_name['ParameterValue'] = STACK_NAME
 
     return params
+
 
 def add_parameter(params, parameter_key, parameter_value):
     parameter = {}
     parameter['ParameterKey'] = parameter_key
     parameter['ParameterValue'] = parameter_value
     params.append(parameter)
-
-
 
 
 def update_tenantstackmapping(tenantId, commit_id):
@@ -378,6 +388,7 @@ def update_tenantstackmapping(tenantId, commit_id):
             ReturnValues="NONE") 
     
     return response
+
 
 def lambda_handler(event, context):
     """The Lambda function handler
@@ -412,8 +423,6 @@ def lambda_handler(event, context):
 
         # Get all the stacks for each tenant to be updated/created from tenant stack mapping table
         mappings = table_tenant_stack_mapping.scan()
-        print('MAPPINGS:')
-        print (mappings)
         #Update/Create stacks for all tenants
         for mapping in mappings['Items']:
             stack = mapping['stackName']

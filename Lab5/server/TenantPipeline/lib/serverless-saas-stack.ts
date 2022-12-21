@@ -13,6 +13,7 @@ import codebuild = require('@aws-cdk/aws-codebuild');
 
 import { Function, Runtime, AssetCode } from '@aws-cdk/aws-lambda'
 import { PolicyStatement } from "@aws-cdk/aws-iam"
+import { POINT_CONVERSION_COMPRESSED } from 'constants';
 
 export class FaunaMigrationsStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -30,7 +31,7 @@ export class FaunaMigrationsStack extends cdk.Stack {
     const codeRepo = codecommit.Repository.fromRepositoryName(
       this,
       'AppRepository', 
-      'aws-serverless-saas-fauna-workshop' 
+      `${process.env.STACK_NAME}-workshop`
     );
 
     // Declare source code as an artifact
@@ -92,6 +93,7 @@ export class ServerlessSaaSStack extends cdk.Stack {
         lambdaPolicy.addActions("*")
         lambdaPolicy.addResources("*")
 
+
     const lambdaFunction = new Function(this, "deploy-tenant-stack", {
         handler: "lambda-deploy-tenant-stack.lambda_handler",
         runtime: Runtime.PYTHON_3_8,
@@ -100,13 +102,14 @@ export class ServerlessSaaSStack extends cdk.Stack {
         timeout: Duration.seconds(10),
         environment: {
             BUCKET: artifactsBucket.bucketName,
+            STACK_NAME: process.env.STACK_NAME || "serverless-saas-wkshp"
         },
-        initialPolicy: [lambdaPolicy],
+        initialPolicy: [lambdaPolicy]
     })
 
     // Pipeline creation starts
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
-      pipelineName: 'serverless-saas-fauna-pipeline',
+      pipelineName: `${process.env.STACK_NAME}-pipeline`,
       artifactBucket: artifactsBucket
     });
 
@@ -114,7 +117,7 @@ export class ServerlessSaaSStack extends cdk.Stack {
     const codeRepo = codecommit.Repository.fromRepositoryName(
       this,
       'AppRepository', 
-      'aws-serverless-saas-fauna-workshop' 
+      `${process.env.STACK_NAME}-workshop`
     );
 
     // Declare source code as an artifact
@@ -137,8 +140,6 @@ export class ServerlessSaaSStack extends cdk.Stack {
     // Declare build output as artifacts
     const buildOutput = new codepipeline.Artifact();
 
-
-
     //Declare a new CodeBuild project
     const buildProject = new codebuild.PipelineProject(this, 'Build', {
       buildSpec : codebuild.BuildSpec.fromSourceFilename("Lab5/server/tenant-buildspec.yml"),
@@ -149,7 +150,6 @@ export class ServerlessSaaSStack extends cdk.Stack {
         }
       }
     });
-
     
 
     // Add the build stage to our pipeline

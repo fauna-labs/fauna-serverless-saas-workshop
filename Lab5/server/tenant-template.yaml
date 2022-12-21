@@ -11,13 +11,16 @@ Parameters:
     Type: String
     Default: pooled
     Description: Tenant ID for the stack
+  StackName:
+    Type: String
+    Default: "serverless-saas-workshop"
   StageName:
     Type: String
     Default: "prod"
     Description: "Stage Name for the api"
   ParameterStoreFaunaConfig:
     Type: String
-    Default: '/serverless-saas-fauna-workshop/faunadb/config'
+    Default: !Sub '/${StackName}/faunadb/config'
     Description: "Parameter Store path where Fauna configuration and secrets are stored"
 Conditions:
   IsPooledDeploy: !Equals [ !Ref TenantIdParameter, pooled]
@@ -36,7 +39,7 @@ Resources:
   ServerlessSaaSLayers:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      LayerName: !Join ['-', [serverless-saas-fauna-dependencies, !Ref TenantIdParameter]]
+      LayerName: !Sub '${StackName}-dependencies-${TenantIdParameter}'
       Description: Utilities for project
       ContentUri: layers/
       CompatibleRuntimes:
@@ -136,7 +139,7 @@ Resources:
       Runtime: python3.8  
       Tracing: Active
       # Role: !GetAtt ProductFunctionExecutionRole.Arn
-      Role: !ImportValue SaaS-Fauna-ProductFunctionExecutionRoleArn
+      Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -156,7 +159,7 @@ Resources:
       Runtime: python3.8  
       Tracing: Active
       # Role: !GetAtt ProductFunctionExecutionRole.Arn
-      Role: !ImportValue SaaS-Fauna-ProductFunctionExecutionRoleArn
+      Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -176,7 +179,7 @@ Resources:
       Runtime: python3.8  
       Tracing: Active 
       # Role: !GetAtt ProductFunctionExecutionRole.Arn 
-      Role: !ImportValue SaaS-Fauna-ProductFunctionExecutionRoleArn
+      Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -196,7 +199,7 @@ Resources:
       Runtime: python3.8 
       Tracing: Active
       # Role: !GetAtt ProductFunctionExecutionRole.Arn 
-      Role: !ImportValue SaaS-Fauna-ProductFunctionExecutionRoleArn
+      Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -216,7 +219,7 @@ Resources:
       Runtime: python3.8 
       Tracing: Active
       # Role: !GetAtt ProductFunctionExecutionRole.Arn 
-      Role: !ImportValue SaaS-Fauna-ProductFunctionExecutionRoleArn
+      Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -275,7 +278,7 @@ Resources:
       Runtime: python3.8  
       Tracing: Active
       # Role: !GetAtt OrderFunctionExecutionRole.Arn
-      Role: !ImportValue SaaS-Fauna-OrderFunctionExecutionRoleArn
+      Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -295,7 +298,7 @@ Resources:
       Runtime: python3.8  
       Tracing: Active
       # Role: !GetAtt OrderFunctionExecutionRole.Arn
-      Role: !ImportValue SaaS-Fauna-OrderFunctionExecutionRoleArn
+      Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -315,7 +318,7 @@ Resources:
       Runtime: python3.8  
       Tracing: Active 
       # Role: !GetAtt OrderFunctionExecutionRole.Arn 
-      Role: !ImportValue SaaS-Fauna-OrderFunctionExecutionRoleArn
+      Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -335,7 +338,7 @@ Resources:
       Runtime: python3.8 
       Tracing: Active
       # Role: !GetAtt OrderFunctionExecutionRole.Arn 
-      Role: !ImportValue SaaS-Fauna-OrderFunctionExecutionRoleArn
+      Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -355,7 +358,7 @@ Resources:
       Runtime: python3.8 
       Tracing: Active
       # Role: !GetAtt OrderFunctionExecutionRole.Arn 
-      Role: !ImportValue SaaS-Fauna-OrderFunctionExecutionRoleArn
+      Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
@@ -370,10 +373,10 @@ Resources:
   GetTenantInfo: 
     Type: Custom::GetTenantInfo
     Properties: 
-      ServiceToken: !ImportValue SaaS-Fauna-GetTenantInfoFunction
+      ServiceToken: !ImportValue Svls-saas-wkshp-GetTenantInfoFunction
       TenantId: !Ref TenantIdParameter  
-      TenantUserPoolPooled: !ImportValue Serverless-SaaS-Fauna-CognitoTenantUserPoolId
-      TenantAppClientPooled: !ImportValue Serverless-SaaS-Fauna-CognitoTenantAppClientId
+      TenantUserPoolPooled: !ImportValue Svls-saas-wkshp-CognitoTenantUserPoolId
+      TenantAppClientPooled: !ImportValue Svls-saas-wkshp-CognitoTenantAppClientId
       ParameterStoreFaunaConfig: !Ref ParameterStoreFaunaConfig
       # TenantApiGatewayUrlPooled: !Sub "https://${ApiGatewayTenantApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
 
@@ -384,7 +387,7 @@ Resources:
       CodeUri: Resources/
       Handler: tenant_authorizer.lambda_handler
       Runtime: python3.8
-      Role: !ImportValue SaaS-Fauna-AuthorizerExecutionRoleArn
+      Role: !ImportValue Svls-saas-wkshp-AuthorizerExecutionRoleArn
       # Role: !ImportValue Serverless-SaaS-AuthorizerExecutionRoleArn
       MemorySize: 256
       Tracing: Active
@@ -392,8 +395,8 @@ Resources:
         - !Ref ServerlessSaaSLayers
       Environment:
         Variables:        
-          OPERATION_USERS_USER_POOL: !ImportValue SaaS-Fauna-CognitoOperationUsersUserPoolId
-          OPERATION_USERS_APP_CLIENT: !ImportValue SaaS-Fauna-CognitoOperationUsersUserPoolClientId
+          OPERATION_USERS_USER_POOL: !ImportValue Svls-saas-wkshp-CognitoOperationUsersUserPoolId
+          OPERATION_USERS_APP_CLIENT: !ImportValue Svls-saas-wkshp--CognitoOperationUsersUserPoolClientId
           TENANT_USER_POOL: !GetAtt GetTenantInfo.userPoolId
           TENANT_APP_CLIENT: !GetAtt GetTenantInfo.appClientId
           # TENANT_API_GATEWAY_URL: !GetAtt GetTenantInfo.apiGatewayUrl
@@ -401,7 +404,7 @@ Resources:
   ApiGatewayAccessLogs:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Join ['-', [/aws/api-gateway/access-logs-serverless-saas-fauna-tenant-api-, !Ref TenantIdParameter]]
+      LogGroupName: !Sub '/aws/api-gateway/access-logs-${StackName}-tenant-api-${TenantIdParameter}'
       RetentionInDays: 30
   ApiGatewayTenantApi:
     Type: AWS::Serverless::Api
@@ -419,7 +422,7 @@ Resources:
       DefinitionBody:
         openapi: 3.0.1
         info:
-          title: !Join ['-', [!Ref TenantIdParameter, 'serverless-saas-fauna-tenant-api']]
+          title: !Sub '${StackName}-tenant-api-${TenantIdParameter}'
         basePath: !Join ['', ['/', !Ref StageName]]
         x-amazon-apigateway-api-key-source : "AUTHORIZER"
         schemes:
@@ -1011,9 +1014,9 @@ Resources:
     Type: Custom::UpdateTenantDetailsApiGatewayUrl
     # DependsOn: UpdateTenantApiGatewayUrlFunction
     Properties:
-      ServiceToken: !ImportValue SaaS-Fauna-UpdateTenantApigUrlFunction
+      ServiceToken: !ImportValue Svls-saas-wkshp--UpdateTenantApigUrlFunction
       # TenantDetailsTableName: ServerlessSaaS-TenantDetails
-      SettingsTableName: ServerlessSaaSFauna-Settings  
+      SettingsTableName: !Sub '${StackName}-Settings'
       TenantId: !Ref TenantIdParameter  
       TenantApiGatewayUrl: !Sub "https://${ApiGatewayTenantApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
       ParameterStoreFaunaConfig: !Ref ParameterStoreFaunaConfig

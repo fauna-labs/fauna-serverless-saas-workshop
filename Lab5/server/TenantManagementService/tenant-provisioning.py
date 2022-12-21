@@ -37,7 +37,7 @@ def provision_tenant(event, context):
           logger.info(response_ddb)
 
           response_codepipeline = codepipeline.start_pipeline_execution(
-              name='serverless-saas-fauna-pipeline'
+              name='svls-saas-wkshp-pipeline'
           )
         else:
           response_codepipeline = codepipeline.start_pipeline_execution(

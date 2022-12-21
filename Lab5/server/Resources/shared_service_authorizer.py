@@ -11,7 +11,6 @@ import logger
 from jose import jwk, jwt
 from jose.utils import base64url_decode
 import auth_manager
-import utils
 
 from utils import FaunaClients
 from faunadb import query as q
@@ -20,8 +19,6 @@ clients = {}
 
 region = os.environ['AWS_REGION']
 sts_client = boto3.client("sts", region_name=region)
-# dynamodb = boto3.resource('dynamodb')
-# table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')
 user_pool_operation_user = os.environ['OPERATION_USERS_USER_POOL']
 app_client_operation_user = os.environ['OPERATION_USERS_APP_CLIENT']
 
@@ -42,16 +39,7 @@ def lambda_handler(event, context):
     if(auth_manager.isSaaSProvider(unauthorized_claims['custom:userRole'])):
         userpool_id = user_pool_operation_user
         appclient_id = app_client_operation_user  
-    else:
-        #get tenant user pool and app client to validate jwt token against
-        # tenant_details = table_tenant_details.get_item( 
-        #     Key ={
-        #         'tenantId': unauthorized_claims['custom:tenantId']
-        #     }
-        # )
-        # logger.info(tenant_details)
-        # userpool_id = tenant_details['Item']['userPoolId']
-        # appclient_id = tenant_details['Item']['appClientId']        
+    else:     
         global clients
         db = FaunaClients(clients)
         res = db.query(
