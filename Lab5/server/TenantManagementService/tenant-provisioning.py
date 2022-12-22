@@ -37,11 +37,11 @@ def provision_tenant(event, context):
           logger.info(response_ddb)
 
           response_codepipeline = codepipeline.start_pipeline_execution(
-              name='svls-saas-wkshp-pipeline'
+              name='serverless-stack-workshop-pipeline'
           )
         else:
           response_codepipeline = codepipeline.start_pipeline_execution(
-              name='fauna-migrations-pipeline'
+              name='fauna-migration-stack-pipeline'
           )
 
     except Exception as e:
