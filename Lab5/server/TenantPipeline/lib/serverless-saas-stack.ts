@@ -147,6 +147,9 @@ export class ServerlessSaaSStack extends cdk.Stack {
       environmentVariables: {
         'PACKAGE_BUCKET': {
           value: artifactsBucket.bucketName
+        },
+        'FAUNA_API_KEY': {
+          value: process.env.FAUNA_API_KEY
         }
       }
     });

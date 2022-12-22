@@ -19,7 +19,7 @@ phases:
       # Run Fauna migrations      
       - cd ../fauna_resources
       - npm install
-      - node index.js
+      - node index.js $FAUNA_API_KEY
       # Run tests, lint scripts or any other pre-build checks.
       - cd ..
       - export PYTHONPATH=./ProductService/

@@ -18,10 +18,6 @@ Parameters:
     Type: String
     Default: "prod"
     Description: "Stage Name for the api"
-  ParameterStoreFaunaConfig:
-    Type: String
-    Default: !Sub '/${StackName}/faunadb/config'
-    Description: "Parameter Store path where Fauna configuration and secrets are stored"
 Conditions:
   IsPooledDeploy: !Equals [ !Ref TenantIdParameter, pooled]
   IsSiloDeploy: !Not [!Equals [ !Ref TenantIdParameter, pooled]]    
@@ -34,7 +30,7 @@ Globals:
         Variables:
           LOG_LEVEL: DEBUG         
           POWERTOOLS_METRICS_NAMESPACE: "ServerlessSaaS"
-          FAUNA_CONFIG_PATH: !Ref ParameterStoreFaunaConfig
+          FAUNA_CONFIG_PATH: !Sub '/${StackName}/faunadb/config'
 Resources: 
   ServerlessSaaSLayers:
     Type: AWS::Serverless::LayerVersion
@@ -377,7 +373,7 @@ Resources:
       TenantId: !Ref TenantIdParameter  
       TenantUserPoolPooled: !ImportValue Svls-saas-wkshp-CognitoTenantUserPoolId
       TenantAppClientPooled: !ImportValue Svls-saas-wkshp-CognitoTenantAppClientId
-      ParameterStoreFaunaConfig: !Ref ParameterStoreFaunaConfig
+      ParameterStoreFaunaConfig: !Sub '/${StackName}/faunadb/config'
       # TenantApiGatewayUrlPooled: !Sub "https://${ApiGatewayTenantApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
 
   BusinessServicesAuthorizerFunction:
@@ -1019,7 +1015,7 @@ Resources:
       SettingsTableName: !Sub '${StackName}-Settings'
       TenantId: !Ref TenantIdParameter  
       TenantApiGatewayUrl: !Sub "https://${ApiGatewayTenantApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
-      ParameterStoreFaunaConfig: !Ref ParameterStoreFaunaConfig
+      ParameterStoreFaunaConfig: !Sub '/${StackName}/faunadb/config'
 
 Outputs:
   TenantApiGatewayId:

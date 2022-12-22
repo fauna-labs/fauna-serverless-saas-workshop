@@ -21,10 +21,6 @@ Parameters:
   StackName:
     Type: String
     Default: "serverless-saas-workshop"
-  ParameterStoreFaunaConfig:
-    Type: String
-    Default: !Sub '/${StackName}/faunadb/config'
-    Description: "Parameter Store path where Fauna configuration and secrets are stored"
   ParameterStoreFaunaAppConfigPublic:
     Type: String
     Default: '{"domain": "db.fauna.com"}'
@@ -49,6 +45,7 @@ Resources:
     Properties:
       Location: nested_templates/cognito.yaml
       Parameters:
+        StackName: !Ref StackName
         AdminEmailParameter: !Ref AdminEmailParameter
         SystemAdminRoleNameParameter: !Ref SystemAdminRoleNameParameter
         AdminUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.ApplicationSite
@@ -61,7 +58,7 @@ Resources:
       Location: nested_templates/lambdafunctions.yaml
       Parameters:
         StackName: !Ref StackName
-        ParameterStoreFaunaConfig: !Ref ParameterStoreFaunaConfig
+        ParameterStoreFaunaConfig: !Sub '/${StackName}/faunadb/config'
         ParameterStoreFaunaAppConfigPublic: !Ref ParameterStoreFaunaAppConfigPublic
         CognitoUserPoolId: !GetAtt Cognito.Outputs.CognitoUserPoolId
         CognitoUserPoolClientId: !GetAtt Cognito.Outputs.CognitoUserPoolClientId                
