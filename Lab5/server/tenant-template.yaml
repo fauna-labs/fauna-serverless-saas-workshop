@@ -1010,7 +1010,7 @@ Resources:
     Type: Custom::UpdateTenantDetailsApiGatewayUrl
     # DependsOn: UpdateTenantApiGatewayUrlFunction
     Properties:
-      ServiceToken: !ImportValue Svls-saas-wkshp--UpdateTenantApigUrlFunction
+      ServiceToken: !ImportValue Svls-saas-wkshp-UpdateTenantApigUrlFunction
       # TenantDetailsTableName: ServerlessSaaS-TenantDetails
       SettingsTableName: !Sub '${StackName}-Settings'
       TenantId: !Ref TenantIdParameter  
