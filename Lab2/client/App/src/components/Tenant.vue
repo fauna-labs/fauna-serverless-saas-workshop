@@ -186,7 +186,7 @@ export default {
           'Accept': 'application/json',
       }      
       if (this.updateMode) {
-        this.url = `${import.meta.env.VITE_ADMIN_API_GATEWAY_URL}/tenant/${this.tenant.tenantId}`;
+        this.url = `${import.meta.env.VITE_ADMIN_API_GATEWAY_URL}tenant/${this.tenant.tenantId}`;
         this.apimethod = 'PUT';
         const accessToken = this.$auth.getAccessToken();
         if (!accessToken) {
@@ -194,7 +194,7 @@ export default {
         }
         headers['Authorization'] = `Bearer ${accessToken}`
       } else {
-        this.url = `${import.meta.env.VITE_ADMIN_API_GATEWAY_URL}/registration`;
+        this.url = `${import.meta.env.VITE_ADMIN_API_GATEWAY_URL}registration`;
         this.apimethod = 'POST';
       }
       const res = await fetch(

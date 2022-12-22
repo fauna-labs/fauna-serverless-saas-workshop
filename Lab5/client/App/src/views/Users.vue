@@ -104,7 +104,7 @@ export default {
       this.progress = true;
 
       fetch(
-        `${import.meta.env.VITE_ADMIN_API_GATEWAY_URL}/users`, {
+        `${import.meta.env.VITE_ADMIN_API_GATEWAY_URL}users`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${this.accessToken}`,

@@ -129,7 +129,7 @@ export default {
     },
     async getTenant() {
       const res = await fetch(
-        `${import.meta.env.VITE_ADMIN_API_GATEWAY_URL}/tenant/init/${this.tenant}`, {
+        `${import.meta.env.VITE_ADMIN_API_GATEWAY_URL}tenant/init/${this.tenant}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

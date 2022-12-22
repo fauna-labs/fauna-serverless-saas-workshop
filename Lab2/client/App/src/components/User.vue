@@ -170,14 +170,14 @@ export default {
 
       let body;
       if (this.updateMode) {
-        this.url = `${import.meta.env.VITE_ADMIN_API_GATEWAY_URL}/user/${this.user.user_name}`;
+        this.url = `${import.meta.env.VITE_ADMIN_API_GATEWAY_URL}user/${this.user.user_name}`;
         this.apimethod = 'PUT';
         body = {
           userEmail: this.email,
           userRole: this.role
         }
       } else {
-        this.url = `${import.meta.env.VITE_ADMIN_API_GATEWAY_URL}/user`;
+        this.url = `${import.meta.env.VITE_ADMIN_API_GATEWAY_URL}user`;
         this.apimethod = 'POST';
         body = {
           userName: this.username,
