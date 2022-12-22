@@ -150,6 +150,9 @@ export class ServerlessSaaSStack extends cdk.Stack {
         },
         'FAUNA_API_KEY': {
           value: process.env.FAUNA_API_KEY
+        },
+        'STACK_NAME': {
+          value: process.env.STACK_NAME
         }
       }
     });
