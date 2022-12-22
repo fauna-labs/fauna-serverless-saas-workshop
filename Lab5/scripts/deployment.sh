@@ -38,34 +38,6 @@ if [[ -z "$faunaApiKey" ]]; then
     exit 1  
 fi
 
-if [[ $server -eq 1 ]] || [[ $pipeline -eq 1 ]]; then
-  echo "CI/CD pipeline code is getting deployed"
-  #Create CodeCommit repo
-  REGION=$(aws configure get region)
-  REPO=$(aws codecommit get-repository --repository-name $stackname-workshop)
-  if [[ $? -ne 0 ]]; then
-      echo "$stackname-workshop codecommit repo is not present, will create one now"
-      CREATE_REPO=$(aws codecommit create-repository --repository-name $stackname-workshop --repository-description "$stackname repository")
-      echo $CREATE_REPO
-      REPO_URL="codecommit::${REGION}://$stackname-workshop"
-      git remote add cc $REPO_URL
-      if [[ $? -ne 0 ]]; then
-           echo "Setting url to remote cc"
-           git remote set-url cc $REPO_URL
-      fi
-      git push --set-upstream cc fauna
-  fi
-
-  #Deploying CI/CD pipeline
-  cd ../server/TenantPipeline/
-  npm install && npm run build 
-  cdk bootstrap  
-  cdk deploy --all --require-approval never
-
-  cd ../../scripts
-
-fi
-
 if [[ $server -eq 1 ]] || [[ $bootstrap -eq 1 ]]; then
   echo "Migrate Fauna database resources"
   cd ../server/fauna_adminApp_resources
@@ -89,9 +61,39 @@ if [[ $server -eq 1 ]] || [[ $bootstrap -eq 1 ]]; then
   sam build -t shared-template.yaml --use-container
   sam deploy --config-file shared-samconfig.toml \
     --region=$REGION \
+    --stack-name=$stackname \
     --parameter-overrides StackName=$stackname
 
   cd ../scripts
+
+fi
+
+if [[ $server -eq 1 ]] || [[ $pipeline -eq 1 ]]; then
+  echo "CI/CD pipeline code is getting deployed"
+  #Create CodeCommit repo
+  REGION=$(aws configure get region)
+  REPO=$(aws codecommit get-repository --repository-name $stackname-workshop)
+  if [[ $? -ne 0 ]]; then
+      echo "$stackname-workshop codecommit repo is not present, will create one now"
+      CREATE_REPO=$(aws codecommit create-repository --repository-name $stackname-workshop --repository-description "$stackname repository")
+      echo $CREATE_REPO
+      REPO_URL="codecommit::${REGION}://$stackname-workshop"
+      git remote add cc $REPO_URL
+      if [[ $? -ne 0 ]]; then
+           echo "Setting url to remote cc"
+           git remote set-url cc $REPO_URL
+      fi
+      git push --set-upstream cc fauna
+  fi
+
+  #Deploying CI/CD pipeline
+  cd ../server/TenantPipeline/
+  npm install && npm run build 
+  cdk bootstrap  
+  cdk deploy svls-saas-wkshp-pipeline --require-approval never
+  cdk deploy fauna-migrations-pipeline --require-approval never
+
+  cd ../../scripts
 
 fi
 
