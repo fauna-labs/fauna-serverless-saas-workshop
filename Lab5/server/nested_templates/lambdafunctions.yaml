@@ -364,6 +364,7 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "TenantManagement.CreateTenant"
+          SETTINGS_TABLE_NAME: !Sub '${StackName}-Settings'
           
   ActivateTenantFunction:
     Type: AWS::Serverless::Function
