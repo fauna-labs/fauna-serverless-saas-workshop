@@ -28,7 +28,7 @@ phases:
   build:
     commands:
       # Use Build phase to build your artifacts (compile, etc.)
-      - sam build -t tenant-template.yaml --parameter-overrides ParameterKey=StackName,ParameterValue=$STACK_NAME
+      - sam build -t tenant-template.yaml
   post_build:
     commands:
       # Use Post-Build for notifications, git tags, upload artifacts to S3
