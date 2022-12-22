@@ -358,6 +358,7 @@ def get_tenant_params(tenantId):
     param_stack_name = {}
     param_stack_name['ParameterKey'] = 'StackName'
     param_stack_name['ParameterValue'] = STACK_NAME
+    params.append(param_stack_name)
 
     return params
 
