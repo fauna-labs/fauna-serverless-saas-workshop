@@ -19,7 +19,6 @@ from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
 clients = {}
 
 region = os.environ['AWS_REGION']
-settings_table_name = os.environ['SETTINGS_TABLE_NAME']
 
 #This method has been locked down to be only called from tenant registration service
 def create_tenant(event, context):
@@ -27,6 +26,7 @@ def create_tenant(event, context):
     tenant_details = json.loads(event['body'])
 
     dynamodb = boto3.resource('dynamodb')
+    settings_table_name = os.environ['SETTINGS_TABLE_NAME']
     table_system_settings = dynamodb.Table(settings_table_name)
 
     try:          
