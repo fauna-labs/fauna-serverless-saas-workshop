@@ -392,7 +392,7 @@ Resources:
       Environment:
         Variables:        
           OPERATION_USERS_USER_POOL: !ImportValue Svls-saas-wkshp-CognitoOperationUsersUserPoolId
-          OPERATION_USERS_APP_CLIENT: !ImportValue Svls-saas-wkshp--CognitoOperationUsersUserPoolClientId
+          OPERATION_USERS_APP_CLIENT: !ImportValue Svls-saas-wkshp-CognitoOperationUsersUserPoolClientId
           TENANT_USER_POOL: !GetAtt GetTenantInfo.userPoolId
           TENANT_APP_CLIENT: !GetAtt GetTenantInfo.appClientId
           # TENANT_API_GATEWAY_URL: !GetAtt GetTenantInfo.apiGatewayUrl
