@@ -433,6 +433,8 @@ def lambda_handler(event, context):
             if (applyLatestRelease):
                 # Get the parameters to be passed to the Cloudformation from tenant table
                 params = get_tenant_params(tenantId)
+                print("params:")
+                print(params)
                 
                 if 'continuationToken' in job_data:
                     # If we're continuing then the create/update has already been triggered
