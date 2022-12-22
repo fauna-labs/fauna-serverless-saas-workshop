@@ -526,12 +526,12 @@ Resources:
                 Action:
                   - codepipeline:StartPipelineExecution
                 Resource:
-                  - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:svls-saas-wkshp-pipeline
+                  - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:serverless-stack-workshop-pipeline
               - Effect: Allow
                 Action:
                   - codepipeline:StartPipelineExecution
                 Resource:
-                  - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:fauna-migrations-pipeline
+                  - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:fauna-migration-stack-pipeline
               - Effect: Allow
                 Action:
                   - cloudformation:DeleteStack
