@@ -44,97 +44,14 @@ Resources:
       RetentionPolicy: Retain      
     Metadata:
       BuildMethod: python3.8   
-  
-  # ProductTable:
-  #   Type: AWS::DynamoDB::Table
-  #   Properties: 
-  #     AttributeDefinitions:
-  #       - AttributeName: shardId
-  #         AttributeType: S          
-  #       - AttributeName: productId
-  #         AttributeType: S          
-  #     KeySchema:
-  #       - AttributeName: shardId
-  #         KeyType: HASH  
-  #       - AttributeName: productId
-  #         KeyType: RANGE  
-  #     ProvisionedThroughput: 
-  #       ReadCapacityUnits: 5
-  #       WriteCapacityUnits: 5
-  #     TableName: !Join ['-', [Product, !Ref TenantIdParameter]]
-  #     Tags:
-  #       - Key: "TenantId"
-  #         Value: !Ref TenantIdParameter
-
-  # OrderTable:
-  #   Type: AWS::DynamoDB::Table
-  #   Properties: 
-  #     AttributeDefinitions:
-  #       - AttributeName: shardId
-  #         AttributeType: S 
-  #       - AttributeName: orderId
-  #         AttributeType: S          
-  #     KeySchema:
-  #       - AttributeName: shardId
-  #         KeyType: HASH 
-  #       - AttributeName: orderId
-  #         KeyType: RANGE  
-  #     ProvisionedThroughput: 
-  #       ReadCapacityUnits: 5
-  #       WriteCapacityUnits: 5
-  #     TableName: !Join ['-', [Order, !Ref TenantIdParameter]]
-  #     Tags:
-  #       - Key: "TenantId"
-  #         Value: !Ref TenantIdParameter
-
-  # ProductFunctionExecutionRolePolicy:
-  #   Condition: IsSiloDeploy
-  #   Type: AWS::IAM::Policy
-  #   Properties:
-  #     PolicyName: !Join ['-', [!Ref TenantIdParameter, product-function-policy]]
-  #     Roles: 
-  #       - !Ref ProductFunctionExecutionRole
-  #     PolicyDocument:
-  #       Version: 2012-10-17
-  #       Statement:              
-  #         - Effect: Allow
-  #           Action:
-  #             - dynamodb:GetItem
-  #             - dynamodb:UpdateItem
-  #             - dynamodb:PutItem
-  #             - dynamodb:DeleteItem
-  #             - dynamodb:Query
-  #           Resource:
-  #             - !GetAtt ProductTable.Arn
-
-  # ProductFunctionExecutionRole:
-  #   Type: AWS::IAM::Role     
-  #   Properties:
-  #     RoleName: !Join ['-', [!Ref TenantIdParameter, product-function-execution-role]]
-  #     Path: '/'
-  #     AssumeRolePolicyDocument:
-  #       Version: 2012-10-17
-  #       Statement:
-  #         - Effect: Allow
-  #           Principal:
-  #             Service:
-  #               - lambda.amazonaws.com
-  #           Action:
-  #             - sts:AssumeRole
-  #     ManagedPolicyArns: 
-  #       - arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy    
-  #       - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-  #       - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
-             
+               
   GetProductFunction:
     Type: AWS::Serverless::Function 
-    # DependsOn: ProductFunctionExecutionRole 
     Properties:
       CodeUri: ProductService/
       Handler: product_service.get_product
       Runtime: python3.8  
       Tracing: Active
-      # Role: !GetAtt ProductFunctionExecutionRole.Arn
       Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
@@ -142,19 +59,16 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
           IS_POOLED_DEPLOY: !If [IsPooledDeploy, true, false]
-          # PRODUCT_TABLE_NAME: !Ref ProductTable      
       Tags:
         TenantId: !Ref TenantIdParameter
 
   GetProductsFunction:
     Type: AWS::Serverless::Function 
-    # DependsOn: ProductFunctionExecutionRole 
     Properties:
       CodeUri: ProductService/
       Handler: product_service.get_products
       Runtime: python3.8  
       Tracing: Active
-      # Role: !GetAtt ProductFunctionExecutionRole.Arn
       Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
@@ -162,19 +76,16 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
           IS_POOLED_DEPLOY: !If [IsPooledDeploy, true, false]
-          # PRODUCT_TABLE_NAME: !Ref ProductTable
       Tags:
         TenantId: !Ref TenantIdParameter
 
   CreateProductFunction:
     Type: AWS::Serverless::Function
-    # DependsOn: ProductFunctionExecutionRole 
     Properties:
       CodeUri: ProductService/
       Handler: product_service.create_product
       Runtime: python3.8  
       Tracing: Active 
-      # Role: !GetAtt ProductFunctionExecutionRole.Arn 
       Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
@@ -182,19 +93,16 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
           IS_POOLED_DEPLOY: !If [IsPooledDeploy, true, false]
-          # PRODUCT_TABLE_NAME: !Ref ProductTable
       Tags:
         TenantId: !Ref TenantIdParameter
 
   UpdateProductFunction:
     Type: AWS::Serverless::Function
-    # DependsOn: ProductFunctionExecutionRole 
     Properties:
       CodeUri: ProductService/
       Handler: product_service.update_product
       Runtime: python3.8 
       Tracing: Active
-      # Role: !GetAtt ProductFunctionExecutionRole.Arn 
       Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
@@ -202,19 +110,16 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
           IS_POOLED_DEPLOY: !If [IsPooledDeploy, true, false]
-          # PRODUCT_TABLE_NAME: !Ref ProductTable
       Tags:
         TenantId: !Ref TenantIdParameter
 
   DeleteProductFunction:
     Type: AWS::Serverless::Function
-    # DependsOn: ProductFunctionExecutionRole 
     Properties:
       CodeUri: ProductService/
       Handler: product_service.delete_product
       Runtime: python3.8 
       Tracing: Active
-      # Role: !GetAtt ProductFunctionExecutionRole.Arn 
       Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
@@ -222,58 +127,16 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
           IS_POOLED_DEPLOY: !If [IsPooledDeploy, true, false]
-          # PRODUCT_TABLE_NAME: !Ref ProductTable
       Tags:
         TenantId: !Ref TenantIdParameter
 
-  # OrderFunctionExecutionRolePolicy:
-  #   Condition: IsSiloDeploy
-  #   Type: AWS::IAM::Policy
-  #   Properties:
-  #     PolicyName: !Join ['-', [!Ref TenantIdParameter, order-function-policy]]
-  #     Roles: 
-  #       - !Ref OrderFunctionExecutionRole
-  #     PolicyDocument:
-  #       Version: 2012-10-17
-  #       Statement:              
-  #         - Effect: Allow
-  #           Action:
-  #             - dynamodb:GetItem
-  #             - dynamodb:UpdateItem
-  #             - dynamodb:PutItem
-  #             - dynamodb:DeleteItem
-  #             - dynamodb:Query
-  #           Resource:
-  #             - !GetAtt OrderTable.Arn
-
-  # OrderFunctionExecutionRole:
-  #   Type: AWS::IAM::Role     
-  #   Properties:
-  #     RoleName: !Join ['-', [!Ref TenantIdParameter, order-function-execution-role]]
-  #     Path: '/'
-  #     AssumeRolePolicyDocument:
-  #       Version: 2012-10-17
-  #       Statement:
-  #         - Effect: Allow
-  #           Principal:
-  #             Service:
-  #               - lambda.amazonaws.com
-  #           Action:
-  #             - sts:AssumeRole
-  #     ManagedPolicyArns: 
-  #       - arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy    
-  #       - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-  #       - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
-                
   GetOrdersFunction:
     Type: AWS::Serverless::Function 
-    # DependsOn: OrderFunctionExecutionRole 
     Properties:
       CodeUri: OrderService/
       Handler: order_service.get_orders
       Runtime: python3.8  
       Tracing: Active
-      # Role: !GetAtt OrderFunctionExecutionRole.Arn
       Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
@@ -281,19 +144,16 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
           IS_POOLED_DEPLOY: !If [IsPooledDeploy, true, false]
-          # ORDER_TABLE_NAME: !Ref OrderTable
       Tags:
         TenantId: !Ref TenantIdParameter
 
   GetOrderFunction:
     Type: AWS::Serverless::Function 
-    # DependsOn: OrderFunctionExecutionRole 
     Properties:
       CodeUri: OrderService/
       Handler: order_service.get_order
       Runtime: python3.8  
       Tracing: Active
-      # Role: !GetAtt OrderFunctionExecutionRole.Arn
       Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
@@ -301,19 +161,16 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
           IS_POOLED_DEPLOY: !If [IsPooledDeploy, true, false]
-          # ORDER_TABLE_NAME: !Ref OrderTable
       Tags:
         TenantId: !Ref TenantIdParameter
 
   CreateOrderFunction:
     Type: AWS::Serverless::Function
-    # DependsOn: OrderFunctionExecutionRole 
     Properties:
       CodeUri: OrderService/
       Handler: order_service.create_order
       Runtime: python3.8  
       Tracing: Active 
-      # Role: !GetAtt OrderFunctionExecutionRole.Arn 
       Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
@@ -321,19 +178,16 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
           IS_POOLED_DEPLOY: !If [IsPooledDeploy, true, false]
-          # ORDER_TABLE_NAME: !Ref OrderTable
       Tags:
         TenantId: !Ref TenantIdParameter
 
   UpdateOrderFunction:
     Type: AWS::Serverless::Function
-    # DependsOn: OrderFunctionExecutionRole 
     Properties:
       CodeUri: OrderService/
       Handler: order_service.update_order
       Runtime: python3.8 
       Tracing: Active
-      # Role: !GetAtt OrderFunctionExecutionRole.Arn 
       Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
@@ -341,19 +195,16 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
           IS_POOLED_DEPLOY: !If [IsPooledDeploy, true, false]
-          # ORDER_TABLE_NAME: !Ref OrderTable
       Tags:
         TenantId: !Ref TenantIdParameter
 
   DeleteOrderFunction:
     Type: AWS::Serverless::Function
-    # DependsOn: OrderFunctionExecutionRole 
     Properties:
       CodeUri: OrderService/
       Handler: order_service.delete_order
       Runtime: python3.8 
       Tracing: Active
-      # Role: !GetAtt OrderFunctionExecutionRole.Arn 
       Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
@@ -361,10 +212,8 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
           IS_POOLED_DEPLOY: !If [IsPooledDeploy, true, false]
-          # ORDER_TABLE_NAME: !Ref OrderTable
       Tags:
         TenantId: !Ref TenantIdParameter
-
 
   GetTenantInfo: 
     Type: Custom::GetTenantInfo
@@ -374,7 +223,6 @@ Resources:
       TenantUserPoolPooled: !ImportValue Svls-saas-wkshp-CognitoTenantUserPoolId
       TenantAppClientPooled: !ImportValue Svls-saas-wkshp-CognitoTenantAppClientId
       ParameterStoreFaunaConfig: !Sub '/${StackName}/faunadb/config'
-      # TenantApiGatewayUrlPooled: !Sub "https://${ApiGatewayTenantApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
 
   BusinessServicesAuthorizerFunction:
     Type: AWS::Serverless::Function 
@@ -384,7 +232,6 @@ Resources:
       Handler: tenant_authorizer.lambda_handler
       Runtime: python3.8
       Role: !ImportValue Svls-saas-wkshp-AuthorizerExecutionRoleArn
-      # Role: !ImportValue Serverless-SaaS-AuthorizerExecutionRoleArn
       MemorySize: 256
       Tracing: Active
       Layers: 
@@ -395,7 +242,6 @@ Resources:
           OPERATION_USERS_APP_CLIENT: !ImportValue Svls-saas-wkshp-CognitoOperationUsersUserPoolClientId
           TENANT_USER_POOL: !GetAtt GetTenantInfo.userPoolId
           TENANT_APP_CLIENT: !GetAtt GetTenantInfo.appClientId
-          # TENANT_API_GATEWAY_URL: !GetAtt GetTenantInfo.apiGatewayUrl
           
   ApiGatewayAccessLogs:
     Type: AWS::Logs::LogGroup
@@ -963,55 +809,10 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Join ["", ["arn:aws:execute-api:", !Ref "AWS::Region", ":", !Ref "AWS::AccountId", ":", !Ref ApiGatewayTenantApi, "/*/*" ]]
 
-  # UpdateTenantApiGatewayUrlLambdaExecutionRole:
-  #   Type: AWS::IAM::Role
-  #   # DependsOn: ApiGatewayTenantApi
-  #   Properties:
-  #     RoleName: !Join ['-', [!Ref TenantIdParameter, apigwurl-lambda-exec-role]]
-  #     Path: "/"
-  #     AssumeRolePolicyDocument:
-  #       Version: 2012-10-17
-  #       Statement:
-  #         - Effect: Allow
-  #           Principal:
-  #             Service:
-  #               - lambda.amazonaws.com
-  #           Action:
-  #             - sts:AssumeRole
-  #     ManagedPolicyArns:
-  #       - arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy
-  #       - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-  #       - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
-  #     Policies:
-  #       - PolicyName: !Join ['-', [!Ref TenantIdParameter, apigwurl-lambda-exe-policy ]]
-  #         PolicyDocument:
-  #           Version: 2012-10-17
-  #           Statement:
-  #             - Effect: Allow
-  #               Action:
-  #                 - dynamodb:PutItem
-  #               Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ServerlessSaaSFauna-Settings 
-  #             - Effect: Allow
-  #               Action:
-  #                 - dynamodb:UpdateItem
-  #               Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ServerlessSaaS-TenantDetails    
-
-  # UpdateTenantApiGatewayUrlFunction:
-  #   Type: AWS::Serverless::Function
-  #   DependsOn: UpdateTenantApiGatewayUrlLambdaExecutionRole
-  #   Properties:
-  #     CodeUri: custom_resources/
-  #     Handler: update_tenant_apigatewayurl.handler
-  #     Runtime: python3.8
-  #     Role: !GetAtt UpdateTenantApiGatewayUrlLambdaExecutionRole.Arn
-  #     Layers: 
-  #         - !Ref ServerlessSaaSLayers  
   UpdateTenantDetailsApiGatewayUrl:
     Type: Custom::UpdateTenantDetailsApiGatewayUrl
-    # DependsOn: UpdateTenantApiGatewayUrlFunction
     Properties:
       ServiceToken: !ImportValue Svls-saas-wkshp-UpdateTenantApigUrlFunction
-      # TenantDetailsTableName: ServerlessSaaS-TenantDetails
       SettingsTableName: !Sub '${StackName}-Settings'
       TenantId: !Ref TenantIdParameter  
       TenantApiGatewayUrl: !Sub "https://${ApiGatewayTenantApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
