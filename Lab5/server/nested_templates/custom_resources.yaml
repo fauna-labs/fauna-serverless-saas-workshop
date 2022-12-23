@@ -6,6 +6,8 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   Template to deploy cloudfront and s3 bucket for UI code
 Parameters:
+  StackName:
+    Type: String
   ServerlessSaaSSettingsTableArn:
     Type: String
   ServerlessSaaSSettingsTableName:
@@ -39,3 +41,4 @@ Resources:
     Properties:
       ServiceToken: !Ref UpdateTenantStackMapTableFunctionArn
       TenantStackMappingTableName: !Ref TenantStackMappingTableName
+      StackName: !Sub 'stack-${StackName}-pooled'

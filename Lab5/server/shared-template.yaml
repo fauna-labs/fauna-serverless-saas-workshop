@@ -136,6 +136,7 @@ Resources:
     Properties:
       Location: nested_templates/custom_resources.yaml
       Parameters:
+        StackName: !Ref StackName
         ServerlessSaaSSettingsTableArn: !GetAtt DynamoDBTables.Outputs.ServerlessSaaSSettingsTableArn  
         ServerlessSaaSSettingsTableName: !GetAtt DynamoDBTables.Outputs.ServerlessSaaSSettingsTableName
         TenantStackMappingTableArn: !GetAtt DynamoDBTables.Outputs.TenantStackMappingTableArn
