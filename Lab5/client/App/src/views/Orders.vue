@@ -122,7 +122,7 @@ export default {
       this.progress = true;
 
       fetch(
-        `${this.$store.state.apiGatewayUrl}/orders`, {
+        `${this.$store.state.apiGatewayUrl}orders`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${this.accessToken}`,

@@ -141,7 +141,7 @@ export default {
       }
       this.progress = true;
 
-      this.url = `${this.$store.state.apiGatewayUrl}/product`;
+      this.url = `${this.$store.state.apiGatewayUrl}product`;
       this.apimethod = 'POST';
       if (this.updateMode) {
         this.url += `/${this.product.productId}`;

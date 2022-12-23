@@ -160,7 +160,7 @@ export default {
       this.loadingProducts = true;
       try {
         const res = await fetch(
-          `${this.$store.state.apiGatewayUrl}/products`, {
+          `${this.$store.state.apiGatewayUrl}products`, {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${accessToken}`,
@@ -204,7 +204,7 @@ export default {
         orderProducts: orderProducts
       }
 
-      this.url = `${this.$store.state.apiGatewayUrl}/order`;
+      this.url = `${this.$store.state.apiGatewayUrl}order`;
       this.apimethod = 'POST';
       if (this.updateMode) {
         this.url += `/${this.product.productId}`;
