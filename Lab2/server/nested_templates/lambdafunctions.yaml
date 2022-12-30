@@ -576,6 +576,5 @@ Outputs:
     Value: !GetAtt DisableUsersByTenantFunction.Arn
   EnableUsersByTenantFunctionArn: 
     Value: !GetAtt EnableUsersByTenantFunction.Arn          
-  SharedServicesAuthorizerFunctionArn: 
-    Value: !GetAtt SharedServicesAuthorizerFunction.Arn      
-  
+  SharedServicesAuthorizerFunctionArn:
+    Value: !GetAtt SharedServicesAuthorizerFunction.Arn
