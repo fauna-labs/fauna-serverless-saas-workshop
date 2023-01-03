@@ -6,6 +6,15 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   Serverless SaaS Reference Architecture 
 
+Parameters:
+  StageName:
+    Type: String
+    Default: "prod"
+    Description: "Stage Name for the api"
+  StackName:
+    Type: String
+    Default: "serverless-saas-workshop"
+
 Globals:
   Function:
     Timeout: 29
@@ -15,18 +24,13 @@ Globals:
         Variables:
           LOG_LEVEL: DEBUG         
           POWERTOOLS_METRICS_NAMESPACE: "ServerlessSaaS"
-          FAUNA_CONFIG_PATH: '/serverless-saas-fauna-workshop/faunadb/config'
+          FAUNA_CONFIG_PATH: !Sub '/${StackName}/faunadb/config'
           
-Parameters:
-  StageName:
-    Type: String
-    Default: "prod"
-    Description: "Stage Name for the api"
 Resources: 
   ServerlessSaaSLayers:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      LayerName: serverless-saas-fauna-dependencies-pooled
+      LayerName: !Sub '${StackName}-dependencies-pooled'
       Description: Utilities for project
       ContentUri: layers/
       CompatibleRuntimes:
@@ -34,43 +38,7 @@ Resources:
       LicenseInfo: 'MIT'
       RetentionPolicy: Retain      
     Metadata:
-      BuildMethod: python3.8   
-  
-  # ProductTable:
-  #   Type: AWS::DynamoDB::Table
-  #   Properties: 
-  #     AttributeDefinitions:
-  #       - AttributeName: shardId
-  #         AttributeType: S          
-  #       - AttributeName: productId
-  #         AttributeType: S          
-  #     KeySchema:
-  #       - AttributeName: shardId
-  #         KeyType: HASH  
-  #       - AttributeName: productId
-  #         KeyType: RANGE  
-  #     ProvisionedThroughput: 
-  #       ReadCapacityUnits: 5
-  #       WriteCapacityUnits: 5
-  #     TableName: Product-pooled
-
-  # OrderTable:
-  #   Type: AWS::DynamoDB::Table
-  #   Properties: 
-  #     AttributeDefinitions:
-  #       - AttributeName: shardId
-  #         AttributeType: S 
-  #       - AttributeName: orderId
-  #         AttributeType: S          
-  #     KeySchema:
-  #       - AttributeName: shardId
-  #         KeyType: HASH 
-  #       - AttributeName: orderId
-  #         KeyType: RANGE  
-  #     ProvisionedThroughput: 
-  #       ReadCapacityUnits: 5
-  #       WriteCapacityUnits: 5
-  #     TableName: Order-pooled
+      BuildMethod: python3.8
 
   GetProductFunction:
     Type: AWS::Serverless::Function 
@@ -79,14 +47,12 @@ Resources:
       Handler: product_service.get_product
       Runtime: python3.8  
       Tracing: Active
-      Role: !ImportValue SaaS-Fauna-ProductFunctionExecutionRoleArn
-      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-product-fxn-role
+      Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
-          # PRODUCT_TABLE_NAME: !Ref ProductTable      
   
   GetProductsFunction:
     Type: AWS::Serverless::Function 
@@ -95,14 +61,12 @@ Resources:
       Handler: product_service.get_products
       Runtime: python3.8  
       Tracing: Active
-      Role: !ImportValue SaaS-Fauna-ProductFunctionExecutionRoleArn
-      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-product-fxn-role
+      Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
-          # PRODUCT_TABLE_NAME: !Ref ProductTable
       
   CreateProductFunction:
     Type: AWS::Serverless::Function
@@ -111,14 +75,12 @@ Resources:
       Handler: product_service.create_product
       Runtime: python3.8  
       Tracing: Active 
-      Role: !ImportValue SaaS-Fauna-ProductFunctionExecutionRoleArn
-      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-product-fxn-role
+      Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
-          # PRODUCT_TABLE_NAME: !Ref ProductTable
 
   UpdateProductFunction:
     Type: AWS::Serverless::Function
@@ -127,14 +89,12 @@ Resources:
       Handler: product_service.update_product
       Runtime: python3.8 
       Tracing: Active
-      Role: !ImportValue SaaS-Fauna-ProductFunctionExecutionRoleArn
-      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-product-fxn-role
+      Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
-          # PRODUCT_TABLE_NAME: !Ref ProductTable
 
   DeleteProductFunction:
     Type: AWS::Serverless::Function
@@ -143,14 +103,12 @@ Resources:
       Handler: product_service.delete_product
       Runtime: python3.8 
       Tracing: Active
-      Role: !ImportValue SaaS-Fauna-ProductFunctionExecutionRoleArn
-      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-product-fxn-role
+      Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "ProductService"
-          # PRODUCT_TABLE_NAME: !Ref ProductTable
                 
   GetOrdersFunction:
     Type: AWS::Serverless::Function 
@@ -159,14 +117,12 @@ Resources:
       Handler: order_service.get_orders
       Runtime: python3.8  
       Tracing: Active
-      Role: !ImportValue SaaS-Fauna-OrderFunctionExecutionRoleArn
-      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-order-fxn-role
+      Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          # ORDER_TABLE_NAME: !Ref OrderTable
       
   GetOrderFunction:
     Type: AWS::Serverless::Function 
@@ -175,14 +131,12 @@ Resources:
       Handler: order_service.get_order
       Runtime: python3.8  
       Tracing: Active
-      Role: !ImportValue SaaS-Fauna-OrderFunctionExecutionRoleArn
-      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-order-fxn-role
+      Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          # ORDER_TABLE_NAME: !Ref OrderTable
       
   CreateOrderFunction:
     Type: AWS::Serverless::Function
@@ -191,14 +145,12 @@ Resources:
       Handler: order_service.create_order
       Runtime: python3.8  
       Tracing: Active 
-      Role: !ImportValue SaaS-Fauna-OrderFunctionExecutionRoleArn
-      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-order-fxn-role
+      Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          # ORDER_TABLE_NAME: !Ref OrderTable
   
   UpdateOrderFunction:
     Type: AWS::Serverless::Function
@@ -207,14 +159,12 @@ Resources:
       Handler: order_service.update_order
       Runtime: python3.8 
       Tracing: Active
-      Role: !ImportValue SaaS-Fauna-OrderFunctionExecutionRoleArn
-      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-order-fxn-role
+      Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          # ORDER_TABLE_NAME: !Ref OrderTable
   
   DeleteOrderFunction:
     Type: AWS::Serverless::Function
@@ -223,20 +173,18 @@ Resources:
       Handler: order_service.delete_order
       Runtime: python3.8 
       Tracing: Active
-      Role: !ImportValue SaaS-Fauna-OrderFunctionExecutionRoleArn
-      # Role: arn:aws:iam::${AWS::AccountId}:role/saas-fauna-order-fxn-role
+      Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
         - !Ref ServerlessSaaSLayers
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "OrderService"
-          # ORDER_TABLE_NAME: !Ref OrderTable
   
   #Tenant Authorizer
   TenantAuthorizerExecutionRole:
     Type: AWS::IAM::Role     
     Properties:
-      RoleName: saas-fauna-tenant-authorizer-role
+      RoleName: !Sub '${StackName}-tenant-authorizer-role'
       Path: '/'
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -276,13 +224,13 @@ Resources:
         - !Ref ServerlessSaaSLayers
       Environment:
         Variables:
-          TENANT_USER_POOL: !ImportValue Serverless-SaaS-Fauna-CognitoTenantUserPoolId
-          TENANT_APP_CLIENT: !ImportValue Serverless-SaaS-Fauna-CognitoTenantAppClientId
+          TENANT_USER_POOL: !ImportValue Svls-saas-wkshp-CognitoTenantUserPoolId
+          TENANT_APP_CLIENT: !ImportValue Svls-saas-wkshp-CognitoTenantAppClientId
           
   ApiGatewayAccessLogs:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /aws/api-gateway/access-logs-serverless-saas-fauna-tenant-api-pooled
+      LogGroupName: !Sub '/aws/api-gateway/access-logs-${StackName}-tenant-api-pooled'
       RetentionInDays: 30
   ApiGatewayTenantApi:
     Type: AWS::Serverless::Api
@@ -300,7 +248,7 @@ Resources:
       DefinitionBody:
         openapi: 3.0.1
         info:
-          title: 'pooled-serverless-saas-fauna-tenant-api'
+          title: !Sub '${StackName}-tenant-api-pooled'
         basePath: !Join ['', ['/', !Ref StageName]]
         x-amazon-apigateway-api-key-source : "AUTHORIZER"
         schemes:
@@ -688,8 +636,7 @@ Resources:
           {"Ref": "AWS::AccountId"}, ":", 
           !Ref ApiGatewayTenantApi, "/*/*/*"
           ]
-        ] 
-      
+        ]      
   GetProductLambdaApiGatewayExecutionPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -754,7 +701,6 @@ Resources:
           !Ref ApiGatewayTenantApi, "/*/*/*"
           ]
         ]  
-  
   GetOrdersLambdaApiGatewayExecutionPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -770,8 +716,7 @@ Resources:
           {"Ref": "AWS::AccountId"}, ":", 
           !Ref ApiGatewayTenantApi, "/*/*/*"
           ]
-        ]      
-
+        ]
   GetOrderLambdaApiGatewayExecutionPermission:
     Type: AWS::Lambda::Permission
     Properties:

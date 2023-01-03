@@ -20,9 +20,6 @@ db = None
 
 
 client = boto3.client('cognito-idp')
-# dynamodb = boto3.resource('dynamodb')
-# table_tenant_user_map = dynamodb.Table('ServerlessSaaS-TenantUserMapping')
-# table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')
 
 user_pool_id = os.environ['TENANT_USER_POOL_ID']
 
@@ -238,15 +235,6 @@ def disable_users_by_tenant(event, context):
     tracer.put_annotation(key="TenantId", value=tenantid_to_update)
     
     if ((auth_manager.isTenantAdmin(user_role) and tenantid_to_update == requesting_tenant_id) or auth_manager.isSystemAdmin(user_role)):
-        # filtering_exp = Key('tenantId').eq(tenantid_to_update)
-        # response = table_tenant_user_map.query(KeyConditionExpression=filtering_exp)
-        # users = response.get('Items')
-        
-        # for user in users:
-        #     response = client.admin_disable_user(
-        #         Username=user['userName'],
-        #         UserPoolId=user_pool_id
-        #     )            
         global db
         if db is None:
             db = FaunaFromConfig()
@@ -278,15 +266,6 @@ def enable_users_by_tenant(event, context):
     tracer.put_annotation(key="TenantId", value=tenantid_to_update)
     
     if (auth_manager.isSystemAdmin(user_role)):
-        # filtering_exp = Key('tenantId').eq(tenantid_to_update)
-        # response = table_tenant_user_map.query(KeyConditionExpression=filtering_exp)
-        # users = response.get('Items')
-        
-        # for user in users:
-        #     response = client.admin_enable_user(
-        #         Username=user['userName'],
-        #         UserPoolId=user_pool_id
-        #     )
         global db
         if db is None:
             db = FaunaFromConfig()
@@ -367,12 +346,6 @@ class UserManagement:
         return response
 
     def create_user_tenant_mapping(self, user_name, tenant_id):
-        # response = table_tenant_user_map.put_item(
-        #         Item={
-        #                 'tenantId': tenant_id,
-        #                 'userName': user_name
-        #             }
-        #         )                    
         global db
         if db is None:
             db = FaunaFromConfig()

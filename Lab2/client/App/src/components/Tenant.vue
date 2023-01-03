@@ -142,10 +142,6 @@ export default {
         {
           "id": "premium",
           "value": "Premium"
-        },
-        {
-          "id": "platinum",
-          "value": "Platinum"
         }
       ]      
     }

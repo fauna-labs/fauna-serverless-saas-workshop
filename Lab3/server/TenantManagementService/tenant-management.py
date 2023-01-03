@@ -3,14 +3,9 @@
 
 import os
 import json
-# import boto3
-# from boto3.dynamodb.conditions import Key
-# import urllib.parse
 import utils
-# from botocore.exceptions import ClientError
 import logger
 import requests
-# import metrics_manager
 import auth_manager
 
 from aws_lambda_powertools import Tracer
@@ -24,25 +19,11 @@ clients = {}
 
 region = os.environ['AWS_REGION']
 
-# dynamodb = boto3.resource('dynamodb')
-# table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')
-
 #This method has been locked down to be only called from tenant registration service
 def create_tenant(event, context):
     tenant_details = json.loads(event['body'])
 
     try:
-        # response = table_tenant_details.put_item(
-        #     Item={
-        #             'tenantId': tenant_details['tenantId'],
-        #             'tenantName' : tenant_details['tenantName'],
-        #             'tenantAddress': tenant_details['tenantAddress'],
-        #             'tenantEmail': tenant_details['tenantEmail'],
-        #             'tenantPhone': tenant_details['tenantPhone'],
-        #             'tenantTier': tenant_details['tenantTier'],                    
-        #             'isActive': True                    
-        #         }
-        #     )
         global clients
         db = FaunaClients(clients)
 
@@ -70,23 +51,13 @@ def create_tenant(event, context):
 
         __create_tenantdb_resources(tenant["tenantId"])
 
-    # except Exception as e:
-    #     raise Exception('Error creating a new tenant', e)
     except FaunaError as e:
         logger.error(e)
         raise Exception('Error adding a new tenant', e)
     else:
-        # return utils.create_success_response("Tenant Created")
         return utils.generate_response(tenant)
 
 def get_tenants(event, context):    
-    # try:
-    #     response = table_tenant_details.scan()
-    # except Exception as e:
-    #     raise Exception('Error getting all tenants', e)
-    # else:
-    #     return utils.generate_response(response['Items'])  
-
     tenants = []
     try:
         global clients
@@ -128,21 +99,6 @@ def update_tenant(event, context):
     logger.log_with_tenant_context(event, "Request received to update tenant")
     
     if ((auth_manager.isTenantAdmin(user_role) and tenant_id == requesting_tenant_id) or auth_manager.isSystemAdmin(user_role)):
-        
-        # response_update = table_tenant_details.update_item(
-        #     Key={
-        #         'tenantId': tenant_id,
-        #     },
-        #     UpdateExpression="set tenantName = :tenantName, tenantAddress = :tenantAddress, tenantEmail = :tenantEmail, tenantPhone = :tenantPhone, tenantTier=:tenantTier",
-        #     ExpressionAttributeValues={
-        #             ':tenantName' : tenant_details['tenantName'],
-        #             ':tenantAddress': tenant_details['tenantAddress'],
-        #             ':tenantEmail': tenant_details['tenantEmail'],
-        #             ':tenantPhone': tenant_details['tenantPhone'],
-        #             ':tenantTier': tenant_details['tenantTier']
-        #         },
-        #     ReturnValues="UPDATED_NEW"
-        #     )
         global clients
         db = FaunaClients(clients)
 
@@ -179,19 +135,6 @@ def get_tenant(event, context):
     logger.log_with_tenant_context(event, "Request received to get tenant details")
     
     if ((auth_manager.isTenantAdmin(user_role) and tenant_id == requesting_tenant_id) or auth_manager.isSystemAdmin(user_role)):
-        # tenant_details = table_tenant_details.get_item(
-        #     Key={
-        #         'tenantId': tenant_id,
-        #     },
-        #     AttributesToGet=[
-        #         'tenantName',
-        #         'tenantAddress',
-        #         'tenantEmail',
-        #         'tenantPhone'
-        #     ]    
-        # )             
-        # item = tenant_details['Item']
-        # tenant_info = TenantInfo(item['tenantName'], item['tenantAddress'],item['tenantEmail'], item['tenantPhone'])
         global clients
         db = FaunaClients(clients)
 
@@ -230,16 +173,6 @@ def deactivate_tenant(event, context):
     logger.log_with_tenant_context(event, "Request received to deactivate tenant")
 
     if ((auth_manager.isTenantAdmin(user_role) and tenant_id == requesting_tenant_id) or auth_manager.isSystemAdmin(user_role)):
-        # response = table_tenant_details.update_item(
-        #     Key={
-        #         'tenantId': tenant_id,
-        #     },
-        #     UpdateExpression="set isActive = :isActive",
-        #     ExpressionAttributeValues={
-        #             ':isActive': False
-        #         },
-        #     ReturnValues="ALL_NEW"
-        #     )
         global clients
         db = FaunaClients(clients)
 
@@ -281,16 +214,6 @@ def activate_tenant(event, context):
     logger.log_with_tenant_context(event, "Request received to activate tenant")
 
     if (auth_manager.isSystemAdmin(user_role)):
-        # response = table_tenant_details.update_item(
-        #     Key={
-        #         'tenantId': tenant_id,
-        #     },
-        #     UpdateExpression="set isActive = :isActive",
-        #     ExpressionAttributeValues={
-        #             ':isActive': True
-        #         },
-        #     ReturnValues="ALL_NEW"
-        #     )
         global clients
         db = FaunaClients(clients)
 

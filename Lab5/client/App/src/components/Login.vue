@@ -32,7 +32,7 @@
               </div>
             </div>
 
-            <div class="py-4" v-if="!adminApp">
+            <div class="py-4" v-if="platinumEnabled && !adminApp">
               <label for="tenant" class="sr-only">tenant</label>
               <input id="tenant" name="tenant" type="text" autocomplete="tenant"
                 required :disabled="setNewPasswordFlow"
@@ -120,6 +120,11 @@ export default {
       sessionUserAttributes: null,
       cognitoUser: null,
       setNewPasswordFlow: false
+    }
+  },
+  computed: {
+    platinumEnabled() {
+      return import.meta.env.VITE_APP_PLATINUM_ENABLED === 'true'
     }
   },
   methods: {

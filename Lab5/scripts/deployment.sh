@@ -122,6 +122,7 @@ if [[ $client -eq 1 ]]; then
   VITE_ADMIN_API_GATEWAY_URL='$ADMIN_APIGATEWAYURL'
   VITE_ADMIN_APPCLIENTID='$ADMIN_APPCLIENTID'
   VITE_ADMIN_USERPOOL_ID='$ADMIN_USERPOOL_ID'
+  VITE_APP_PLATINUM_ENABLED=true
 EoF
 
   npm install --legacy-peer-deps && npm run build

@@ -3,7 +3,7 @@ version = 0.1
 [default.deploy]
 [default.deploy.parameters]
 stack_name = "stack-pooled-wkshp"
-s3_bucket = "sam-bootstrap-bucket-e6426b54-f90d-46e8-9e26-225ab27aff67"
+s3_bucket = "sam-bootstrap-bucket-751c65f9-1100-4c3d-9f45-2c9d457ff655"
 s3_prefix = "serverless-saas-wkshp-tenant"
 region = "us-west-2"
 confirm_changeset = false

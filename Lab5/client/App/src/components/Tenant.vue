@@ -142,10 +142,6 @@ export default {
         {
           "id": "premium",
           "value": "Premium"
-        },
-        {
-          "id": "platinum",
-          "value": "Platinum"
         }
       ]      
     }
@@ -169,6 +165,12 @@ export default {
     } else {
       this.updateMode = false;
     }
+    if (import.meta.env.VITE_APP_PLATINUM_ENABLED === 'true') {
+      this.tiers.push({
+        "id": "platinum",
+        "value": "Platinum"
+      })
+    }    
   },
   methods: {
     exit() {

@@ -5,6 +5,7 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
   Template to Bootstrap the Common Resources
+
 Parameters:
   AdminEmailParameter:
     Type: String
@@ -17,13 +18,16 @@ Parameters:
   StageName:
     Type: String
     Default: "prod"
-    Description: "Stage Name for the api"  
-Resources:
-  # DynamoDBTables:
-  #   Type: AWS::Serverless::Application
-  #   Properties:
-  #     Location: nested_templates/tables.yaml
+    Description: "Stage Name for the api"
+  StackName:
+    Type: String
+    Default: "serverless-saas-workshop"
+  ParameterStoreFaunaAppConfigPublic:
+    Type: String
+    Default: '{"domain": "db.fauna.com"}'
+    Description: ""
 
+Resources:
   #Create cloudfront and s3 for UI Cde
   UserInterface:
     Type: AWS::Serverless::Application
@@ -36,9 +40,10 @@ Resources:
     Properties:
       Location: nested_templates/cognito.yaml
       Parameters:
+        StackName: !Ref StackName
         AdminEmailParameter: !Ref AdminEmailParameter
         SystemAdminRoleNameParameter: !Ref SystemAdminRoleNameParameter
-        AdminUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.AdminAppSite
+        AdminUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.ApplicationSite
         TenantUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.ApplicationSite
         
   LambdaFunctions:
@@ -47,12 +52,13 @@ Resources:
     Properties:
       Location: nested_templates/lambdafunctions.yaml
       Parameters:
+        StackName: !Ref StackName
+        ParameterStoreFaunaConfig: !Sub '/${StackName}/faunadb/config'
+        ParameterStoreFaunaAppConfigPublic: !Ref ParameterStoreFaunaAppConfigPublic
         CognitoUserPoolId: !GetAtt Cognito.Outputs.CognitoUserPoolId
         CognitoUserPoolClientId: !GetAtt Cognito.Outputs.CognitoUserPoolClientId                
         CognitoOperationUsersUserPoolId: !GetAtt Cognito.Outputs.CognitoOperationUsersUserPoolId
         CognitoOperationUsersUserPoolClientId: !GetAtt Cognito.Outputs.CognitoOperationUsersUserPoolClientId
-        # TenantDetailsTableArn: !GetAtt DynamoDBTables.Outputs.TenantDetailsTableArn
-        # TenantUserMappingTableArn: !GetAtt DynamoDBTables.Outputs.TenantUserMappingTableArn
         
   APIs:
     Type: AWS::Serverless::Application
@@ -61,6 +67,7 @@ Resources:
       Location: nested_templates/apigateway.yaml
       Parameters:
         StageName: !Ref StageName
+        StackName: !Ref StackName
         RegisterTenantLambdaExecutionRoleArn: !GetAtt LambdaFunctions.Outputs.RegisterTenantLambdaExecutionRoleArn          
         TenantManagementLambdaExecutionRoleArn: !GetAtt LambdaFunctions.Outputs.TenantManagementLambdaExecutionRoleArn          
         RegisterTenantFunctionArn: !GetAtt LambdaFunctions.Outputs.RegisterTenantFunctionArn
@@ -110,24 +117,15 @@ Outputs:
   AdminApi:
     Description: "API Gateway endpoint URL for Admin API"
     Value: !Join ["", ["https://", !GetAtt APIs.Outputs.AdminApiGatewayApi, ".execute-api.", !Ref "AWS::Region", ".amazonaws.com/", !Ref StageName, "/"]]
-  AdminSiteBucket:
-    Description: The S3 Bucket that will contain the static assets for the tenant administration application
-    Value: !GetAtt UserInterface.Outputs.AdminBucket
-  AdminAppSite:
-    Description: The name of the CloudFront url for Admin Management site
-    Value: !GetAtt UserInterface.Outputs.AdminAppSite
-  LandingApplicationSiteBucket:
-    Description: The S3 Bucket that will contain the static assets for the landing application
-    Value: !GetAtt UserInterface.Outputs.LandingAppBucket
-  LandingApplicationSite:
-    Description: The name of the CloudFront url for Landing site
-    Value: !GetAtt UserInterface.Outputs.LandingApplicationSite
   ApplicationSiteBucket:
     Description: The S3 Bucket that will contain the static assets for the tenant application
     Value: !GetAtt UserInterface.Outputs.AppBucket
   ApplicationSite:
     Description: The name of the CloudFront url for Tenant Management site
     Value: !GetAtt UserInterface.Outputs.ApplicationSite
+  CognitoOperationUsersUserPoolId:
+    Description: The user pool id of Admin Management userpool 
+    Value: !GetAtt Cognito.Outputs.CognitoOperationUsersUserPoolId
   CognitoOperationUsersUserPoolProviderURL:
     Description: The Admin Management userpool provider url
     Value: !GetAtt Cognito.Outputs.CognitoOperationUsersUserPoolProviderURL
@@ -138,17 +136,17 @@ Outputs:
     Description: The user pool id for tenant user pool
     Value: !GetAtt Cognito.Outputs.CognitoUserPoolId
     Export:
-      Name: "Serverless-SaaS-Fauna-CognitoTenantUserPoolId"  
+      Name: "Svls-saas-wkshp-CognitoTenantUserPoolId"  
   CognitoTenantAppClientId:
     Description: The app client id for tenant user pool
     Value: !GetAtt Cognito.Outputs.CognitoUserPoolClientId
     Export:
-      Name: "Serverless-SaaS-Fauna-CognitoTenantAppClientId"
+      Name: "Svls-saas-wkshp-CognitoTenantAppClientId"
   ProductFunctionExecutionRoleArn:
     Value: !GetAtt LambdaFunctions.Outputs.ProductFunctionExecutionRoleArn
     Export:
-      Name: "SaaS-Fauna-ProductFunctionExecutionRoleArn"
+      Name: "Svls-saas-wkshp-ProductFunctionExecutionRoleArn"
   OrderFunctionExecutionRoleArn:
     Value: !GetAtt LambdaFunctions.Outputs.OrderFunctionExecutionRoleArn
     Export:
-      Name: "SaaS-Fauna-OrderFunctionExecutionRoleArn"
+      Name: "Svls-saas-wkshp-OrderFunctionExecutionRoleArn"
