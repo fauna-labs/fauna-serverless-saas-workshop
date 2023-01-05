@@ -23,22 +23,26 @@ def provision_tenant(event, context):
     tenant_details = json.loads(event['body'])
     
     try:          
-        response_ddb = table_tenant_stack_mapping.put_item(
-            Item={
-                    'tenantId': tenant_details['tenantId'],
-                    'stackName': stack_name.format(tenant_details['tenantId']),
-                    'applyLatestRelease': True,
-                    'codeCommitId': ''
-                }
-            )    
-        
-        logger.info(response_ddb)
+        if tenant_details['dedicatedTenancy'].upper() == 'TRUE':
+          #TODO: Add missing code to kick off the pipeline
+          response_ddb = table_tenant_stack_mapping.put_item(
+              Item={
+                      'tenantId': tenant_details['tenantId'],
+                      'stackName': stack_name.format(tenant_details['tenantId']),
+                      'applyLatestRelease': True,
+                      'codeCommitId': ''
+                  }
+              )    
 
-        response_codepipeline = codepipeline.start_pipeline_execution(
-            name='serverless-saas-pipeline'
-        )
+          logger.info(response_ddb)
 
-        logger.info(response_ddb)
+          response_codepipeline = codepipeline.start_pipeline_execution(
+              name='serverless-stack-workshop-pipeline'
+          )
+        else:
+          response_codepipeline = codepipeline.start_pipeline_execution(
+              name='fauna-migration-stack-pipeline'
+          )
 
     except Exception as e:
         raise

@@ -10,25 +10,25 @@ phases:
       - python -m pip install aws-sam-cli==1.33.0
       - sam --version
       # Installing project dependencies
-      - cd Lab6/server/ProductService
+      - cd Lab5/server/ProductService
       - python -m pip install -r requirements.txt 
       - cd ../OrderService
       - python -m pip install -r requirements.txt 
-      
-
   pre_build:
     commands:
+      # Run Fauna migrations      
+      - cd ../fauna_resources
+      - npm install
+      - node index.js $FAUNA_API_KEY
       # Run tests, lint scripts or any other pre-build checks.
       - cd ..
       - export PYTHONPATH=./ProductService/
       # unit tests needs to be fixed. Commenting for now
       #- python -m pytest tests/unit/ProductService-test_handler.py
-
   build:
     commands:
       # Use Build phase to build your artifacts (compile, etc.)
       - sam build -t tenant-template.yaml
-
   post_build:
     commands:
       # Use Post-Build for notifications, git tags, upload artifacts to S3
@@ -38,4 +38,4 @@ artifacts:
   discard-paths: yes
   files:
     # List of local artifacts that will be passed down the pipeline
-    - Lab6/server/packaged.yaml
+    - Lab5/server/packaged.yaml

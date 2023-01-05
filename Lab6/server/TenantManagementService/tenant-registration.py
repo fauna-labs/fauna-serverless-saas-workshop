@@ -5,57 +5,52 @@ import json
 import boto3
 import os
 import utils
-import uuid
 import logger
 import requests
-import re
 
 region = os.environ['AWS_REGION']
 create_tenant_admin_user_resource_path = os.environ['CREATE_TENANT_ADMIN_USER_RESOURCE_PATH']
 create_tenant_resource_path = os.environ['CREATE_TENANT_RESOURCE_PATH']
 provision_tenant_resource_path = os.environ['PROVISION_TENANT_RESOURCE_PATH']
 
-platinum_tier_api_key = os.environ['PLATINUM_TIER_API_KEY']
-premium_tier_api_key = os.environ['PREMIUM_TIER_API_KEY']
-standard_tier_api_key = os.environ['STANDARD_TIER_API_KEY']
-basic_tier_api_key = os.environ['BASIC_TIER_API_KEY']
 
 lambda_client = boto3.client('lambda')
 
 
 def register_tenant(event, context):
     try:
-        api_key=''
-        tenant_id = uuid.uuid1().hex
         tenant_details = json.loads(event['body'])
-        tenant_details['dedicatedTenancy'] = 'false'
 
-        #TODO: Pass relevant apikey to tenant_details object based upon tenant tier
         if (tenant_details['tenantTier'].upper() == utils.TenantTier.PLATINUM.value.upper()):
             tenant_details['dedicatedTenancy'] = 'true'
-        
-        tenant_details['tenantId'] = tenant_id
-        
-        
+        else:
+            tenant_details['dedicatedTenancy'] = 'false'
+
+        tenant_details['apiKey'] = __getApiKey(tenant_details['tenantTier'])
+
         logger.info(tenant_details)
 
         stage_name = event['requestContext']['stage']
         host = event['headers']['Host']
         auth = utils.get_auth(host, region)
         headers = utils.get_headers(event)
-        create_user_response = __create_tenant_admin_user(tenant_details, headers, auth, host, stage_name)
-        
+
+        # first we create the tenant, and get the tenant_id
+        create_tenant_response = __create_or_update_tenant(tenant_details, headers, auth, host, stage_name)
+        tenant_details['tenantId'] = create_tenant_response['tenantId']
+        logger.info(tenant_details)
+
+        create_user_response = __create_tenant_admin_user(tenant_details, headers, auth, host, stage_name)        
         logger.info (create_user_response)
         tenant_details['userPoolId'] = create_user_response['message']['userPoolId']
         tenant_details['appClientId'] = create_user_response['message']['appClientId']
-        tenant_details['tenantAdminUserName'] = create_user_response['message']['tenantAdminUserName']
 
-        create_tenant_response = __create_tenant(tenant_details, headers, auth, host, stage_name)
+        # update the tenant with the userPoolId and appClientId
+        create_tenant_response = __create_or_update_tenant(tenant_details, headers, auth, host, stage_name)
         logger.info (create_tenant_response)
 
-        if (tenant_details['dedicatedTenancy'].upper() == 'TRUE'):
-            provision_tenant_response = __provision_tenant(tenant_details, headers, auth, host, stage_name)
-            logger.info(provision_tenant_response)
+        provision_tenant_response = __provision_tenant(tenant_details, headers, auth, host, stage_name)
+        logger.info(provision_tenant_response)
 
         
     except Exception as e:
@@ -63,6 +58,7 @@ def register_tenant(event, context):
         raise Exception('Error registering a new tenant', e)
     else:
         return utils.create_success_response("You have been registered in our system")
+
 
 def __create_tenant_admin_user(tenant_details, headers, auth, host, stage_name):
     try:
@@ -76,7 +72,8 @@ def __create_tenant_admin_user(tenant_details, headers, auth, host, stage_name):
     else:
         return response_json
 
-def __create_tenant(tenant_details, headers, auth, host, stage_name):
+
+def __create_or_update_tenant(tenant_details, headers, auth, host, stage_name):
     try:
         url = ''.join(['https://', host, '/', stage_name, create_tenant_resource_path])
         response = requests.post(url, data=json.dumps(tenant_details), auth=auth, headers=headers) 
@@ -86,6 +83,7 @@ def __create_tenant(tenant_details, headers, auth, host, stage_name):
         raise Exception('Error occured while creating the tenant record in table', e) 
     else:
         return response_json
+
 
 def __provision_tenant(tenant_details, headers, auth, host, stage_name):
     try:
@@ -100,3 +98,12 @@ def __provision_tenant(tenant_details, headers, auth, host, stage_name):
         return response_json
 
               
+def __getApiKey(tenant_tier):
+    if (tenant_tier.upper() == utils.TenantTier.PLATINUM.value.upper()):
+        return os.environ['PLATINUM_TIER_API_KEY']
+    elif (tenant_tier.upper() == utils.TenantTier.PREMIUM.value.upper()):
+        return os.environ['PREMIUM_TIER_API_KEY']
+    elif (tenant_tier.upper() == utils.TenantTier.STANDARD.value.upper()):
+        return os.environ['STANDARD_TIER_API_KEY']
+    elif (tenant_tier.upper() == utils.TenantTier.BASIC.value.upper()):
+        return os.environ['BASIC_TIER_API_KEY']

@@ -38,6 +38,7 @@ fi
 
 cp .env ../../Lab3/scripts/
 cp .env ../../Lab5/scripts/
+cp .env ../../Lab6/scripts/
 
 if [[ $server -eq 1 ]]; then
   echo "Migrate Fauna database resources"
@@ -71,6 +72,8 @@ if [[ $server -eq 1 ]]; then
       ex -sc '%s/s3_bucket = .*/s3_bucket = \"'$SAM_S3_BUCKET'\"/|x' ../../Lab3/server/tenant-samconfig.toml
       ex -sc '%s/s3_bucket = .*/s3_bucket = \"'$SAM_S3_BUCKET'\"/|x' ../../Lab5/server/shared-samconfig.toml
       ex -sc '%s/s3_bucket = .*/s3_bucket = \"'$SAM_S3_BUCKET'\"/|x' ../../Lab5/server/tenant-samconfig.toml
+      ex -sc '%s/s3_bucket = .*/s3_bucket = \"'$SAM_S3_BUCKET'\"/|x' ../../Lab6/server/shared-samconfig.toml
+      ex -sc '%s/s3_bucket = .*/s3_bucket = \"'$SAM_S3_BUCKET'\"/|x' ../../Lab6/server/tenant-samconfig.toml
   fi
 
   echo "Validating server code using pylint"

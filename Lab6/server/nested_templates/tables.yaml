@@ -5,6 +5,9 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
   Template to create dynamodb tables as part of bootstrap
+Parameters:
+  StackName:
+    Type: String
 Resources:
   ServerlessSaaSSettingsTable:
     Type: AWS::DynamoDB::Table
@@ -16,7 +19,7 @@ Resources:
         - AttributeName: settingName
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
-      TableName: ServerlessSaaS-Settings
+      TableName: !Sub '${StackName}-Settings'
   TenantStackMappingTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -27,55 +30,7 @@ Resources:
         - AttributeName: tenantId
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
-      TableName: ServerlessSaaS-TenantStackMapping
-  TenantDetailsTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      AttributeDefinitions:
-        - AttributeName: tenantId
-          AttributeType: S
-        - AttributeName: tenantName
-          AttributeType: S   
-      KeySchema:
-        - AttributeName: tenantId
-          KeyType: HASH
-      BillingMode: PAY_PER_REQUEST
-      GlobalSecondaryIndexes:
-        - IndexName: ServerlessSaas-TenantConfig
-          KeySchema:
-            - AttributeName: tenantName
-              KeyType: HASH
-          Projection:
-            NonKeyAttributes: 
-              - userPoolId
-              - appClientId
-              - apiGatewayUrl
-            ProjectionType: INCLUDE      
-      TableName: ServerlessSaaS-TenantDetails
-  TenantUserMappingTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      AttributeDefinitions:
-        - AttributeName: tenantId
-          AttributeType: S
-        - AttributeName: userName
-          AttributeType: S
-      KeySchema:
-        - AttributeName: tenantId
-          KeyType: HASH
-        - AttributeName: userName
-          KeyType: RANGE
-      BillingMode: PAY_PER_REQUEST
-      TableName: ServerlessSaaS-TenantUserMapping
-      GlobalSecondaryIndexes: 
-        - IndexName: UserName
-          KeySchema: 
-            - AttributeName: userName
-              KeyType: HASH
-            - AttributeName: tenantId
-              KeyType: RANGE
-          Projection:
-            ProjectionType: ALL
+      TableName: !Sub '${StackName}-TenantStackMapping'
 Outputs:
   ServerlessSaaSSettingsTableArn: 
     Value: !GetAtt ServerlessSaaSSettingsTable.Arn
@@ -85,11 +40,3 @@ Outputs:
     Value: !GetAtt TenantStackMappingTable.Arn
   TenantStackMappingTableName: 
     Value: !Ref TenantStackMappingTable
-  TenantDetailsTableArn: 
-    Value: !GetAtt TenantDetailsTable.Arn
-  TenantDetailsTableName: 
-    Value: !Ref TenantDetailsTable
-  TenantUserMappingTableArn: 
-    Value: !GetAtt TenantUserMappingTable.Arn
-  TenantUserMappingTableName: 
-    Value: !Ref TenantUserMappingTable

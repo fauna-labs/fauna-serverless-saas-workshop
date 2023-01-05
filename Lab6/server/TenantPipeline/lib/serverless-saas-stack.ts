@@ -13,7 +13,73 @@ import codebuild = require('@aws-cdk/aws-codebuild');
 
 import { Function, Runtime, AssetCode } from '@aws-cdk/aws-lambda'
 import { PolicyStatement } from "@aws-cdk/aws-iam"
+import { POINT_CONVERSION_COMPRESSED } from 'constants';
 
+export class FaunaMigrationsStack extends cdk.Stack {
+  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id, props);
+
+    const artifactsBucket = new s3.Bucket(this, "ArtifactsBucket");
+
+    // Pipeline creation starts
+    const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
+      pipelineName: 'fauna-migration-stack-pipeline',
+      artifactBucket: artifactsBucket
+    });
+
+    // Import existing CodeCommit sam-app repository
+    const codeRepo = codecommit.Repository.fromRepositoryName(
+      this,
+      'AppRepository', 
+      `${process.env.STACK_NAME}-workshop`
+    );
+
+    // Declare source code as an artifact
+    const sourceOutput = new codepipeline.Artifact();
+
+    // Add source stage to pipeline
+    pipeline.addStage({
+      stageName: 'Source',
+      actions: [
+        new codepipeline_actions.CodeCommitSourceAction({
+          actionName: 'CodeCommit_Source',
+          repository: codeRepo,
+          branch: 'fauna',
+          output: sourceOutput,
+          variablesNamespace: 'SourceVariables'
+        }),
+      ],
+    });
+
+    // Declare build output as artifacts
+    const buildOutput = new codepipeline.Artifact();
+
+    //Declare a new CodeBuild project
+    const buildProject = new codebuild.PipelineProject(this, 'Build', {
+      buildSpec : codebuild.BuildSpec.fromSourceFilename("Lab5/server/tenant-fsm-buildspec.yml"),
+      environment: { buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_2 },
+      environmentVariables: {
+        'FAUNA_API_KEY': {
+          value: process.env.FAUNA_API_KEY
+        }
+      }
+    });
+
+    // Add the build stage to our pipeline
+    pipeline.addStage({
+      stageName: 'Build',
+      actions: [
+        new codepipeline_actions.CodeBuildAction({
+          actionName: 'Run-Fauna-Schema-Migrate',
+          project: buildProject,
+          input: sourceOutput,
+          outputs: [buildOutput],
+        }),
+      ],
+    });
+
+  }
+}
 
 export class ServerlessSaaSStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -27,6 +93,7 @@ export class ServerlessSaaSStack extends cdk.Stack {
         lambdaPolicy.addActions("*")
         lambdaPolicy.addResources("*")
 
+
     const lambdaFunction = new Function(this, "deploy-tenant-stack", {
         handler: "lambda-deploy-tenant-stack.lambda_handler",
         runtime: Runtime.PYTHON_3_8,
@@ -35,13 +102,14 @@ export class ServerlessSaaSStack extends cdk.Stack {
         timeout: Duration.seconds(10),
         environment: {
             BUCKET: artifactsBucket.bucketName,
+            STACK_NAME: `${process.env.STACK_NAME}`
         },
-        initialPolicy: [lambdaPolicy],
+        initialPolicy: [lambdaPolicy]
     })
 
     // Pipeline creation starts
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
-      pipelineName: 'serverless-saas-pipeline',
+      pipelineName: 'serverless-stack-workshop-pipeline',
       artifactBucket: artifactsBucket
     });
 
@@ -49,7 +117,7 @@ export class ServerlessSaaSStack extends cdk.Stack {
     const codeRepo = codecommit.Repository.fromRepositoryName(
       this,
       'AppRepository', 
-      'aws-saas-factory-ref-serverless-saas' 
+      `${process.env.STACK_NAME}-workshop`
     );
 
     // Declare source code as an artifact
@@ -62,7 +130,7 @@ export class ServerlessSaaSStack extends cdk.Stack {
         new codepipeline_actions.CodeCommitSourceAction({
           actionName: 'CodeCommit_Source',
           repository: codeRepo,
-          branch: 'main',
+          branch: 'fauna',
           output: sourceOutput,
           variablesNamespace: 'SourceVariables'
         }),
@@ -72,19 +140,22 @@ export class ServerlessSaaSStack extends cdk.Stack {
     // Declare build output as artifacts
     const buildOutput = new codepipeline.Artifact();
 
-
-
     //Declare a new CodeBuild project
     const buildProject = new codebuild.PipelineProject(this, 'Build', {
-      buildSpec : codebuild.BuildSpec.fromSourceFilename("Lab6/server/tenant-buildspec.yml"),
+      buildSpec : codebuild.BuildSpec.fromSourceFilename("Lab5/server/tenant-buildspec.yml"),
       environment: { buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_2 },
       environmentVariables: {
         'PACKAGE_BUCKET': {
           value: artifactsBucket.bucketName
+        },
+        'FAUNA_API_KEY': {
+          value: process.env.FAUNA_API_KEY
+        },
+        'STACK_NAME': {
+          value: process.env.STACK_NAME
         }
       }
     });
-
     
 
     // Add the build stage to our pipeline

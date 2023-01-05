@@ -137,7 +137,6 @@ export default {
     }
   },
   mounted() {
-    console.log('mounted')
     if (this.user) {
       this.seed = this.user.email;
 

@@ -8,6 +8,8 @@ Description: >
 Parameters:
   StageName:
     Type: String
+  StackName:
+    Type: String
   RegisterTenantLambdaExecutionRoleArn:
     Type: String
   TenantManagementLambdaExecutionRoleArn:
@@ -59,13 +61,13 @@ Parameters:
   ApiKeyStandardTierParameter:
     Type: String
   ApiKeyBasicTierParameter:
-    Type: String  
+    Type: String
   
 Resources:
   ApiGatewayCloudWatchLogRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub apigateway-cloudwatch-publish-role-${AWS::Region}
+      RoleName: !Sub svls-saas-wkshp-apigateway-cloudwatch-publish-role
       Path: "/"
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
@@ -86,7 +88,7 @@ Resources:
   AdminApiGatewayAccessLogs:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/api-gateway/access-logs-serverless-saas-admin-api
+      LogGroupName: !Sub /aws/api-gateway/access-logs-${StackName}-admin-api
       RetentionInDays: 30
   AdminApiGatewayApi:
     Type: AWS::Serverless::Api
@@ -172,7 +174,7 @@ Resources:
       DefinitionBody:
         openapi: 3.0.1
         info:
-          title: !Join ["", ["serverless-saas-admin-api-", !Ref "AWS::Region"]]
+          title: !Sub '${StackName}-admin-api'
         basePath: !Join ["", ["/", !Ref StageName]]
         x-amazon-apigateway-api-key-source : "AUTHORIZER"
         schemes:
@@ -527,7 +529,7 @@ Resources:
               produces:
                 - application/json
               responses: {}
-              security:   
+              security:
                 - api_key: []
                 - Authorizer: []
               x-amazon-apigateway-integration:
@@ -544,7 +546,7 @@ Resources:
               produces:
                 - application/json
               responses: {}
-              security:   
+              security:
                 - api_key: []
                 - Authorizer: []
               x-amazon-apigateway-integration:
@@ -561,7 +563,7 @@ Resources:
               produces:
                 - application/json
               responses: {}
-              security:        
+              security:
                 - api_key: []
                 - Authorizer: []
               x-amazon-apigateway-integration:
@@ -609,8 +611,8 @@ Resources:
               produces:
                 - application/json
               responses: {}
-              security:    
-                - api_key: [] 
+              security:
+                - api_key: []
                 - Authorizer: []
               x-amazon-apigateway-integration:
                 uri: !Join
@@ -624,8 +626,8 @@ Resources:
               produces:
                 - application/json
               responses: {}
-              security:         
-                - api_key: []       
+              security:
+                - api_key: []
                 - Authorizer: []
               x-amazon-apigateway-integration:
                 uri: !Join
@@ -641,7 +643,7 @@ Resources:
               produces:
                 - application/json
               responses: {}
-              security: 
+              security:
                 - api_key: []
                 - Authorizer: []
               x-amazon-apigateway-integration:
@@ -652,6 +654,36 @@ Resources:
                     - /invocations
                 httpMethod: POST
                 type: aws_proxy
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                '200':
+                  description: 200 response
+                  schema:
+                    $ref: "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Origin:  "'*'"
+                passthroughBehavior: when_no_match
+                requestTemplates:
+                  application/json: "{\"statusCode\": 200}"
+                type: mock 
+
           /user/tenant-admin:
             post:
               summary: Creates a tenant admin user
@@ -705,8 +737,8 @@ Resources:
               produces:
                 - application/json
               responses: {}
-              security:  
-                - api_key: []          
+              security:
+                - api_key: []
                 - Authorizer: []
               x-amazon-apigateway-integration:
                 uri: !Join
@@ -753,7 +785,7 @@ Resources:
               produces:
                 - application/json
               responses: {}
-              security:   
+              security:
                 - api_key: []
                 - Authorizer: []
               x-amazon-apigateway-integration:
@@ -1109,6 +1141,7 @@ Resources:
       KeyType: API_KEY
       UsagePlanId: !Ref UsagePlanBasicTier
     DependsOn: UsagePlanBasicTier
+
 Outputs:
   UsagePlanBasicTier: 
     Value: !Ref UsagePlanBasicTier

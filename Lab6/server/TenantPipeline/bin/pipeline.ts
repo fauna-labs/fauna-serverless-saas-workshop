@@ -1,7 +1,12 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from '@aws-cdk/core';
-import { ServerlessSaaSStack } from '../lib/serverless-saas-stack';
+import { ServerlessSaaSStack, FaunaMigrationsStack } from '../lib/serverless-saas-stack';
 
 const app = new cdk.App();
-new ServerlessSaaSStack(app, 'serverless-saas-pipeline');
+
+new ServerlessSaaSStack(app, 'svls-saas-wkshp-pipeline');
+
+new FaunaMigrationsStack(app, 'fauna-migrations-pipeline');
+
+app.synth();

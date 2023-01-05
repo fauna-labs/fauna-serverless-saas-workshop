@@ -9,7 +9,6 @@ from crhelper import CfnResource
 helper = CfnResource()
 
 try:
-    dynamodb = boto3.resource('dynamodb')
     apigateway = boto3.client('apigateway')
 except Exception as e:
     helper.init_failure(e)
@@ -32,8 +31,6 @@ def do_action(event, _):
     usage_plan_id_standard = event['ResourceProperties']['UsagePlanStandardTier']
     usage_plan_id_premium = event['ResourceProperties']['UsagePlanPremiumTier']
     usage_plan_id_platinum = event['ResourceProperties']['UsagePlanPlatinumTier']
-
-    table_system_settings = dynamodb.Table(settings_table_name)
 
     if(is_pooled_deploy == "true"):
         response_apigateway = apigateway.update_usage_plan (

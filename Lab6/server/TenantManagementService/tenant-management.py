@@ -4,33 +4,34 @@
 import os
 import json
 import boto3
-from boto3.dynamodb.conditions import Key
 import urllib.parse
 import utils
-from botocore.exceptions import ClientError
 import logger
-import metrics_manager
 import auth_manager
 import requests
-from aws_requests_auth.aws_auth import AWSRequestsAuth
 
 from aws_lambda_powertools import Tracer
 tracer = Tracer()
 
+from utils import FaunaClients
+from faunadb import query as q
+from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
+clients = {}
 
 region = os.environ['AWS_REGION']
 
-#This method has been locked down to be only
+
+#This method has been locked down to be only called from tenant registration service
 def create_tenant(event, context):
     api_gateway_url = ''       
     tenant_details = json.loads(event['body'])
 
     dynamodb = boto3.resource('dynamodb')
-    table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')#TODO: read table names from env vars
-    table_system_settings = dynamodb.Table('ServerlessSaaS-Settings')
+    settings_table_name = os.environ['SETTINGS_TABLE_NAME']
+    table_system_settings = dynamodb.Table(settings_table_name)
 
     try:          
-        # for pooled tenants the apigateway url is saving in settings during stack creation
+        # for pooled tenants the apigateway url is saved in settings during stack creation
         # update from there during tenant creation
         if(tenant_details['dedicatedTenancy'].lower()!= 'true'):
             settings_response = table_system_settings.get_item(
@@ -38,48 +39,94 @@ def create_tenant(event, context):
                     'settingName': 'apiGatewayUrl-Pooled'
                 } 
             )
-            api_gateway_url = settings_response['Item']['settingValue']
+            api_gateway_url = settings_response['Item']['settingValue']              
 
-        #TODO: Save API Key inside the table**
-        response = table_tenant_details.put_item(
-            Item={
-                    'tenantId': tenant_details['tenantId'],
-                    'tenantName' : tenant_details['tenantName'],
-                    'tenantAddress': tenant_details['tenantAddress'],
-                    'tenantEmail': tenant_details['tenantEmail'],
-                    'tenantPhone': tenant_details['tenantPhone'],
-                    'tenantTier': tenant_details['tenantTier'],
-                    #'apiKey': tenant_details['apiKey'],
-                    'userPoolId': tenant_details['userPoolId'],                 
-                    'appClientId': tenant_details['appClientId'],
-                    'dedicatedTenancy': tenant_details['dedicatedTenancy'],
-                    'isActive': True,
-                    'apiGatewayUrl': api_gateway_url
-                }
-            )                    
+        tenant_id = tenant_details['tenantId'] if 'tenantId' in tenant_details else None
+        data = {
+          'isActive': True,
+          'apiGatewayUrl': api_gateway_url
+        }
+        for key in tenant_details:
+          data[key] = tenant_details[key]
 
+        # Note:
+        # 1) This method has been locked down to be only called from tenant registration service
+        # 2) Is doing an UPSERT
+        global clients
+        db = FaunaClients(clients)
+        if tenant_id:
+            tenant = db.query(
+              q.let(
+                {
+                  'tenant': q.update(q.ref(q.collection('tenant'), tenant_id), { 'data': data } ),
+                  'tenantId': q.select(['ref', 'id'], q.var('tenant'), 0)
+                },
+                { 'tenantId': q.var('tenantId') }
+              )
+            )            
+        else:
+            tenant = db.query(
+              q.let(
+                {
+                  'tenant': q.create(q.collection('tenant'), { 'data': data } ),
+                  'tenantId': q.select(['ref', 'id'], q.var('tenant'), 0),
+                  'db': q.create_database({ 'name': q.concat(['tenant_', q.var('tenantId')]) })
+                },
+                { 'tenantId': q.var('tenantId') }
+              )
+            )
+    except FaunaError as fe:
+        logger.error(fe)
+        raise Exception('Error adding a new tenant', fe)
     except Exception as e:
         raise Exception('Error creating a new tenant', e)
     else:
-        return utils.create_success_response("Tenant Created")
+        return utils.generate_response(tenant)
+
 
 def get_tenants(event, context):
-    
-    table_tenant_details = __getTenantManagementTable(event)
-
+    tenants = []
     try:
-        response = table_tenant_details.scan()
-    except Exception as e:
+        tenant_id = event['requestContext']['authorizer']['tenantId']
+        user_role = event['requestContext']['authorizer']['userRole']
+        global clients
+        db = FaunaClients(clients)
+
+        if auth_manager.isSystemAdmin(user_role):
+            results = db.query(
+              q.map_(
+                q.lambda_('x', 
+                  q.let(
+                    { 'tenant': q.get(q.var('x')) },
+                    q.merge(
+                      { 'tenantId': q.select(['ref', 'id'], q.var('tenant')) },
+                      q.select(['data'], q.var('tenant'))
+                    )
+                  )
+                ),
+                q.paginate(q.documents(q.collection('tenant')))
+              )
+            )
+        else:
+            results = db.query(
+              q.let(
+                { 'tenant': q.get(q.ref(q.collection('tenant'), tenant_id)) },
+                q.merge(
+                  { 'tenantId': q.select(['ref', 'id'], q.var('tenant')) },
+                  q.select(['data'], q.var('tenant'))
+                )
+              )              
+            )
+        tenants = results['data']
+    except FaunaError as e:
+        logger.error(e)
         raise Exception('Error getting all tenants', e)
     else:
-        return utils.generate_response(response['Items'])    
+        return utils.generate_response(tenants)
 
 
 @tracer.capture_lambda_handler
-def update_tenant(event, context):
-    
-    table_tenant_details = __getTenantManagementTable(event)
-    
+def update_tenant(event, context):    
     requesting_tenant_id = event['requestContext']['authorizer']['tenantId']    
     user_role = event['requestContext']['authorizer']['userRole']
 
@@ -91,34 +138,35 @@ def update_tenant(event, context):
     logger.log_with_tenant_context(event, "Request received to update tenant")
 
     if ((auth_manager.isTenantAdmin(user_role) and tenant_id == requesting_tenant_id) or auth_manager.isSystemAdmin(user_role)):
-        exiting_tenant_details = table_tenant_details.get_item(
-                Key={
-                    'tenantId': tenant_id,
-                }    
-            )             
-
-        if (exiting_tenant_details['Item']['tenantTier'].upper() != tenant_details['tenantTier'].upper()):
-            api_key = __getApiKey(tenant_details['tenantTier'])
-        else:            
-            api_key = exiting_tenant_details['Item']['apiKey']
-
-        response_update = table_tenant_details.update_item(
-            Key={
-                'tenantId': tenant_id,
+        global clients
+        db = FaunaClients(clients)
+        response_update = db.query(
+          q.let(
+            {
+              'tenantRef': q.ref(q.collection('tenant'), tenant_id),
+              'existingTier': q.select(['data', 'tenantTier'], q.get(q.var('tenantRef'))),
+              'existingApiKey': q.select(['data', 'apiKey'], q.get(q.var('tenantRef'))),
+              'apiKey': q.if_(
+                q.equals(tenant_details['tenantTier'], q.var('existingTier')),
+                q.var('existingApiKey'),
+                __getApiKey(tenant_details['tenantTier'])
+              )
             },
-            UpdateExpression="set tenantName = :tenantName, tenantAddress = :tenantAddress, tenantEmail = :tenantEmail, tenantPhone = :tenantPhone, tenantTier=:tenantTier, apiKey=:apiKey",
-            ExpressionAttributeValues={
-                    ':tenantName' : tenant_details['tenantName'],
-                    ':tenantAddress': tenant_details['tenantAddress'],
-                    ':tenantEmail': tenant_details['tenantEmail'],
-                    ':tenantPhone': tenant_details['tenantPhone'],
-                    ':tenantTier': tenant_details['tenantTier'],
-                    ':apiKey': api_key
-                },
-            ReturnValues="UPDATED_NEW"
-            )             
-            
-        
+            q.update(
+              q.var('tenantRef'), {
+                'data': {
+                    'tenantName' : tenant_details['tenantName'],
+                    'tenantAddress': tenant_details['tenantAddress'],
+                    'tenantEmail': tenant_details['tenantEmail'],
+                    'tenantPhone': tenant_details['tenantPhone'],
+                    'tenantTier': tenant_details['tenantTier'],
+                    'apiKey': q.var('apiKey')
+                }
+              }
+            )
+          )
+        )
+
         logger.log_with_tenant_context(event, response_update)     
 
         logger.log_with_tenant_context(event, "Request completed to update tenant")
@@ -127,10 +175,9 @@ def update_tenant(event, context):
         logger.log_with_tenant_context(event, "Request completed as unauthorized. Only tenant admin or system admin can update tenant!")        
         return utils.create_unauthorized_response()
 
+
 @tracer.capture_lambda_handler
-def get_tenant(event, context):
-    table_tenant_details = __getTenantManagementTable(event)
-    
+def get_tenant(event, context):    
     requesting_tenant_id = event['requestContext']['authorizer']['tenantId']    
     user_role = event['requestContext']['authorizer']['userRole']
 
@@ -140,18 +187,19 @@ def get_tenant(event, context):
     logger.log_with_tenant_context(event, "Request received to get tenant details")
 
     if ((auth_manager.isTenantAdmin(user_role) and tenant_id == requesting_tenant_id) or auth_manager.isSystemAdmin(user_role)):
-        tenant_details = table_tenant_details.get_item(
-            Key={
-                'tenantId': tenant_id,
-            },
-            AttributesToGet=[
-                'tenantName',
-                'tenantAddress',
-                'tenantEmail',
-                'tenantPhone'
-            ]    
-        )             
-        item = tenant_details['Item']
+        global clients
+        db = FaunaClients(clients)
+
+        item = db.query(
+          q.let(
+            { 'tenant': q.get(q.ref(q.collection('tenant'), tenant_id)) },
+            q.merge(
+              q.select(['data'], q.var('tenant')),
+              { 'tenantId':  q.select(['ref', 'id'], q.var('tenant')) }
+            )
+          )
+        )
+
         tenant_info = TenantInfo(item['tenantName'], item['tenantAddress'],item['tenantEmail'], item['tenantPhone'])
         logger.log_with_tenant_context(event, tenant_info)
         
@@ -161,10 +209,9 @@ def get_tenant(event, context):
         logger.log_with_tenant_context(event, "Request completed as unauthorized. Only tenant admin or system admin can deactivate tenant!")        
         return utils.create_unauthorized_response()  
 
+
 @tracer.capture_lambda_handler
-def deactivate_tenant(event, context):
-    table_tenant_details = __getTenantManagementTable(event)
-    
+def deactivate_tenant(event, context):    
     url_disable_users = os.environ['DISABLE_USERS_BY_TENANT']
     url_deprovision_tenant = os.environ['DEPROVISION_TENANT']
     stage_name = event['requestContext']['stage']
@@ -182,17 +229,16 @@ def deactivate_tenant(event, context):
     logger.log_with_tenant_context(event, "Request received to deactivate tenant")
 
     if ((auth_manager.isTenantAdmin(user_role) and tenant_id == requesting_tenant_id) or auth_manager.isSystemAdmin(user_role)):
-        response = table_tenant_details.update_item(
-            Key={
-                'tenantId': tenant_id,
-            },
-            UpdateExpression="set isActive = :isActive",
-            ExpressionAttributeValues={
-                    ':isActive': False
-                },
-            ReturnValues="ALL_NEW"
-            )             
-        
+        global clients
+        db = FaunaClients(clients)
+
+        response = db.query(
+          q.update(
+            q.get(q.ref(q.collection('tenant'), tenant_id)),
+            { 'data': { 'active': False } }
+          )
+        )                  
+
         logger.log_with_tenant_context(event, response)
 
         if (response["Attributes"]["dedicatedTenancy"].upper() == "TRUE"):
@@ -215,10 +261,9 @@ def deactivate_tenant(event, context):
         logger.log_with_tenant_context(event, "Request completed as unauthorized. Only tenant admin or system admin can deactivate tenant!")        
         return utils.create_unauthorized_response()    
 
+
 @tracer.capture_lambda_handler
-def activate_tenant(event, context):
-    table_tenant_details = __getTenantManagementTable(event)
-    
+def activate_tenant(event, context):    
     url_enable_users = os.environ['ENABLE_USERS_BY_TENANT']
     url_provision_tenant = os.environ['PROVISION_TENANT']
     stage_name = event['requestContext']['stage']
@@ -235,18 +280,17 @@ def activate_tenant(event, context):
     
     logger.log_with_tenant_context(event, "Request received to activate tenant")
 
-    if (auth_manager.isSystemAdmin(user_role)):
-        response = table_tenant_details.update_item(
-            Key={
-                'tenantId': tenant_id,
-            },
-            UpdateExpression="set isActive = :isActive",
-            ExpressionAttributeValues={
-                    ':isActive': True
-                },
-            ReturnValues="ALL_NEW"
-            )             
-        
+    if (auth_manager.isSystemAdmin(user_role)):        
+        global clients
+        db = FaunaClients(clients)
+
+        response = db.query(
+          q.update(
+            q.get(q.ref(q.collection('tenant'), tenant_id)),
+            { 'data': { 'active': True } }
+          )
+        )        
+
         logger.log_with_tenant_context(event, response)
 
         if (response["Attributes"]["dedicatedTenancy"].upper() == "TRUE"):
@@ -269,27 +313,29 @@ def activate_tenant(event, context):
         logger.log_with_tenant_context(event, "Request completed as unauthorized. Only system admin can activate tenant!")        
         return utils.create_unauthorized_response()    
 
+
 def load_tenant_config(event, context):
     params = event['pathParameters']
-    tenantName = urllib.parse.unquote(params['tenantname'])
-
-    dynamodb = boto3.resource('dynamodb')
-    table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')#TODO: read table names from env vars
-    
+    tenantName = urllib.parse.unquote(params['tenantname'])    
     try:
-        response = table_tenant_details.query(
-            IndexName="ServerlessSaas-TenantConfig",
-            KeyConditionExpression=Key('tenantName').eq(tenantName),
-            ProjectionExpression="userPoolId, appClientId, apiGatewayUrl"
-        ) 
+        global clients
+        db = FaunaClients(clients)
+
+        response = db.query(
+          q.map_(
+            q.lambda_('x', q.select(['data'], q.get(q.var('x')))),
+            q.select(['data'], q.paginate(q.match(q.index('tenants_by_name'), tenantName)))  
+          )
+        )
     except Exception as e:
         raise Exception('Error getting tenant config', e)
     else:
-        if (response['Count'] == 0):
+        if len(response) == 0:
             return utils.create_notfound_response("Tenant not found."+
             "Please enter exact tenant name used during tenant registration.")
         else:
-            return utils.generate_response(response['Items'][0])        
+            return utils.generate_response(response[0])
+
 
 def __invoke_disable_users(update_details, headers, auth, host, stage_name, invoke_url):
     try:
@@ -306,6 +352,7 @@ def __invoke_disable_users(update_details, headers, auth, host, stage_name, invo
     else:
         return "Success invoking disable users"
 
+
 def __invoke_deprovision_tenant(update_details, headers, auth, host, stage_name, invoke_url):
     try:
         url = ''.join(['https://', host, '/', stage_name, invoke_url + update_details['tenantId']])
@@ -320,6 +367,7 @@ def __invoke_deprovision_tenant(update_details, headers, auth, host, stage_name,
         raise Exception('Error occured while deprovisioning tenant', e) 
     else:
         return "Success invoking deprovision tenant"
+
 
 def __invoke_enable_users(update_details, headers, auth, host, stage_name, invoke_url):
     try:
@@ -336,6 +384,7 @@ def __invoke_enable_users(update_details, headers, auth, host, stage_name, invok
     else:
         return "Success invoking enable users"
 
+
 def __invoke_provision_tenant(update_details, headers, auth, host, stage_name, invoke_url):
     try:
         url = ''.join(['https://', host, '/', stage_name, invoke_url])
@@ -351,6 +400,7 @@ def __invoke_provision_tenant(update_details, headers, auth, host, stage_name, i
     else:
         return "Success invoking provision tenant"
 
+
 def __getApiKey(tenant_tier):
     if (tenant_tier.upper() == utils.TenantTier.PLATINUM.value.upper()):
         return os.environ['PLATINUM_TIER_API_KEY']
@@ -360,15 +410,7 @@ def __getApiKey(tenant_tier):
         return os.environ['STANDARD_TIER_API_KEY']
     elif (tenant_tier.upper() == utils.TenantTier.BASIC.value.upper()):
         return os.environ['BASIC_TIER_API_KEY']
-        
-def __getTenantManagementTable(event):
-    accesskey = event['requestContext']['authorizer']['accesskey']
-    secretkey = event['requestContext']['authorizer']['secretkey']
-    sessiontoken = event['requestContext']['authorizer']['sessiontoken']    
-    dynamodb = boto3.resource('dynamodb', aws_access_key_id=accesskey, aws_secret_access_key=secretkey, aws_session_token=sessiontoken)
-    table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')#TODO: read table names from env vars
-    
-    return table_tenant_details
+
 
 class TenantInfo:
     def __init__(self, tenant_name, tenant_address, tenant_email, tenant_phone):

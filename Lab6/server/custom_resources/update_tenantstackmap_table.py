@@ -25,17 +25,19 @@ def do_action(event, _):
     logger.info("Updating Tenant Stack Map")
 
     tenantstackmap_table_name = event['ResourceProperties']['TenantStackMappingTableName']
+    stack_name = event['ResourceProperties']['StackName']
     
     table_stack_mapping = dynamodb.Table(tenantstackmap_table_name)
     
     response = table_stack_mapping.put_item(
             Item={
                     'tenantId': 'pooled',
-                    'stackName' : 'stack-pooled',
+                    'stackName' : stack_name,
                     'applyLatestRelease': True,
                     'codeCommitId': ''
                 }
-            )                  
+            )
+    print(response)
     
 @helper.delete
 def do_nothing(_, __):

@@ -11,15 +11,23 @@ import logger
 from jose import jwk, jwt
 from jose.utils import base64url_decode
 import auth_manager
-import utils
+
+from utils import FaunaClients
+from faunadb import query as q
+from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
+clients = {}
+
 
 region = os.environ['AWS_REGION']
 sts_client = boto3.client("sts", region_name=region)
-dynamodb = boto3.resource('dynamodb')
-table_tenant_details = dynamodb.Table('ServerlessSaaS-TenantDetails')
+
 user_pool_operation_user = os.environ['OPERATION_USERS_USER_POOL']
 app_client_operation_user = os.environ['OPERATION_USERS_APP_CLIENT']
 api_key_operation_user = os.environ['OPERATION_USERS_API_KEY']
+user_pool_tenant = os.environ['TENANT_USER_POOL']
+app_client_tenant = os.environ['TENANT_APP_CLIENT']
+api_gateway_url_tenant = os.environ['TENANT_API_GATEWAY_URL']
+
 
 def lambda_handler(event, context):
     
@@ -36,21 +44,18 @@ def lambda_handler(event, context):
 
     if(auth_manager.isSaaSProvider(unauthorized_claims['custom:userRole'])):
         userpool_id = user_pool_operation_user
-        appclient_id = app_client_operation_user   
-        api_key = api_key_operation_user  
-    else:
-        #get tenant user pool and app client to validate jwt token against
-        tenant_details = table_tenant_details.get_item( 
-            Key ={
-                'tenantId': unauthorized_claims['custom:tenantId']
-            }
+        appclient_id = app_client_operation_user
+        api_key = api_key_operation_user
+    else:        
+        global clients
+        db = FaunaClients(clients)
+        res = db.query(
+          q.get(q.ref(q.collection('tenant'), unauthorized_claims['custom:tenantId']))
         )
-        logger.info(tenant_details)
-        userpool_id = tenant_details['Item']['userPoolId']
-        appclient_id = tenant_details['Item']['appClientId']
-        apigateway_url = tenant_details['Item']['apiGatewayUrl']
-        #TODO: Get API Key from tenant management table
-        #api_key = tenant_details['Item']['apiKey']
+        userpool_id = res['data']['userPoolId']
+        appclient_id = res['data']['appClientId']
+        apigateway_url = res['data']['apiGatewayUrl']
+        api_key = res['data']['apiKey']
         
 
     #get keys for tenant user pool to validate
@@ -83,10 +88,11 @@ def lambda_handler(event, context):
     policy.region = tmp[3]
     policy.stage = api_gateway_arn_tmp[1]
 
-    if (auth_manager.isSaaSProvider(user_role) == False):
-        if (isTenantAuthorizedForThisAPI(apigateway_url, api_gateway_arn_tmp[0]) == False):
-            logger.error('Unauthorized')
-            raise Exception('Unauthorized')
+    # This check is redundant because we're already validating appclient_id, which is on a per-tenant basis
+    # if (auth_manager.isSaaSProvider(user_role) == False):
+    #     if (isTenantAuthorizedForThisAPI(apigateway_url, api_gateway_arn_tmp[0]) == False):
+    #         logger.error('Unauthorized')
+    #         raise Exception('Unauthorized')
 
     #roles are not fine-grained enough to allow selectively
     policy.allowAllMethods()        
@@ -100,31 +106,36 @@ def lambda_handler(event, context):
     #   Another option is to generate the STS token inside the lambda function itself, as mentioned in this blog post: https://aws.amazon.com/blogs/apn/isolating-saas-tenants-with-dynamically-generated-iam-policies/
     #   Finally, you can also consider creating one Authorizer per microservice in cases where you want the IAM policy specific to that service 
     
-    iam_policy = auth_manager.getPolicyForUser(user_role, utils.Service_Identifier.BUSINESS_SERVICES.value, tenant_id, region, aws_account_id)
-    logger.info(iam_policy)
+    # iam_policy = auth_manager.getPolicyForUser(user_role, utils.Service_Identifier.BUSINESS_SERVICES.value, tenant_id, region, aws_account_id)
+    # logger.info(iam_policy)
     
-    role_arn = "arn:aws:iam::{}:role/authorizer-access-role".format(aws_account_id)
+    # role_arn = "arn:aws:iam::{}:role/authorizer-access-role".format(aws_account_id)
     
-    assumed_role = sts_client.assume_role(
-        RoleArn=role_arn,
-        RoleSessionName="tenant-aware-session",
-        Policy=iam_policy,
-    )
-    credentials = assumed_role["Credentials"]
+    # assumed_role = sts_client.assume_role(
+    #     RoleArn=role_arn,
+    #     RoleSessionName="tenant-aware-session",
+    #     Policy=iam_policy,
+    # )
+    # credentials = assumed_role["Credentials"]
 
     #pass sts credentials to lambda
+    # context = {
+    #     'accesskey': credentials['AccessKeyId'], # $context.authorizer.key -> value
+    #     'secretkey' : credentials['SecretAccessKey'],
+    #     'sessiontoken' : credentials["SessionToken"],
+    #     'userName': user_name,
+    #     'tenantId': tenant_id,
+    #     'userPoolId': userpool_id,
+    #     'userRole': user_role
+    # }
     context = {
-        'accesskey': credentials['AccessKeyId'], # $context.authorizer.key -> value
-        'secretkey' : credentials['SecretAccessKey'],
-        'sessiontoken' : credentials["SessionToken"],
         'userName': user_name,
         'tenantId': tenant_id,
         'userPoolId': userpool_id,
-        #TODO: Assign API Key to authorizer response
-        #'apiKey': api_key,
-        'userRole': user_role
-    }
-    
+        'userRole': user_role,
+        # TODO: Assign API Key to authorizer response
+        'apiKey': api_key
+    }    
     authResponse['context'] = context
     authResponse['usageIdentifierKey'] = api_key
     

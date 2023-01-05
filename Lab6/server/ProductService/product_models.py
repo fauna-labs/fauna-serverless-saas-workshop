@@ -3,20 +3,15 @@
 
 class Product:
     key =''
-    def __init__(self, shardId, productId, sku, name, price, category):
-        self.shardId = shardId
+    def __init__(self, productId, sku, name, description, price, quantity, backorderedLimit, backordered):
         self.productId = productId
-        self.key = shardId + ':' +  productId
         self.sku = sku
         self.name = name
+        self.description = description
         self.price = price
-        self.category = category
-
-class Category:
-    def __init__(self, id, name):
-        self.id = id
-        self.name = name
-                
+        self.quantity = quantity
+        self.backorderedLimit = backorderedLimit
+        self.backordered = backordered                
 
         
 

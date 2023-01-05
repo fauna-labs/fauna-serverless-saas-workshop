@@ -33,16 +33,25 @@ Parameters:
   ApiKeyBasicTierParameter:
     Type: String
     Default: "daae9784-6d96-11eb-a28b-38f9d33cfd0f"
-    Description: "Enter default api key value to be used by api gateway for basic tier tenants"  
+    Description: "Enter default api key value to be used by api gateway for basic tier tenants"
   StageName:
     Type: String
     Default: "prod"
-    Description: "Stage Name for the api"  
+    Description: "Stage Name for the api"
+  StackName:
+    Type: String
+    Default: "serverless-saas-workshop"
+  ParameterStoreFaunaAppConfigPublic:
+    Type: String
+    Default: '{"domain": "db.fauna.com"}'
+    Description: ""
 Resources:
   DynamoDBTables:
     Type: AWS::Serverless::Application
     Properties:
       Location: nested_templates/tables.yaml
+      Parameters:
+        StackName: !Ref StackName
 
   #Create cloudfront and s3 for UI Cde
   UserInterface:
@@ -56,9 +65,10 @@ Resources:
     Properties:
       Location: nested_templates/cognito.yaml
       Parameters:
+        StackName: !Ref StackName
         AdminEmailParameter: !Ref AdminEmailParameter
         SystemAdminRoleNameParameter: !Ref SystemAdminRoleNameParameter
-        AdminUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.AdminAppSite
+        AdminUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.ApplicationSite
         TenantUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.ApplicationSite
         
   LambdaFunctions:
@@ -67,22 +77,22 @@ Resources:
     Properties:
       Location: nested_templates/lambdafunctions.yaml
       Parameters:
+        StackName: !Ref StackName
+        ParameterStoreFaunaConfig: !Sub '/${StackName}/faunadb/config'
+        ParameterStoreFaunaAppConfigPublic: !Ref ParameterStoreFaunaAppConfigPublic
         CognitoUserPoolId: !GetAtt Cognito.Outputs.CognitoUserPoolId
         CognitoUserPoolClientId: !GetAtt Cognito.Outputs.CognitoUserPoolClientId                
         CognitoOperationUsersUserPoolId: !GetAtt Cognito.Outputs.CognitoOperationUsersUserPoolId
         CognitoOperationUsersUserPoolClientId: !GetAtt Cognito.Outputs.CognitoOperationUsersUserPoolClientId
-        TenantDetailsTableArn: !GetAtt DynamoDBTables.Outputs.TenantDetailsTableArn
         ServerlessSaaSSettingsTableArn: !GetAtt DynamoDBTables.Outputs.ServerlessSaaSSettingsTableArn
+        TenantStackMappingTableArn: !GetAtt DynamoDBTables.Outputs.TenantStackMappingTableArn
+        TenantStackMappingTableName: !GetAtt DynamoDBTables.Outputs.TenantStackMappingTableName
+        TenantUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.ApplicationSite 
         ApiKeyOperationUsersParameter: !Ref ApiKeyOperationUsersParameter
         ApiKeyPlatinumTierParameter: !Ref ApiKeyPlatinumTierParameter
         ApiKeyPremiumTierParameter: !Ref ApiKeyPremiumTierParameter
         ApiKeyStandardTierParameter: !Ref ApiKeyStandardTierParameter
-        ApiKeyBasicTierParameter: !Ref ApiKeyBasicTierParameter
-        TenantStackMappingTableArn: !GetAtt DynamoDBTables.Outputs.TenantStackMappingTableArn
-        TenantUserMappingTableArn: !GetAtt DynamoDBTables.Outputs.TenantUserMappingTableArn
-        TenantStackMappingTableName: !GetAtt DynamoDBTables.Outputs.TenantStackMappingTableName
-        TenantUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.ApplicationSite 
-        
+        ApiKeyBasicTierParameter: !Ref ApiKeyBasicTierParameter        
         
   APIs:
     Type: AWS::Serverless::Application
@@ -90,6 +100,7 @@ Resources:
     Properties:
       Location: nested_templates/apigateway.yaml
       Parameters:
+        StackName: !Ref StackName
         StageName: !Ref StageName
         RegisterTenantLambdaExecutionRoleArn: !GetAtt LambdaFunctions.Outputs.RegisterTenantLambdaExecutionRoleArn          
         TenantManagementLambdaExecutionRoleArn: !GetAtt LambdaFunctions.Outputs.TenantManagementLambdaExecutionRoleArn          
@@ -111,13 +122,13 @@ Resources:
         CreateUserFunctionArn: !GetAtt LambdaFunctions.Outputs.CreateUserFunctionArn
         DisableUsersByTenantFunctionArn: !GetAtt LambdaFunctions.Outputs.DisableUsersByTenantFunctionArn
         EnableUsersByTenantFunctionArn: !GetAtt LambdaFunctions.Outputs.EnableUsersByTenantFunctionArn                  
-        AuthorizerFunctionArn: !GetAtt LambdaFunctions.Outputs.SharedServicesAuthorizerFunctionArn 
+        AuthorizerFunctionArn: !GetAtt LambdaFunctions.Outputs.SharedServicesAuthorizerFunctionArn  
         ApiKeyOperationUsersParameter: !Ref ApiKeyOperationUsersParameter
         ApiKeyPlatinumTierParameter: !Ref ApiKeyPlatinumTierParameter
         ApiKeyPremiumTierParameter: !Ref ApiKeyPremiumTierParameter
         ApiKeyStandardTierParameter: !Ref ApiKeyStandardTierParameter
-        ApiKeyBasicTierParameter: !Ref ApiKeyBasicTierParameter 
-        
+        ApiKeyBasicTierParameter: !Ref ApiKeyBasicTierParameter         
+
   APIGatewayLambdaPermissions:
     Type: AWS::Serverless::Application
     DependsOn: LambdaFunctions
@@ -146,13 +157,15 @@ Resources:
         EnableUsersByTenantFunctionArn: !GetAtt LambdaFunctions.Outputs.EnableUsersByTenantFunctionArn          
         AuthorizerFunctionArn: !GetAtt LambdaFunctions.Outputs.SharedServicesAuthorizerFunctionArn         
         AdminApiGatewayApi: !GetAtt APIs.Outputs.AdminApiGatewayApi
-  #setup custom resources
+
+  # setup custom resources
   CustomResources:
     Type: AWS::Serverless::Application
     DependsOn: APIs    
     Properties:
       Location: nested_templates/custom_resources.yaml
       Parameters:
+        StackName: !Ref StackName
         ServerlessSaaSSettingsTableArn: !GetAtt DynamoDBTables.Outputs.ServerlessSaaSSettingsTableArn  
         ServerlessSaaSSettingsTableName: !GetAtt DynamoDBTables.Outputs.ServerlessSaaSSettingsTableName
         TenantStackMappingTableArn: !GetAtt DynamoDBTables.Outputs.TenantStackMappingTableArn
@@ -166,18 +179,6 @@ Outputs:
   AdminApi:
     Description: "API Gateway endpoint URL for Admin API"
     Value: !Join ["", ["https://", !GetAtt APIs.Outputs.AdminApiGatewayApi, ".execute-api.", !Ref "AWS::Region", ".amazonaws.com/", !Ref StageName, "/"]]
-  AdminSiteBucket:
-    Description: The S3 Bucket that will contain the static assets for the tenant administration application
-    Value: !GetAtt UserInterface.Outputs.AdminBucket
-  AdminAppSite:
-    Description: The name of the CloudFront url for Admin Management site
-    Value: !GetAtt UserInterface.Outputs.AdminAppSite
-  LandingApplicationSiteBucket:
-    Description: The S3 Bucket that will contain the static assets for the landing application
-    Value: !GetAtt UserInterface.Outputs.LandingAppBucket
-  LandingApplicationSite:
-    Description: The name of the CloudFront url for Landing site
-    Value: !GetAtt UserInterface.Outputs.LandingApplicationSite
   ApplicationSiteBucket:
     Description: The S3 Bucket that will contain the static assets for the tenant application
     Value: !GetAtt UserInterface.Outputs.AppBucket
@@ -188,7 +189,7 @@ Outputs:
     Description: The user pool id of Admin Management userpool 
     Value: !GetAtt Cognito.Outputs.CognitoOperationUsersUserPoolId
     Export:
-      Name: "Serverless-SaaS-CognitoOperationUsersUserPoolId"  
+      Name: "Svls-saas-wkshp-CognitoOperationUsersUserPoolId"  
   CognitoOperationUsersUserPoolProviderURL:
     Description: The Admin Management userpool provider url
     Value: !GetAtt Cognito.Outputs.CognitoOperationUsersUserPoolProviderURL
@@ -196,45 +197,60 @@ Outputs:
     Description: The Admin Management userpool client id
     Value: !GetAtt Cognito.Outputs.CognitoOperationUsersUserPoolClientId
     Export:
-      Name: "Serverless-SaaS-CognitoOperationUsersUserPoolClientId"
+      Name: "Svls-saas-wkshp-CognitoOperationUsersUserPoolClientId"
   CognitoTenantUserPoolId:
     Description: The user pool id for tenant user pool
     Value: !GetAtt Cognito.Outputs.CognitoUserPoolId
     Export:
-      Name: "Serverless-SaaS-CognitoTenantUserPoolId"  
+      Name: "Svls-saas-wkshp-CognitoTenantUserPoolId"
   CognitoTenantAppClientId:
     Description: The app client id for tenant user pool
     Value: !GetAtt Cognito.Outputs.CognitoUserPoolClientId
     Export:
-      Name: "Serverless-SaaS-CognitoTenantAppClientId"  
+      Name: "Svls-saas-wkshp-CognitoTenantAppClientId"  
   AuthorizerExecutionRoleArn:
     Description: The Lambda authorizer execution role
     Value: !GetAtt LambdaFunctions.Outputs.AuthorizerExecutionRoleArn 
     Export:
-      Name: "Serverless-SaaS-AuthorizerExecutionRoleArn"   
+      Name: "Svls-saas-wkshp-AuthorizerExecutionRoleArn"
+  UpdateTenantApiGatewayUrlFunctionArn:
+    Value: !GetAtt LambdaFunctions.Outputs.UpdateTenantApiGatewayUrlFunctionArn
+    Export:
+      Name: "Svls-saas-wkshp-UpdateTenantApigUrlFunction"
+  GetTenantInfoFunctionArn:
+    Value: !GetAtt LambdaFunctions.Outputs.GetTenantInfoFunctionArn
+    Export:
+      Name: "Svls-saas-wkshp-GetTenantInfoFunction"
+  ProductFunctionExecutionRoleArn:
+    Value: !GetAtt LambdaFunctions.Outputs.ProductFunctionExecutionRoleArn
+    Export:
+      Name: "Svls-saas-wkshp-ProductFunctionExecutionRoleArn"
+  OrderFunctionExecutionRoleArn:
+    Value: !GetAtt LambdaFunctions.Outputs.OrderFunctionExecutionRoleArn
+    Export:
+      Name: "Svls-saas-wkshp-OrderFunctionExecutionRoleArn"
   UsagePlanBasicTier: 
     Description: The basic tier usage plan
     Value: !GetAtt APIs.Outputs.UsagePlanBasicTier
     Export:
-      Name: "Serverless-SaaS-UsagePlanBasicTier"
+      Name: "Svls-saas-wkshp-UsagePlanBasicTier"
   UsagePlanStandardTier: 
     Description: The standard tier usage plan
     Value: !GetAtt APIs.Outputs.UsagePlanStandardTier
     Export:
-      Name: "Serverless-SaaS-UsagePlanStandardTier"
+      Name: "Svls-saas-wkshp-UsagePlanStandardTier"
   UsagePlanPremiumTier: 
     Description: The premium tier usage plan
     Value: !GetAtt APIs.Outputs.UsagePlanPremiumTier
     Export:
-      Name: "Serverless-SaaS-UsagePlanPremiumTier"
+      Name: "Svls-saas-wkshp-UsagePlanPremiumTier"
   UsagePlanPlatinumTier: 
     Description: The premium tier usage plan
     Value: !GetAtt APIs.Outputs.UsagePlanPlatinumTier
     Export:
-      Name: "Serverless-SaaS-UsagePlanPlatinumTier"
+      Name: "Svls-saas-wkshp-UsagePlanPlatinumTier"
   ApiKeyOperationUsers:
     Description: The api key of system admins
     Value: !Ref ApiKeyOperationUsersParameter
     Export:
-      Name: "Serverless-SaaS-ApiKeyOperationUsers"    
-          
+      Name: "Svls-saas-wkshp-ApiKeyOperationUsers"      

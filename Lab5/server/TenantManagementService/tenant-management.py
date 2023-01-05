@@ -48,11 +48,9 @@ def create_tenant(event, context):
         for key in tenant_details:
           data[key] = tenant_details[key]
 
-        print("tenant_id: {}".format(tenant_id))
-        print(data)
-
-        # This method has been locked down to be only called from tenant registration service
-        # Note: It also has a non-standard POST behavior of UPSERTing into the collection
+        # Note:
+        # 1) This method has been locked down to be only called from tenant registration service
+        # 2) Is doing an UPSERT
         global clients
         db = FaunaClients(clients)
         if tenant_id:
