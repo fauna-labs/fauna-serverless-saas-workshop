@@ -26,7 +26,6 @@ app_client_operation_user = os.environ['OPERATION_USERS_APP_CLIENT']
 api_key_operation_user = os.environ['OPERATION_USERS_API_KEY']
 user_pool_tenant = os.environ['TENANT_USER_POOL']
 app_client_tenant = os.environ['TENANT_APP_CLIENT']
-api_gateway_url_tenant = os.environ['TENANT_API_GATEWAY_URL']
 
 
 def lambda_handler(event, context):
@@ -100,35 +99,6 @@ def lambda_handler(event, context):
     
     authResponse = policy.build()
  
-    #   Generate STS credentials to be used for FGAC
-    
-    #   Important Note: 
-    #   We are generating STS token inside Authorizer to take advantage of the caching behavior of authorizer
-    #   Another option is to generate the STS token inside the lambda function itself, as mentioned in this blog post: https://aws.amazon.com/blogs/apn/isolating-saas-tenants-with-dynamically-generated-iam-policies/
-    #   Finally, you can also consider creating one Authorizer per microservice in cases where you want the IAM policy specific to that service 
-    
-    # iam_policy = auth_manager.getPolicyForUser(user_role, utils.Service_Identifier.BUSINESS_SERVICES.value, tenant_id, region, aws_account_id)
-    # logger.info(iam_policy)
-    
-    # role_arn = "arn:aws:iam::{}:role/authorizer-access-role".format(aws_account_id)
-    
-    # assumed_role = sts_client.assume_role(
-    #     RoleArn=role_arn,
-    #     RoleSessionName="tenant-aware-session",
-    #     Policy=iam_policy,
-    # )
-    # credentials = assumed_role["Credentials"]
-
-    #pass sts credentials to lambda
-    # context = {
-    #     'accesskey': credentials['AccessKeyId'], # $context.authorizer.key -> value
-    #     'secretkey' : credentials['SecretAccessKey'],
-    #     'sessiontoken' : credentials["SessionToken"],
-    #     'userName': user_name,
-    #     'tenantId': tenant_id,
-    #     'userPoolId': userpool_id,
-    #     'userRole': user_role
-    # }
     context = {
         'userName': user_name,
         'tenantId': tenant_id,
@@ -138,6 +108,7 @@ def lambda_handler(event, context):
         'apiKey': api_key
     }    
     authResponse['context'] = context
+    # TODO: Assign API Key to usageIdentifierKey response
     authResponse['usageIdentifierKey'] = api_key
     
     return authResponse

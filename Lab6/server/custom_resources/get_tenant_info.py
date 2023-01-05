@@ -23,7 +23,6 @@ def do_action(event, _):
     if tenant_id == 'pooled':
         helper.Data.update({"userPoolId": event['ResourceProperties']['TenantUserPoolPooled']})
         helper.Data.update({"appClientId": event['ResourceProperties']['TenantAppClientPooled']})
-        # helper.Data.update({"apiGatewayUrl": event['ResourceProperties']['TenantApiGatewayUrlPooled']})
     else:
         configuration = configparser.ConfigParser()
         config_dict = {}
@@ -50,7 +49,6 @@ def do_action(event, _):
                           
             helper.Data.update({"userPoolId": tenant_data['userPoolId']})
             helper.Data.update({"appClientId": tenant_data['appClientId']})
-            # helper.Data.update({"apiGatewayUrl": tenant_data['apiGatewayUrl']})
         except:
             print("Encountered an error loading config from SSM.")
             traceback.print_exc()

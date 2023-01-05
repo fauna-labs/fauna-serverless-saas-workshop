@@ -2,7 +2,6 @@ import json
 import boto3
 import os, configparser, traceback
 import logger
-# from boto3.dynamodb.conditions import Key
 from crhelper import CfnResource
 from utils import FaunaFromConfig
 from faunadb import query as q
@@ -45,15 +44,6 @@ def do_action(event, _):
                     'settingValue' : tenant_api_gateway_url                    
                 })        
     else:
-        # tenant_details = dynamodb.Table(tenant_details_table_name)
-        # response = tenant_details.update_item(
-        #     Key={'tenantId': tenant_id},
-        #     UpdateExpression="set apiGatewayUrl=:apiGatewayUrl",
-        #     ExpressionAttributeValues={
-        #     ':apiGatewayUrl': tenant_api_gateway_url
-        #     },
-        #     ReturnValues="NONE") 
-
         response = db.query(
             q.update(
               q.ref(q.collection('tenant'), tenant_id), 
@@ -65,7 +55,6 @@ def do_action(event, _):
             )
         )
 
-    # helper.Data.update({"UpdateTenantAPIGatewayURLData": tenant_id})
 
 @helper.delete
 def do_nothing(_, __):

@@ -3,23 +3,12 @@
 
 class Order:
     key=''
-    # def __init__(self, orderId, orderName, orderProducts):
-    #     self.orderId = orderId
-    #     self.orderName = orderName
-    #     self.orderProducts = orderProducts
     def __init__(self, orderId, orderName, orderCreated, orderStatus, orderProducts):
         self.orderId = orderId
         self.orderName = orderName
         self.orderCreated = orderCreated
         self.orderStatus = orderStatus
         self.orderProducts = orderProducts
-
-# class  OrderProduct:
-
-#     def __init__(self, productId, price, quantity):
-#         self.productId = productId
-#         self.price = price
-#         self.quantity = quantity
 
 
 

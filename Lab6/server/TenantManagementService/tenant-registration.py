@@ -26,6 +26,7 @@ def register_tenant(event, context):
         else:
             tenant_details['dedicatedTenancy'] = 'false'
 
+        #TODO: Pass relevant apikey to tenant_details object based upon tenant tier
         tenant_details['apiKey'] = __getApiKey(tenant_details['tenantTier'])
 
         logger.info(tenant_details)
@@ -50,9 +51,7 @@ def register_tenant(event, context):
         logger.info (create_tenant_response)
 
         provision_tenant_response = __provision_tenant(tenant_details, headers, auth, host, stage_name)
-        logger.info(provision_tenant_response)
-
-        
+        logger.info(provision_tenant_response)        
     except Exception as e:
         logger.error('Error registering a new tenant')
         raise Exception('Error registering a new tenant', e)

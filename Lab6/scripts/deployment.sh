@@ -1,6 +1,18 @@
-
+#!/bin/bash
 
 echo "server code is getting deployed"
+
+
+export $(grep -v '^#' .env | xargs)
+
+stackname=$STACK_NAME
+
+if [[ -z "$stackname" ]]; then
+    echo "Please provide a stack name by supplying a value for STACK_NAME in the .env file" 
+    echo "Note: Invoke script without parameters to know the list of script parameters"
+    exit 1  
+fi
+
 cd ../server
 REGION=$(aws configure get region)
 
@@ -12,22 +24,23 @@ if [[ $? -ne 0 ]]; then
 fi
 
 sam build -t shared-template.yaml --use-container
-sam deploy --config-file shared-samconfig.toml --region=$REGION
+sam deploy --config-file shared-samconfig.toml \
+  --region=$REGION \
+  --stack-name=$stackname \
+  --parameter-overrides StackName=$stackname
 
 echo "Pooled tenant server code is getting deployed"
-REGION=$(aws configure get region)
 sam build -t tenant-template.yaml --use-container
-sam deploy --config-file tenant-samconfig.toml --region=$REGION
+sam deploy --config-file tenant-samconfig.toml \
+  --region=$REGION \
+  --stack-name=stack-$stackname-pooled \
+  --parameter-overrides StackName=$stackname
+
 cd ../scripts
 
-ADMIN_SITE_URL=$(aws cloudformation describe-stacks --stack-name serverless-saas --query "Stacks[0].Outputs[?OutputKey=='AdminAppSite'].OutputValue" --output text)
-LANDING_APP_SITE_URL=$(aws cloudformation describe-stacks --stack-name serverless-saas --query "Stacks[0].Outputs[?OutputKey=='LandingApplicationSite'].OutputValue" --output text)
-APP_SITE_URL=$(aws cloudformation describe-stacks --stack-name serverless-saas --query "Stacks[0].Outputs[?OutputKey=='ApplicationSite'].OutputValue" --output text)
+APP_SITE_URL=$(aws cloudformation describe-stacks --stack-name $stackname --query "Stacks[0].Outputs[?OutputKey=='ApplicationSite'].OutputValue" --output text)
 
-echo "Admin site URL: https://$ADMIN_SITE_URL"
-echo "Landing site URL: https://$LANDING_APP_SITE_URL"
 echo "App site URL: https://$APP_SITE_URL"
-  
 
 
 
