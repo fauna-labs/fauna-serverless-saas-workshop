@@ -55,6 +55,7 @@ def lambda_handler(event, context):
         userpool_id = res['data']['userPoolId']
         appclient_id = res['data']['appClientId']
         apigateway_url = res['data']['apiGatewayUrl']
+        # TODO: Assign API Key to authorizer response
         api_key = res['data']['apiKey']
         
 

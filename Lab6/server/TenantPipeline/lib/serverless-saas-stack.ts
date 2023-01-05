@@ -44,7 +44,7 @@ export class FaunaMigrationsStack extends cdk.Stack {
         new codepipeline_actions.CodeCommitSourceAction({
           actionName: 'CodeCommit_Source',
           repository: codeRepo,
-          branch: 'fauna',
+          branch: 'main',
           output: sourceOutput,
           variablesNamespace: 'SourceVariables'
         }),
@@ -130,7 +130,7 @@ export class ServerlessSaaSStack extends cdk.Stack {
         new codepipeline_actions.CodeCommitSourceAction({
           actionName: 'CodeCommit_Source',
           repository: codeRepo,
-          branch: 'fauna',
+          branch: 'main',
           output: sourceOutput,
           variablesNamespace: 'SourceVariables'
         }),
