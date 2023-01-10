@@ -1,0 +1,17 @@
+{
+  "name": "fauna-resources",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "zee.khoo@fauna.com",
+  "license": "MIT",
+  "dependencies": {
+    "@fauna-labs/fauna-schema-migrate": "^2.2.1",
+    "dotenv": "^16.0.1",
+    "faunadb": "^4.6.0"
+  }
+}
