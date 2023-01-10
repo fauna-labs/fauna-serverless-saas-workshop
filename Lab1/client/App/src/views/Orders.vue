@@ -111,7 +111,6 @@ export default {
       })
         .then(res => {
           if (!res.ok) {
-            console.log('ERR: ', e);
             this.progress = false;
           } else {
             return res.json();

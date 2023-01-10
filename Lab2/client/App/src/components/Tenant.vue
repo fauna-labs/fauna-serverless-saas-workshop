@@ -65,10 +65,7 @@
 
                     <div>
                       <label for="tier" class="block text-md font-medium text-gray-700">Service plan</label>
-                      <div v-if="updateMode" class="mt-2 text-md font-light">
-                        {{tier}}
-                      </div>
-                      <div v-else class="mt-2 pb-6">
+                      <div class="mt-2 pb-6">
                         <select v-model="tier" id="tier-select"
                               class="
                                 bg-white
