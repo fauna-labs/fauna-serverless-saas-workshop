@@ -91,7 +91,6 @@ Resources:
               - 'kms:DescribeKey'
             Resource: '*'  
 
-
   ServerlessSaaSLayers:
     Type: AWS::Serverless::LayerVersion
     Properties:
@@ -105,7 +104,6 @@ Resources:
     Metadata:
       BuildMethod: python3.8
 
-  
   AuthorizerExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -134,11 +132,6 @@ Resources:
                   - cognito-idp:List*                                    
                 Resource:
                   - !Sub arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/*    
-              # - Effect: Allow
-              #   Action:
-              #     - dynamodb:GetItem
-              #   Resource:
-              #     - !Ref TenantDetailsTableArn    
   
   SharedServicesAuthorizerFunction:
     Type: AWS::Serverless::Function 
@@ -185,17 +178,6 @@ Resources:
                 Action:
                   - cognito-idp:*
                 Resource: "*"
-              # - Effect: Allow
-              #   Action:
-              #     - dynamodb:GetItem
-              #   Resource:
-              #     - !Ref TenantDetailsTableArn
-              # - Effect: Allow
-              #   Action:
-              #     - dynamodb:GetItem
-              #     - dynamodb:Query
-              #   Resource:
-              #     - !Ref TenantUserMappingTableArn
         - PolicyName: 'UserPoolFxnsParameterStoreAccess'
           PolicyDocument:
             Version: '2012-10-17'
@@ -205,7 +187,6 @@ Resources:
                 Action:
                   - 'ssm:GetParameter*'
                 Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${StackName}/faunadb/config'
-
   CreateUserLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -233,16 +214,6 @@ Resources:
                 Action:
                   - cognito-idp:*
                 Resource: "*"
-              # - Effect: Allow
-              #   Action:
-              #     - dynamodb:PutItem
-              #   Resource:
-              #     - !Ref TenantUserMappingTableArn
-              # - Effect: Allow
-              #   Action:
-              #     - dynamodb:GetItem
-              #   Resource:
-              #     - !Ref TenantDetailsTableArn
         - PolicyName: 'CreateUserFxnsParameterStoreAccess'
           PolicyDocument:
             Version: '2012-10-17'
@@ -252,7 +223,6 @@ Resources:
                 Action:
                   - 'ssm:GetParameter*'
                 Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${StackName}/faunadb/config'
-
   CreateTenantAdminUserFunction:
     Type: AWS::Serverless::Function
     DependsOn: CreateUserLambdaExecutionRole
@@ -285,8 +255,7 @@ Resources:
       Environment:
         Variables:
           TENANT_USER_POOL_ID: !Ref CognitoUserPoolId
-          POWERTOOLS_SERVICE_NAME: "UserManagement.CreateUser"   
-      
+          POWERTOOLS_SERVICE_NAME: "UserManagement.CreateUser"
   UpdateUserFunction:
     Type: AWS::Serverless::Function
     DependsOn: TenantUserPoolLambdaExecutionRole
@@ -302,7 +271,6 @@ Resources:
         Variables:
           TENANT_USER_POOL_ID: !Ref CognitoUserPoolId
           POWERTOOLS_SERVICE_NAME: "UserManagement.UpdateUser"
-      
   DisableUserFunction:
     Type: AWS::Serverless::Function
     DependsOn: TenantUserPoolLambdaExecutionRole
@@ -318,7 +286,6 @@ Resources:
         Variables:
           TENANT_USER_POOL_ID: !Ref CognitoUserPoolId
           POWERTOOLS_SERVICE_NAME: "UserManagement.DisableUser"
-      
   DisableUsersByTenantFunction:
     Type: AWS::Serverless::Function
     DependsOn: TenantUserPoolLambdaExecutionRole
@@ -334,7 +301,6 @@ Resources:
         Variables:
           TENANT_USER_POOL_ID: !Ref CognitoUserPoolId
           POWERTOOLS_SERVICE_NAME: "UserManagement.DisableUsersByTenant"
-           
   EnableUsersByTenantFunction:
     Type: AWS::Serverless::Function
     DependsOn: TenantUserPoolLambdaExecutionRole
@@ -350,7 +316,6 @@ Resources:
         Variables:
           TENANT_USER_POOL_ID: !Ref CognitoUserPoolId
           POWERTOOLS_SERVICE_NAME: "UserManagement.EnableUsersByTenant"
-      
   GetUserFunction:
     Type: AWS::Serverless::Function
     DependsOn: TenantUserPoolLambdaExecutionRole
@@ -366,7 +331,6 @@ Resources:
         Variables:
           TENANT_USER_POOL_ID: !Ref CognitoUserPoolId
           POWERTOOLS_SERVICE_NAME: "UserManagement.GetUser"
-         
   GetUsersFunction:
     Type: AWS::Serverless::Function
     DependsOn: TenantUserPoolLambdaExecutionRole
@@ -412,7 +376,6 @@ Resources:
                 Action:
                   - 'ssm:GetParameter*'
                 Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${StackName}/faunadb/config'
-
   CreateTenantFunction:
     Type: AWS::Serverless::Function
     DependsOn: TenantManagementLambdaExecutionRole
@@ -427,7 +390,6 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "TenantManagement.CreateTenant"
-      
   ActivateTenantFunction:
     Type: AWS::Serverless::Function
     DependsOn: TenantManagementLambdaExecutionRole
@@ -444,7 +406,6 @@ Resources:
           POWERTOOLS_SERVICE_NAME: "TenantManagement.ActivateTenant"
           ENABLE_USERS_BY_TENANT: "/users/enable"
           PROVISION_TENANT: "/provisioning/"
-  
   GetTenantFunction:
     Type: AWS::Serverless::Function
     DependsOn: TenantManagementLambdaExecutionRole
@@ -459,7 +420,6 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: "TenantManagement.GetTenant"    
-        
   DeactivateTenantFunction:
     Type: AWS::Serverless::Function
     DependsOn: TenantManagementLambdaExecutionRole
@@ -489,7 +449,7 @@ Resources:
         - !Ref ServerlessSaaSLayers
       Environment:
         Variables:
-          POWERTOOLS_SERVICE_NAME: "TenantManagement.UpdateTenant"          
+          POWERTOOLS_SERVICE_NAME: "TenantManagement.UpdateTenant"
   GetTenantsFunction:
     Type: AWS::Serverless::Function
     DependsOn: TenantManagementLambdaExecutionRole
@@ -539,8 +499,7 @@ Resources:
           PROVISION_TENANT_RESOURCE_PATH: "/provisioning"
           POWERTOOLS_SERVICE_NAME: "TenantRegistration.RegisterTenant"  
   
-   
-  
+
 Outputs:
   RegisterTenantLambdaExecutionRoleArn: 
     Value: !GetAtt RegisterTenantLambdaExecutionRole.Arn          

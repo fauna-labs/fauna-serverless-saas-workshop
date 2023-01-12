@@ -1,7 +1,29 @@
-# Vue 3 + Vite
+# Sample App
+This project was built with Vue 3 and Vite. Check out the [guide](https://vitejs.dev/guide/) 
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+## Setup
+No setup is necessary as the [/scripts/deployment.sh](../../scripts/deployment.sh) script should create
+a `.env` file with the necessary environment variables for you:
 
-## Recommended IDE Setup
+```
+VITE_ADMIN_API_GATEWAY_URL="Admin API" API Gateway URL
+VITE_ADMIN_APPCLIENTID="Operation Users" User pool Client Id
+VITE_ADMIN_USERPOOL_ID="Operation Users" User pool Id
+VITE_APP_PLATINUM_ENABLED=true
+```
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
+## Run locally
+
+```
+npm run dev
+```
+
+## Build
+The [/scripts/deployment.sh](../../scripts/deployment.sh) script builds and deploys this app on CloudFront
+but you can run manually as well:
+
+```
+npm install && run build
+
+aws s3 sync --delete --cache-control no-store dist s3://$APP_SITE_BUCKET 
+```
