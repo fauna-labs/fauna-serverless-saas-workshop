@@ -1,6 +1,7 @@
 # About
 
-Lab4 introduces AWS Code Pipeline, which we first use to run a command-line tool to manage Fauna database resources as code.
+Lab4 introduces AWS Code Pipeline. Here we use it to run a command-line tool to manage the database as code, 
+and easily apply database migrations to tenants' databases without writing any custom code.
 
 ## Deploying Lab4
 
