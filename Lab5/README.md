@@ -15,7 +15,7 @@ of service, where the tenant is provided dedicated AWS resources for higher leve
   * Naviate to __Security__ > __Keys__
   * Click **New Key**
   * Role = **Admin**
-  * Provife a name for the key
+  * Provide a name for the key
   * Copy the value, you will not be able to see it again.
 * Save API Key from previous step into [/scripts/.env](./scripts/.env) 
 

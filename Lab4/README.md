@@ -1,7 +1,7 @@
 # About
 
 Lab4 introduces AWS Code Pipeline. Here we use it to run a command-line tool to manage the database as code, 
-and easily apply database migrations to tenants' databases without writing any custom code.
+and easily apply database migrations to tenants' databases without writing any custom logic in our app.
 
 ## Deploying Lab4
 
@@ -14,7 +14,7 @@ and easily apply database migrations to tenants' databases without writing any c
   * Naviate to __Security__ > __Keys__
   * Click **New Key**
   * Role = **Admin**
-  * Provife a name for the key
+  * Provide a name for the key
   * Copy the value, you will not be able to see it again.
 * Save API Key from previous step into [/scripts/.env](./scripts/.env) 
 
