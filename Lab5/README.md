@@ -32,3 +32,25 @@ of service, where the tenant is provided dedicated AWS resources for higher leve
 cd /scripts/
 ./deployment.sh -s -c
 ```
+
+### Create a Parameter Store parameter
+> Note: If you've already done this in previous labs, you may skip this step.
+> 
+The previous script utlilized CloudFormation to create AWS resources, among which is a KMS Key that we'll
+now use to create an encrypted parameter to store the previously obtained Fauna API Key. 
+The Lambdas that need to access Fauna have permission to use this KMS Key to decrypt the parameter, 
+retrieving the API Key that will be used to authorize Fauna requests.
+
+From the AWS Dashboard, navigate to **Systems Manager > Parameter Store**. (*Notice there is a sample (unencrypted) parameter
+named **/serverless-saas-fauna/faunadb/config/appConfig** created already*). 
+
+**Create a new (encrypted) parameter:**
+
+* Name = **/serverless-saas-fauna/faunadb/config/appSecrets**
+* Type = **SecureString**
+* KMS Key Source = **My current account**
+* KMS Key ID = **alias/ServerlessSaasFaunaWorkshopParameterStoreKey**
+* Value = `{"secret": "<key from Fauna setup>"}`
+  > **Note:** Be sure to include the double quotes (`"`)
+  >
+  > e.g. `{"secret": "fnAE6pbfUUAAVVBN3kACeHLr5YWAFLQSCecdAwmt"}`

@@ -12,10 +12,10 @@ import auth_manager
 from aws_lambda_powertools import Tracer
 tracer = Tracer()
 
-from utils import FaunaClients
-from faunadb import query as q
-from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
-clients = {}
+from utils import FaunaFromConfig
+from faunadb.query import get, select, paginate, match, index, create, collection, ref
+
+db = None
 
 client = boto3.client('cognito-idp')
 
@@ -74,10 +74,11 @@ def create_user(event, context):
     if (auth_manager.isSystemAdmin(user_role)):
         user_tenant_id = user_details['tenantId']
 
-        global clients
-        db = FaunaClients(clients)
+        global db
+        if db is None:
+            db = FaunaFromConfig()       
         user_pool_id = db.query(
-          q.select(['data', 'userPoolId'], q.get(q.ref(q.collection('tenant'), user_tenant_id)))
+          select(['data', 'userPoolId'], get(ref(collection('tenant'), user_tenant_id)))
         )
     else:
         user_tenant_id = tenant_id
@@ -176,12 +177,12 @@ def get_user(event, context):
 
     if (auth_manager.isSystemAdmin(user_role)):
         user_tenant_id = event['queryStringParameters']['tenantid']
-        global clients
-        db = FaunaClients(clients)
+        global db
+        if db is None:
+            db = FaunaFromConfig()
         user_pool_id = db.query(
-          q.select(['data', 'userPoolId'], q.get(q.ref(q.collection('tenant'), user_tenant_id)))
+          select(['data', 'userPoolId'], get(ref(collection('tenant'), user_tenant_id)))
         )
-
 
     if (auth_manager.isTenantUser(user_role) and user_name != requesting_user_name):        
         logger.log_with_tenant_context(event, "Request completed as unauthorized. User can only get its information.")        
@@ -212,10 +213,11 @@ def update_user(event, context):
 
     if (auth_manager.isSystemAdmin(user_role)):
         user_tenant_id = user_details['tenantId']
-        global clients
-        db = FaunaClients(clients)
+        global db
+        if db is None:
+            db = FaunaFromConfig()
         user_pool_id = db.query(
-          q.select(['data', 'userPoolId'], q.get(q.ref(q.collection('tenant'), user_tenant_id)))
+          select(['data', 'userPoolId'], get(ref(collection('tenant'), user_tenant_id)))
         )
 
     if (auth_manager.isTenantUser(user_role)):                
@@ -259,10 +261,11 @@ def disable_user(event, context):
     
     if (auth_manager.isSystemAdmin(user_role)):
         user_tenant_id = event['queryStringParameters']['tenantid']
-        global clients
-        db = FaunaClients(clients)
+        global db
+        if db is None:
+            db = FaunaFromConfig()
         user_pool_id = db.query(
-          q.select(['data', 'userPoolId'], q.get(q.ref(q.collection('tenant'), user_tenant_id)))
+          select(['data', 'userPoolId'], get(ref(collection('tenant'), user_tenant_id)))
         )
     
     if (auth_manager.isTenantAdmin(user_role) or auth_manager.isSystemAdmin(user_role)):
@@ -298,10 +301,11 @@ def disable_users_by_tenant(event, context):
     
     
     if ((auth_manager.isTenantAdmin(user_role) and tenantid_to_update == requesting_tenant_id) or auth_manager.isSystemAdmin(user_role)):
-        global clients
-        db = FaunaClients(clients)
+        global db
+        if db is None:
+            db = FaunaFromConfig()
         users = db.query(
-          q.select(['data'], q.paginate(q.match(q.index('usernames_by_tenant_id'), tenantid_to_update)))
+          select(['data'], paginate(match(index('usernames_by_tenant_id'), tenantid_to_update)))
         )
         for username in users:
             response = client.admin_disable_user(
@@ -331,10 +335,11 @@ def enable_users_by_tenant(event, context):
     
     
     if (auth_manager.isSystemAdmin(user_role)):
-        global clients
-        db = FaunaClients(clients)
+        global db
+        if db is None:
+            db = FaunaFromConfig()
         users = db.query(
-          q.select(['data'], q.paginate(q.match(q.index('usernames_by_tenant_id'), tenantid_to_update)))
+          select(['data'], paginate(match(index('usernames_by_tenant_id'), tenantid_to_update)))
         )
         for username in users:
             response = client.admin_enable_user(
@@ -491,13 +496,14 @@ class UserManagement:
         return response
 
     def create_user_tenant_mapping(self, user_name, tenant_id):
-        global clients
-        db = FaunaClients(clients)
+        global db
+        if db is None:
+            db = FaunaFromConfig()
         response = db.query(
-          q.create(
-            q.collection('tenant_user'), {
+          create(
+            collection('tenant_user'), {
               'data': {
-                'tenant_id': q.ref(q.collection('tenant'), tenant_id),
+                'tenant_id': ref(collection('tenant'), tenant_id),
                 'user_name': user_name
               }
             }

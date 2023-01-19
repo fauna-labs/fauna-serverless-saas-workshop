@@ -14,8 +14,10 @@ from aws_lambda_powertools import Tracer
 tracer = Tracer()
 
 from utils import FaunaClients
-from faunadb import query as q
-from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
+from faunadb.query import let, create, update, collection, select, get, ref, var, create_database, concat, \
+  map_, lambda_, if_, equals, merge, paginate, documents, match, index
+from faunadb.errors import FaunaError
+
 clients = {}
 
 region = os.environ['AWS_REGION']
@@ -56,23 +58,23 @@ def create_tenant(event, context):
         db = FaunaClients(clients)
         if tenant_id:
             tenant = db.query(
-              q.let(
+              let(
                 {
-                  'tenant': q.update(q.ref(q.collection('tenant'), tenant_id), { 'data': data } ),
-                  'tenantId': q.select(['ref', 'id'], q.var('tenant'), 0)
+                  'tenant': update(ref(collection('tenant'), tenant_id), { 'data': data } ),
+                  'tenantId': select(['ref', 'id'], var('tenant'), 0)
                 },
-                { 'tenantId': q.var('tenantId') }
+                { 'tenantId': var('tenantId') }
               )
             )            
         else:
             tenant = db.query(
-              q.let(
+              let(
                 {
-                  'tenant': q.create(q.collection('tenant'), { 'data': data } ),
-                  'tenantId': q.select(['ref', 'id'], q.var('tenant'), 0),
-                  'db': q.create_database({ 'name': q.concat(['tenant_', q.var('tenantId')]) })
+                  'tenant': create(collection('tenant'), { 'data': data } ),
+                  'tenantId': select(['ref', 'id'], var('tenant'), 0),
+                  'db': create_database({ 'name': concat(['tenant_', var('tenantId')]) })
                 },
-                { 'tenantId': q.var('tenantId') }
+                { 'tenantId': var('tenantId') }
               )
             )
     except FaunaError as fe:
@@ -94,26 +96,26 @@ def get_tenants(event, context):
 
         if auth_manager.isSystemAdmin(user_role):
             results = db.query(
-              q.map_(
-                q.lambda_('x', 
-                  q.let(
-                    { 'tenant': q.get(q.var('x')) },
-                    q.merge(
-                      { 'tenantId': q.select(['ref', 'id'], q.var('tenant')) },
-                      q.select(['data'], q.var('tenant'))
+              map_(
+                lambda_('x', 
+                  let(
+                    { 'tenant': get(var('x')) },
+                    merge(
+                      { 'tenantId': select(['ref', 'id'], var('tenant')) },
+                      select(['data'], var('tenant'))
                     )
                   )
                 ),
-                q.paginate(q.documents(q.collection('tenant')))
+                paginate(documents(collection('tenant')))
               )
             )
         else:
             results = db.query(
-              q.let(
-                { 'tenant': q.get(q.ref(q.collection('tenant'), tenant_id)) },
-                q.merge(
-                  { 'tenantId': q.select(['ref', 'id'], q.var('tenant')) },
-                  q.select(['data'], q.var('tenant'))
+              let(
+                { 'tenant': get(ref(collection('tenant'), tenant_id)) },
+                merge(
+                  { 'tenantId': select(['ref', 'id'], var('tenant')) },
+                  select(['data'], var('tenant'))
                 )
               )              
             )
@@ -141,26 +143,26 @@ def update_tenant(event, context):
         global clients
         db = FaunaClients(clients)
         response_update = db.query(
-          q.let(
+          let(
             {
-              'tenantRef': q.ref(q.collection('tenant'), tenant_id),
-              'existingTier': q.select(['data', 'tenantTier'], q.get(q.var('tenantRef'))),
-              'existingApiKey': q.select(['data', 'apiKey'], q.get(q.var('tenantRef'))),
-              'apiKey': q.if_(
-                q.equals(tenant_details['tenantTier'], q.var('existingTier')),
-                q.var('existingApiKey'),
+              'tenantRef': ref(collection('tenant'), tenant_id),
+              'existingTier': select(['data', 'tenantTier'], get(var('tenantRef'))),
+              'existingApiKey': select(['data', 'apiKey'], get(var('tenantRef'))),
+              'apiKey': if_(
+                equals(tenant_details['tenantTier'], var('existingTier')),
+                var('existingApiKey'),
                 __getApiKey(tenant_details['tenantTier'])
               )
             },
-            q.update(
-              q.var('tenantRef'), {
+            update(
+              var('tenantRef'), {
                 'data': {
                     'tenantName' : tenant_details['tenantName'],
                     'tenantAddress': tenant_details['tenantAddress'],
                     'tenantEmail': tenant_details['tenantEmail'],
                     'tenantPhone': tenant_details['tenantPhone'],
                     'tenantTier': tenant_details['tenantTier'],
-                    'apiKey': q.var('apiKey')
+                    'apiKey': var('apiKey')
                 }
               }
             )
@@ -191,11 +193,11 @@ def get_tenant(event, context):
         db = FaunaClients(clients)
 
         item = db.query(
-          q.let(
-            { 'tenant': q.get(q.ref(q.collection('tenant'), tenant_id)) },
-            q.merge(
-              q.select(['data'], q.var('tenant')),
-              { 'tenantId':  q.select(['ref', 'id'], q.var('tenant')) }
+          let(
+            { 'tenant': get(ref(collection('tenant'), tenant_id)) },
+            merge(
+              select(['data'], var('tenant')),
+              { 'tenantId':  select(['ref', 'id'], var('tenant')) }
             )
           )
         )
@@ -233,8 +235,8 @@ def deactivate_tenant(event, context):
         db = FaunaClients(clients)
 
         response = db.query(
-          q.update(
-            q.get(q.ref(q.collection('tenant'), tenant_id)),
+          update(
+            get(ref(collection('tenant'), tenant_id)),
             { 'data': { 'active': False } }
           )
         )                  
@@ -285,8 +287,8 @@ def activate_tenant(event, context):
         db = FaunaClients(clients)
 
         response = db.query(
-          q.update(
-            q.get(q.ref(q.collection('tenant'), tenant_id)),
+          update(
+            get(ref(collection('tenant'), tenant_id)),
             { 'data': { 'active': True } }
           )
         )        
@@ -322,9 +324,9 @@ def load_tenant_config(event, context):
         db = FaunaClients(clients)
 
         response = db.query(
-          q.map_(
-            q.lambda_('x', q.select(['data'], q.get(q.var('x')))),
-            q.select(['data'], q.paginate(q.match(q.index('tenants_by_name'), tenantName)))  
+          map_(
+            lambda_('x', select(['data'], get(var('x')))),
+            select(['data'], paginate(match(index('tenants_by_name'), tenantName)))  
           )
         )
     except Exception as e:

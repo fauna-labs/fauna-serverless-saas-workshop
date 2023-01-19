@@ -4,7 +4,8 @@
 from order_models import Order
 import logger 
 from utils import FaunaClients
-from faunadb import query as q
+from faunadb.query import get, ref, collection, map_, lambda_, let, select, var, merge, to_string, delete, create, update, \
+  lt, do, foreach, if_, abort, concat, subtract, time, paginate, documents
 from faunadb.errors import FaunaError
 clients = {}
 
@@ -17,33 +18,33 @@ def get_order(event, key):
         db = FaunaClients(clients, tenantId)
 
         item = db.query(
-          q.let(
+          let(
             {
-              'order': q.get(q.ref(q.collection('order'), orderId)),
-              'orderProducts': q.map_(
-                q.lambda_(
+              'order': get(ref(collection('order'), orderId)),
+              'orderProducts': map_(
+                lambda_(
                   'x',
-                  q.let(
-                    { 'product': q.get(q.select(['product'], q.var('x'))) },
+                  let(
+                    { 'product': get(select(['product'], var('x'))) },
                     {
-                      'quantity': q.select(['quantity'], q.var('x')),
-                      'price': q.select(['price'], q.var('x')),
-                      'productId': q.select(['ref', 'id'], q.var('product')),
-                      'productName': q.select(['data', 'name'], q.var('product'), ''),
-                      'productSku': q.select(['data', 'sku'], q.var('product'), ''),
-                      'productDescription': q.select(['data', 'description'], q.var('product'), '')
+                      'quantity': select(['quantity'], var('x')),
+                      'price': select(['price'], var('x')),
+                      'productId': select(['ref', 'id'], var('product')),
+                      'productName': select(['data', 'name'], var('product'), ''),
+                      'productSku': select(['data', 'sku'], var('product'), ''),
+                      'productDescription': select(['data', 'description'], var('product'), '')
                     }
                   )
                 ),
-                q.select(['data', 'orderProducts'], q.var('order'))
+                select(['data', 'orderProducts'], var('order'))
               )
             },
-            q.merge(
-              q.select(['data'], q.var('order')),
+            merge(
+              select(['data'], var('order')),
               {
-                'orderId': q.select(['ref', 'id'], q.var('order')),
-                'creationDate': q.to_string(q.select(['data', 'creationDate'], q.var('order'))),
-                'orderProducts': q.var('orderProducts')
+                'orderId': select(['ref', 'id'], var('order')),
+                'creationDate': to_string(select(['data', 'creationDate'], var('order'))),
+                'orderProducts': var('orderProducts')
               },
             )
           )
@@ -64,10 +65,10 @@ def delete_order(event, key):
         db = FaunaClients(clients, tenantId)
 
         response = db.query(
-          q.select(
+          select(
             ['ref', 'id'],
-            q.delete(
-              q.ref(q.collection('order'), orderId)
+            delete(
+              ref(collection('order'), orderId)
             )
           )
         )
@@ -86,78 +87,78 @@ def create_order(event, payload):
         db = FaunaClients(clients, tenantId)
 
         response = db.query(
-          q.let(
+          let(
             {
-              'products': q.map_(
-                q.lambda_(
+              'products': map_(
+                lambda_(
                   'requestedProduct',
-                  q.let(
+                  let(
                     {
-                      'requestedQuantity': q.select(['quantity'], q.var('requestedProduct')),
-                      'product': q.get(q.select(['product'], q.var('requestedProduct'))),
-                      'currentQuantity': q.select(['data', 'quantity'], q.var('product')),
-                      'backorderedLimit': q.select(['data', 'backorderedLimit'], q.var('product')),
-                      'updatedQuantity': q.subtract(q.var('currentQuantity'), q.var('requestedQuantity')),
+                      'requestedQuantity': select(['quantity'], var('requestedProduct')),
+                      'product': get(select(['product'], var('requestedProduct'))),
+                      'currentQuantity': select(['data', 'quantity'], var('product')),
+                      'backorderedLimit': select(['data', 'backorderedLimit'], var('product')),
+                      'updatedQuantity': subtract(var('currentQuantity'), var('requestedQuantity')),
                     },
                     {
-                      'ref': q.select('ref', q.var('product')),
-                      'price': q.select(['data', 'price'], q.var('product')),
-                      'name': q.select(['data', 'name'], q.var('product')),
-                      'requestedQuantity': q.var('requestedQuantity'),
-                      'updatedQuantity': q.var('updatedQuantity'),
-                      'backorderedLimit': q.var('backorderedLimit'),
-                      'backordered': q.lt(q.var('updatedQuantity'), q.var('backorderedLimit')) # if remaining stock < backorderedLimit, then backordered = True
+                      'ref': select('ref', var('product')),
+                      'price': select(['data', 'price'], var('product')),
+                      'name': select(['data', 'name'], var('product')),
+                      'requestedQuantity': var('requestedQuantity'),
+                      'updatedQuantity': var('updatedQuantity'),
+                      'backorderedLimit': var('backorderedLimit'),
+                      'backordered': lt(var('updatedQuantity'), var('backorderedLimit')) # if remaining stock < backorderedLimit, then backordered = True
                     }
                   )
                 ),
                 _format_order_products(payload.orderProducts)
               )
             },
-            q.do(
+            do(
               # for each product, check if stocked quantity is sufficient to fulfill the order
-              q.foreach(
-                q.lambda_(
+              foreach(
+                lambda_(
                   'product',
-                  q.if_(
-                    q.lt(q.select(['updatedQuantity'], q.var('product')), 0), # if updatedQuantity < 0 then abort
-                    q.abort(
-                      q.concat(['Stock quantity for Product [', q.select(['name'], q.var('product')), '] not enough'])
+                  if_(
+                    lt(select(['updatedQuantity'], var('product')), 0), # if updatedQuantity < 0 then abort
+                    abort(
+                      concat(['Stock quantity for Product [', select(['name'], var('product')), '] not enough'])
                     ),
                     # else
                     # adjust the products' quantity by subtracting quantity requested
                     # if remaining stock < backorderedLimit, then set backordered = True
-                    q.update(q.select('ref', q.var('product')), {
+                    update(select('ref', var('product')), {
                       'data': {
-                        'quantity': q.select(['updatedQuantity'], q.var('product')),
-                        'backordered': q.select(['backordered'], q.var('product'))
+                        'quantity': select(['updatedQuantity'], var('product')),
+                        'backordered': select(['backordered'], var('product'))
                       }
                     })
                   )
                 ),
-                q.var('products')
+                var('products')
               ),
-              q.let(
+              let(
                 {
-                  'orderProducts': q.map_(
-                    q.lambda_('product', {
-                      'product': q.select('ref', q.var('product')),
-                      'quantity': q.select('requestedQuantity', q.var('product')),
-                      'price': q.select('price', q.var('product'))
+                  'orderProducts': map_(
+                    lambda_('product', {
+                      'product': select('ref', var('product')),
+                      'quantity': select('requestedQuantity', var('product')),
+                      'price': select('price', var('product'))
                     }),
-                    q.var('products')
+                    var('products')
                   ),
-                  'result': q.create(q.collection('order'), {
+                  'result': create(collection('order'), {
                       'data': {
                         'orderName': payload.orderName,
-                        'creationDate': q.time('now'),
+                        'creationDate': time('now'),
                         'status': 'processing',
-                        'orderProducts': q.var('orderProducts')
+                        'orderProducts': var('orderProducts')
                       }
                     })
                 },
                 {
-                  'id': q.select(['ref', 'id'], q.var('result')),
-                  'creationDate': q.to_string(q.select(['data', 'creationDate'], q.var('result')))
+                  'id': select(['ref', 'id'], var('result')),
+                  'creationDate': to_string(select(['data', 'creationDate'], var('result')))
                 }
               )
             )
@@ -180,10 +181,10 @@ def update_order(event, payload, key):
         db = FaunaClients(clients, tenantId)
 
         response = db.query(
-          q.let(
+          let(
             {
-              'update': q.update(
-                q.ref(q.collection('order'), orderId), {
+              'update': update(
+                ref(collection('order'), orderId), {
                   'data': {
                     'orderName': payload.orderName,
                     'status': payload.orderStatus,
@@ -194,8 +195,8 @@ def update_order(event, payload, key):
             },
             {
               'id': orderId,
-              'status': q.select(['data', 'status'], q.var('update')),
-              'creationDate': q.to_string(q.select(['data', 'creationDate'], q.var('update')))
+              'status': select(['data', 'status'], var('update')),
+              'creationDate': to_string(select(['data', 'creationDate'], var('update')))
             }
           )
         )
@@ -216,40 +217,40 @@ def get_orders(event, tenantId):
         db = FaunaClients(clients, tenantId)
 
         results = db.query(
-          q.map_(
-            q.lambda_('x', 
-              q.let(
+          map_(
+            lambda_('x', 
+              let(
                 {
-                  'order': q.get(q.var('x')),
-                  'orderProducts': q.map_(
-                    q.lambda_(
+                  'order': get(var('x')),
+                  'orderProducts': map_(
+                    lambda_(
                       'x',
-                      q.let(
-                        { 'product': q.get(q.select(['product'], q.var('x'))) },
+                      let(
+                        { 'product': get(select(['product'], var('x'))) },
                         {
-                          'quantity': q.select(['quantity'], q.var('x')),
-                          'price': q.select(['price'], q.var('x')),
-                          'productId': q.select(['ref', 'id'], q.var('product')),
-                          'productName': q.select(['data', 'name'], q.var('product'), ''),
-                          'productSku': q.select(['data', 'sku'], q.var('product'), ''),
-                          'productDescription': q.select(['data', 'description'], q.var('product'), '')
+                          'quantity': select(['quantity'], var('x')),
+                          'price': select(['price'], var('x')),
+                          'productId': select(['ref', 'id'], var('product')),
+                          'productName': select(['data', 'name'], var('product'), ''),
+                          'productSku': select(['data', 'sku'], var('product'), ''),
+                          'productDescription': select(['data', 'description'], var('product'), '')
                         }
                       )
                     ),
-                    q.select(['data', 'orderProducts'], q.var('order'))
+                    select(['data', 'orderProducts'], var('order'))
                   )
                 },
-                q.merge(
-                  q.select(['data'], q.var('order')),
+                merge(
+                  select(['data'], var('order')),
                   {
-                    'orderId': q.select(['ref', 'id'], q.var('order')),
-                    'creationDate': q.to_string(q.select(['data', 'creationDate'], q.var('order'))),
-                    'orderProducts': q.var('orderProducts')
+                    'orderId': select(['ref', 'id'], var('order')),
+                    'creationDate': to_string(select(['data', 'creationDate'], var('order'))),
+                    'orderProducts': var('orderProducts')
                   },
                 )
               )
             ),
-            q.paginate(q.documents(q.collection('order')))
+            paginate(documents(collection('order')))
           )
         )
         results = results['data']
@@ -268,7 +269,7 @@ def _format_order_products(orderProducts):
   orderProductList = []
   for i in range(len(orderProducts)):
       product = {
-        'product': q.ref(q.collection('product'), orderProducts[i].productId),
+        'product': ref(collection('product'), orderProducts[i].productId),
         'price': orderProducts[i].price,
         'quantity': orderProducts[i].quantity
       }

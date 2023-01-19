@@ -10,8 +10,8 @@ import utils
 from boto3.dynamodb.conditions import Key
 
 from utils import FaunaFromConfig
-from faunadb import query as q
-from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
+from faunadb.query import select, paginate, match, index, create, collection, ref
+
 db = None
 
 client = boto3.client('cognito-idp')
@@ -170,7 +170,7 @@ def disable_users_by_tenant(event, context):
     if db is None:
         db = FaunaFromConfig()
     users = db.query(
-      q.select(["data"], q.paginate(q.match(q.index("usernames_by_tenant_id"), tenantid_to_update)))
+      select(["data"], paginate(match(index("usernames_by_tenant_id"), tenantid_to_update)))
     )
     for username in users:
         response = client.admin_disable_user(
@@ -194,7 +194,7 @@ def enable_users_by_tenant(event, context):
     if db is None:
         db = FaunaFromConfig()
     users = db.query(
-      q.select(["data"], q.paginate(q.match(q.index("usernames_by_tenant_id"), tenantid_to_update)))
+      select(["data"], paginate(match(index("usernames_by_tenant_id"), tenantid_to_update)))
     )
     for username in users:
         response = client.admin_enable_user(
@@ -270,10 +270,10 @@ class UserManagement:
             db = FaunaFromConfig()
 
         response = db.query(
-          q.create(
-            q.collection("tenant_user"), {
+          create(
+            collection("tenant_user"), {
               "data": {
-                "tenant_id": q.ref(q.collection("tenant"), tenant_id),
+                "tenant_id": ref(collection("tenant"), tenant_id),
                 "user_name": user_name
               }
             }

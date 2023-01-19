@@ -4,7 +4,8 @@
 import logger
 from product_models import Product
 from utils import FaunaClients
-from faunadb import query as q
+from faunadb.query import let, get, ref, collection, merge, select, var, delete, create, update, \
+  map_, lambda_, paginate, documents
 from faunadb.errors import FaunaError
 clients = {}
 
@@ -18,11 +19,11 @@ def get_product(event, key):
         db = FaunaClients(clients, tenantId)
 
         item = db.query(
-          q.let(
-            { 'product': q.get(q.ref(q.collection('product'), productId)) },
-            q.merge(
-              q.select(['data'], q.var('product')),
-              { 'productId':  q.select(['ref', 'id'], q.var('product')) }
+          let(
+            { 'product': get(ref(collection('product'), productId)) },
+            merge(
+              select(['data'], var('product')),
+              { 'productId':  select(['ref', 'id'], var('product')) }
             )
           )
         )
@@ -43,10 +44,10 @@ def delete_product(event, key):
         db = FaunaClients(clients, tenantId)
 
         response = db.query(
-          q.select(
+          select(
             ['ref', 'id'],
-            q.delete(
-              q.ref(q.collection('product'), productId)
+            delete(
+              ref(collection('product'), productId)
             )
           )
         )        
@@ -65,9 +66,9 @@ def create_product(event, payload):
         db = FaunaClients(clients, tenantId)
 
         response = db.query(
-          q.let(
+          let(
             {
-              'result': q.create(q.collection('product'), {
+              'result': create(collection('product'), {
                     'data': {
                       'sku': payload.sku,
                       'name': payload.name,
@@ -80,8 +81,8 @@ def create_product(event, payload):
                   })
             },
             {
-              'id': q.select(['ref', 'id'], q.var('result')),
-              'backordered': q.select(['data', 'backordered'], q.var('result'))
+              'id': select(['ref', 'id'], var('result')),
+              'backordered': select(['data', 'backordered'], var('result'))
             }
           )
         )
@@ -102,10 +103,10 @@ def update_product(event, payload, key):
         db = FaunaClients(clients, tenantId)
 
         response = db.query(
-          q.let(
+          let(
             {
-              'result': q.update(
-                q.ref(q.collection('product'), productId), {
+              'result': update(
+                ref(collection('product'), productId), {
                   'data': {
                     'sku': payload.sku,
                     'name': payload.name,
@@ -119,8 +120,8 @@ def update_product(event, payload, key):
               )
             },
             {
-              'id': q.select(['ref', 'id'], q.var('result')),
-              'backordered': q.select(['data', 'backordered'], q.var('result'))
+              'id': select(['ref', 'id'], var('result')),
+              'backordered': select(['data', 'backordered'], var('result'))
             }
           )
         )
@@ -140,17 +141,17 @@ def get_products(event, tenantId):
         db = FaunaClients(clients, tenantId)
 
         results = db.query(
-          q.map_(
-            q.lambda_('x', 
-              q.let(
-                { 'product': q.get(q.var('x')) },
-                q.merge(
-                  { 'productId': q.select(['ref', 'id'], q.var('product')) },
-                  q.select(['data'], q.var('product'))
+          map_(
+            lambda_('x', 
+              let(
+                { 'product': get(var('x')) },
+                merge(
+                  { 'productId': select(['ref', 'id'], var('product')) },
+                  select(['data'], var('product'))
                 )
               )
             ),
-            q.paginate(q.documents(q.collection('product')))
+            paginate(documents(collection('product')))
           )
         )
         results = results['data']

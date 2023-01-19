@@ -3,7 +3,7 @@ version = 0.1
 [default.deploy]
 [default.deploy.parameters]
 stack_name = "serverless-saas-wkshp"
-s3_bucket = "sam-bootstrap-bucket-34a11516-c234-4a0f-89e8-ed2cadb66e41"
+s3_bucket = "sam-bootstrap-bucket-a4b87023-6feb-42d2-9828-aacce51b37b8"
 s3_prefix = "serverless-saas-wkshp"
 region = "us-west-2"
 confirm_changeset = false

@@ -12,10 +12,11 @@ from aws_lambda_powertools import Tracer
 tracer = Tracer()
 
 from utils import FaunaClients
-from faunadb import query as q
-from faunadb.errors import FaunaError, BadRequest, Unauthorized, NotFound
-clients = {}
+from faunadb.query import let, create, update, collection, select, get, ref, var, create_database, concat, \
+  map_, lambda_, merge, paginate, documents
+from faunadb.errors import FaunaError
 
+clients = {}
 
 region = os.environ['AWS_REGION']
 
@@ -28,10 +29,10 @@ def create_tenant(event, context):
         db = FaunaClients(clients)
 
         tenant = db.query(
-          q.let(
+          let(
             {
-              "tenant": q.create(
-                  q.collection("tenant"), {
+              "tenant": create(
+                  collection("tenant"), {
                     "data": {
                       'tenantName' : tenant_details['tenantName'],
                       'tenantAddress': tenant_details['tenantAddress'],
@@ -42,10 +43,10 @@ def create_tenant(event, context):
                     }
                   }
                 ),
-              "tenantId": q.select(["ref", "id"], q.var("tenant")),
-              "db": q.create_database({ "name": q.concat(["tenant_", q.var("tenantId")]) })
+              "tenantId": select(["ref", "id"], var("tenant")),
+              "db": create_database({ "name": concat(["tenant_", var("tenantId")]) })
             },
-            { "tenantId": q.var("tenantId") }
+            { "tenantId": var("tenantId") }
           )
         )
     except FaunaError as e:
@@ -61,17 +62,17 @@ def get_tenants(event, context):
         db = FaunaClients(clients)
 
         results = db.query(
-          q.map_(
-            q.lambda_("x", 
-              q.let(
-                { "tenant": q.get(q.var("x")) },
-                q.merge(
-                  { "tenantId": q.select(["ref", "id"], q.var("tenant")) },
-                  q.select(["data"], q.var("tenant"))
+          map_(
+            lambda_("x", 
+              let(
+                { "tenant": get(var("x")) },
+                merge(
+                  { "tenantId": select(["ref", "id"], var("tenant")) },
+                  select(["data"], var("tenant"))
                 )
               )
             ),
-            q.paginate(q.documents(q.collection("tenant")))
+            paginate(documents(collection("tenant")))
           )
         )
         tenants = results['data']
@@ -100,8 +101,8 @@ def update_tenant(event, context):
         db = FaunaClients(clients)
 
         response_update = db.query(
-          q.update(
-            q.ref(q.collection("tenant"), tenant_id), {
+          update(
+            ref(collection("tenant"), tenant_id), {
               "data": {
                   'tenantName' : tenant_details['tenantName'],
                   'tenantAddress': tenant_details['tenantAddress'],
@@ -136,11 +137,11 @@ def get_tenant(event, context):
         db = FaunaClients(clients)
 
         item = db.query(
-          q.let(
-            { "tenant": q.get(q.ref(q.collection("tenant"), tenant_id)) },
-            q.merge(
-              q.select(["data"], q.var("tenant")),
-              { "tenantId":  q.select(["ref", "id"], q.var("tenant")) }
+          let(
+            { "tenant": get(ref(collection("tenant"), tenant_id)) },
+            merge(
+              select(["data"], var("tenant")),
+              { "tenantId":  select(["ref", "id"], var("tenant")) }
             )
           )
         )
@@ -174,8 +175,8 @@ def deactivate_tenant(event, context):
         db = FaunaClients(clients)
 
         response = db.query(
-          q.update(
-            q.get(q.ref(q.collection("tenant"), tenant_id)),
+          update(
+            get(ref(collection("tenant"), tenant_id)),
             { "data": { "active": False } }
           )
         )                  
@@ -215,8 +216,8 @@ def activate_tenant(event, context):
         db = FaunaClients(clients)
 
         response = db.query(
-          q.update(
-            q.get(q.ref(q.collection("tenant"), tenant_id)),
+          update(
+            get(ref(collection("tenant"), tenant_id)),
             { "data": { "active": True } }
           )
         )           
