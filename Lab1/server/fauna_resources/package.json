@@ -10,7 +10,7 @@
   "author": "zee.khoo@fauna.com",
   "license": "MIT",
   "dependencies": {
-    "@fauna-labs/fauna-schema-migrate": "^2.2.1",
-    "faunadb": "^4.6.0"
-  }
+    "fauna": "^0.5.7"
+  },
+  "type": "module"
 }

@@ -51,7 +51,7 @@ def delete_order(event, context):
     params = event['pathParameters']
     orderId = params['id']
     try:
-        response = order_service_dal.delete_order(event, orderId)
+        order_service_dal.delete_order(event, orderId)
         logger.info("Request completed to delete a order")
         return utils.create_success_response("Successfully deleted the order")
     except Exception as e:

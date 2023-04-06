@@ -53,7 +53,7 @@ def delete_product(event, context):
     params = event['pathParameters']
     key = params['id']
     try:
-        response = product_service_dal.delete_product(event, key)
+        product_service_dal.delete_product(event, key)
         logger.info("Request completed to delete a product")
         return utils.create_success_response("Successfully deleted the product")
     except Exception as e:
