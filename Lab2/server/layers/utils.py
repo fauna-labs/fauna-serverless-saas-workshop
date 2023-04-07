@@ -3,15 +3,14 @@
 
 import json
 import jsonpickle
-import simplejson
-
 import boto3
 from aws_requests_auth.aws_auth import AWSRequestsAuth
 from enum import Enum
-
 import os, configparser, traceback
-from faunadb.client import FaunaClient
-from faunadb.errors import Unauthorized, NotFound
+import logger
+
+from fauna.client import Client as FaunaClient
+from fauna.errors import FaunaException, FaunaError, AuthenticationError, AuthorizationError, QueryRuntimeError
 
 
 FAUNA_CONFIG_PATH = os.environ['FAUNA_CONFIG_PATH']
@@ -21,7 +20,7 @@ boto_client = boto3.client('ssm')
 class FaunaFromConfig(FaunaClient):
     def __init__(self):
         config = load_config()
-        print("Loading config and creating new Fauna client...")
+        logger.info("Loading config and creating new Fauna client...")
 
         self.secret = config['FAUNA']['secret']
 
@@ -38,7 +37,7 @@ def FaunaClients(clients, tenant_id=None):
         tenant_id = 'admin'
 
     if tenant_id in clients:
-        print("Client for tenant_id {} found".format(tenant_id))
+        logger.info("Client for tenant_id {} found".format(tenant_id))
         return clients[tenant_id]
     else:
         if 'admin' in clients:
@@ -51,13 +50,13 @@ def FaunaClients(clients, tenant_id=None):
             client = admin_client
         else:
           try:
-            print("creating client for tenant {}".format(tenant_id))
+            logger.info("creating client for tenant {}".format(tenant_id))
             client = FaunaClient(
                 secret="{}:tenant_{}:server".format(admin_client.get_secret(), tenant_id)
             )
             clients[tenant_id] = client
           except Exception as e:
-            print("EXCEPTION {}".format(e))
+            logger.error("EXCEPTION {}".format(e))
  
         return client
 
@@ -75,7 +74,7 @@ def load_config():
             for param in param_details.get('Parameters'):
                 config_dict.update(json.loads(param.get('Value')))
     except:
-        print("Encountered an error loading config from SSM.")
+        logger.error("Encountered an error loading config from SSM.")
         traceback.print_exc()
     finally:
         configuration['FAUNA'] = config_dict
@@ -112,13 +111,16 @@ def generate_response(inputObject):
 
 
 def generate_error_response(err):
-    err_type = type(err)
-    if err_type == Unauthorized:
-        code = 401
-    elif err_type == NotFound:
-        code = 404        
+    errorType = type(err)
+    if errorType in (FaunaException, FaunaError, AuthenticationError, AuthorizationError):
+        code = err.args[0]
+        responseBody = err.args[1]
+    elif errorType == QueryRuntimeError:
+        code = err.args[0]
+        responseBody = err.query_info.summary
     else:
         code = 400
+        responseBody = err.args[0]
 
     response = {
         "statusCode": code,
@@ -126,12 +128,11 @@ def generate_error_response(err):
             "Access-Control-Allow-Headers" : "Content-Type, Origin, X-Requested-With, Accept, Authorization, Access-Control-Allow-Methods, Access-Control-Allow-Headers, Access-Control-Allow-Origin",
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PUT"
-        }
+        },
+        "body": responseBody
     }
-    if code == 400:
-      response['body'] = err.args[0]
 
-    return response 
+    return response
 
     
 def  encode_to_json_object(inputObject):

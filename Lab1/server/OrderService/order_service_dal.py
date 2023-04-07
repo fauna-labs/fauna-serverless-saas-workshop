@@ -17,9 +17,9 @@ def get_order(event, orderId):
         if db is None:
             db = Fauna.from_config(load_config())
 
-        reponse = db.query(
+        response = db.query(
             fql("""
-            let o = order.byId("${orderId}") 
+            let o = order.byId(${orderId}) 
             let cart = o.orderProducts
             {
               id: o.id,
@@ -43,7 +43,7 @@ def get_order(event, orderId):
         logger.error(e)
         raise e
     else:
-        item = reponse.data        
+        item = response.data        
         order = Order(item['id'], 
                       item['orderName'], 
                       item['creationDate'], 
@@ -60,7 +60,7 @@ def delete_order(event, orderId):
 
         response = db.query(
             fql("""
-            order.byId("${orderId}").delete()
+            order.byId(${orderId}).delete()
             """, 
             orderId = orderId
             )
@@ -189,6 +189,7 @@ def get_orders(event):
         global db
         if db is None:
             db = Fauna.from_config(load_config())
+
         response = db.query(
             fql("""
             order.all().map(o=>{

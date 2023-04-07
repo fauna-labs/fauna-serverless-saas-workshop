@@ -20,25 +20,6 @@ Lab1 is a basic e-commerce application that introduces the core components of a 
 * [pylint](https://pypi.org/project/pylint/)
 * [git-remote-codecommit](https://pypi.org/project/git-remote-codecommit/)
 
-### Fauna Setup
-* Login to the Fauna [dashboard](https://dashboard.fauna.com)
-* Create a new database
-* Generate an API Key for the database above:
-  * Naviate to __Security__ > __Keys__
-  * Click **New Key**
-  * Role = **Admin**
-  * Provide a name for the key
-  * Copy the value, you will not be able to see it again.
-* Save API Key from previous step into a new file `/scripts/.env`
-  > A template file [/scripts/.env.template](./scripts/.env.template) has been provided for you. Make a copy of it and rename it `.env`, and edit in the values
-
-  e.g. 
-  ```
-  STACK_NAME="serverless-saas-fauna-workshop-lab1"
-  FAUNA_API_KEY="<The API Key>"
-  AWS_PROFILE="serverless-workshop"
-  ```
-
 ### AWS Setup
 * Navigate to the IAM services dashboard and create a new user with Administrator access (as we'll need it to provision lots
   of AWS resources).
@@ -52,7 +33,26 @@ Lab1 is a basic e-commerce application that introduces the core components of a 
   aws_access_key_id=<<"Access Key" from the previous step>>
   aws_secret_access_key=<<"Secret Access Key" from the previous step>>
   ```
-  * Update the `scripts/.env` file's `AWS_PROFILE` variable with the profile name you set in the `credentials` file above.
+
+### Fauna Setup
+* Login to the Fauna [dashboard](https://dashboard.fauna.com)
+* Create a new database
+* Generate an API Key for the database above:
+  * Naviate to __Security__ > __Keys__
+  * Click **New Key**
+  * Role = **Admin**
+  * Provide a name for the key
+  * Copy the value, you will not be able to see it again.
+* Save API Key from previous step into a new file `/scripts/.env`
+  > A template file [/scripts/.env.template](./scripts/.env.template) has been provided for you. Make a copy of it and rename it `.env`, and edit in the values
+* Update the `AWS_PROFILE` variable to match the profile name you set in the AWS `credentials` file above
+
+  e.g. 
+  ```
+  STACK_NAME="serverless-saas-fauna-workshop-lab1"
+  FAUNA_API_KEY="<The API Key>"
+  AWS_PROFILE="serverless-workshop"
+  ```
 
 ### Deploy the AWS resources using the provided script:
 ```

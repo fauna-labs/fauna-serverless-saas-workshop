@@ -11,6 +11,31 @@ The web application in Lab2:
 
 ## Deploying Lab2
 
+### Prerequisites
+* Node 16 or greater
+* Python 3.9 or greater
+* [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+* [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)
+* [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html)
+* [jq](https://pypi.org/project/jq/)
+* [pylint](https://pypi.org/project/pylint/)
+* [git-remote-codecommit](https://pypi.org/project/git-remote-codecommit/)
+
+### AWS Setup
+> Ignore this step if you've already completed it in previous lab(s)
+* Navigate to the IAM services dashboard and create a new user with Administrator access (as we'll need it to provision lots
+  of AWS resources).
+* Create an "access key" and when done copy its **Access Key** and **Secret Access Key** for the next step, below.
+* Create a "named profile" in your AWS CLI's credentials file:
+  * Your AWS `config` and `credentials` files are normally in the `~/.aws` folder. For more information about config and credentials
+    file settings see [AWS documentation](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html#cli-configure-files-using-profiles)
+  * Edit the `credentials` file by adding the following entry: 
+  ```
+  [serverless-workshop]
+  aws_access_key_id=<<"Access Key" from the previous step>>
+  aws_secret_access_key=<<"Secret Access Key" from the previous step>>
+  ```
+
 ### Fauna Setup
 > You may have noticed these same steps from Lab1. Go ahead and create a new Fauna database 
 > as we won't be using Lab1's database.
@@ -23,14 +48,18 @@ The web application in Lab2:
   * Role = **Admin**
   * Provide a name for the key
   * Copy the value, you will not be able to see it again.
-* Save API Key from previous step into [/scripts/.env](./scripts/.env) 
+* Save API Key from previous step into a new file `/scripts/.env`
+  > A template file [/scripts/.env.template](./scripts/.env.template) has been provided for you. Make a copy of it and rename it `.env`, and edit in the values
+* Update the `AWS_PROFILE` variable to match the profile name you set in the AWS `credentials` file above
 
   e.g. 
   ```
   STACK_NAME="serverless-saas-fauna"
-  FAUNA_API_KEY=<The API Key>
+  FAUNA_API_KEY="<The API Key>"
+  AWS_PROFILE="serverless-workshop"
   ```
-  (For convenience, a `./scripts/.env.template` is provided):
+
+
 
 
 ### Deploy the AWS resources using the provided script:

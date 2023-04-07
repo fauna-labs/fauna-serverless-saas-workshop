@@ -5,10 +5,8 @@ import json
 import boto3
 import os
 import utils
-import uuid
 import logger
 import requests
-import re
 
 region = os.environ['AWS_REGION']
 create_tenant_admin_user_resource_path = os.environ['CREATE_TENANT_ADMIN_USER_RESOURCE_PATH']
@@ -27,7 +25,7 @@ def register_tenant(event, context):
         headers = utils.get_headers(event)
 
         create_tenant_response = __create_tenant(tenant_details, headers, auth, host, stage_name)
-        tenant_details['tenantId'] = create_tenant_response['tenantId']
+        tenant_details['tenantId'] = create_tenant_response['id']
         logger.info(tenant_details)
 
         create_user_response = __create_tenant_admin_user(tenant_details, headers, auth, host, stage_name)        

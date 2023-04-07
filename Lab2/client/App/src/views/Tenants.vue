@@ -52,7 +52,7 @@
                         </div>
                       </a>
                     </td>
-                  <td class="text-sm font-light px-6 py-4 whitespace-nowrap">{{ t.tenantId }}</td>
+                  <td class="text-sm font-light px-6 py-4 whitespace-nowrap">{{ t.id }}</td>
                   <td class="text-sm font-light px-6 py-4 whitespace-nowrap">{{ t.tenantTier }}</td>
                   <td class="text-sm font-light px-6 py-4 whitespace-nowrap">{{ t.isActive ? 'Active' : 'Inactive' }}</td>
                 </tr>

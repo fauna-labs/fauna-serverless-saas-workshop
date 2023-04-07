@@ -18,7 +18,7 @@ def get_product(event, productId):
 
         response = db.query(
             fql("""
-            product.byId("${productId}") {
+            product.byId(${productId}) {
               id,
               name,
               description,
@@ -55,12 +55,11 @@ def delete_product(event, productId):
 
         response = db.query(
             fql("""
-            product.byId("${productId}").delete()
+            product.byId(${productId}).delete()
             """, 
             productId = productId
             )
         )
-
     except FaunaException as e:
         logger.error("Error deleting a product: {}".format(e))
         raise e

@@ -98,7 +98,7 @@ def load_config():
             for param in param_details.get('Parameters'):
                 config_dict.update(json.loads(param.get('Value')))
     except:
-        print("Encountered an error loading config from SSM.")
+        logger.error("Encountered an error loading config from SSM.")
         traceback.print_exc()
     finally:
         configuration['FAUNA'] = config_dict

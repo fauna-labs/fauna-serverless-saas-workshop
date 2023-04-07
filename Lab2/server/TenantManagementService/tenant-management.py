@@ -3,18 +3,13 @@
 
 import os
 import json
-import boto3
-from boto3.dynamodb.conditions import Key
-import urllib.parse
 import utils
-from botocore.exceptions import ClientError
 import logger
 import requests
 
 from utils import FaunaClients
-from faunadb.query import let, create, update, collection, select, get, ref, var, create_database, concat, \
-  map_, lambda_, merge, paginate, documents, do, create_collection
-from faunadb.errors import FaunaError
+from fauna import fql
+from fauna.errors import FaunaException
 
 clients = {}
 
@@ -28,34 +23,47 @@ def create_tenant(event, context):
         global clients
         db = FaunaClients(clients)
 
-        tenant = db.query(
-          let(
-            {
-              "tenant": create(
-                  collection("tenant"), {
-                    "data": {
-                      'tenantName' : tenant_details['tenantName'],
-                      'tenantAddress': tenant_details['tenantAddress'],
-                      'tenantEmail': tenant_details['tenantEmail'],
-                      'tenantPhone': tenant_details['tenantPhone'],
-                      'tenantTier': tenant_details['tenantTier'],                    
-                      'isActive': True
-                    }
-                  }
-                ),
-              "tenantId": select(["ref", "id"], var("tenant")),
-              "db": create_database({ "name": concat(["tenant_", var("tenantId")]) })
-            },
-            { "tenantId": var("tenantId") }
-          )
-        )
-        __create_tenantdb_resources(tenant["tenantId"])
+        response = db.query(
+            fql("""
+            // create tenant entry
+            let t = tenant.create({
+              tenantName : ${tenantName},
+              tenantAddress: ${tenantAddress},
+              tenantEmail: ${tenantEmail},
+              tenantPhone: ${tenantPhone},
+              tenantTier: ${tenantTier},
+              isActive: ${isActive}         
+            }) {
+              id
+            }
 
-    except FaunaError as e:
+            // create child database
+            Database.create({
+              name: "tenant_" + t.id
+            })
+
+            // return the tenant id in the response
+            {
+              id: t.id
+            }
+            """,
+            tenantName=tenant_details['tenantName'],
+            tenantAddress=tenant_details['tenantAddress'],
+            tenantEmail=tenant_details['tenantEmail'],
+            tenantPhone=tenant_details['tenantPhone'],
+            tenantTier=tenant_details['tenantTier'],
+            isActive=True
+            )
+        )
+        tenant = response.data
+        __create_tenantdb_resources(tenant["id"])
+
+    except FaunaException as e:
         logger.error(e)
         raise Exception('Error creating a new tenant', e)
     else:
         return utils.generate_response(tenant)
+
 
 def get_tenants(event, context):
     tenants = []
@@ -63,25 +71,25 @@ def get_tenants(event, context):
         global clients
         db = FaunaClients(clients)
         results = db.query(
-          map_(
-            lambda_("x", 
-              let(
-                { "tenant": get(var("x")) },
-                merge(
-                  { "tenantId": select(["ref", "id"], var("tenant")) },
-                  select(["data"], var("tenant"))
-                )
-              )
-            ),
-            paginate(documents(collection("tenant")))
-          )
+            fql("""
+            tenant.all() {
+              id,
+              tenantName,
+              tenantAddress,
+              tenantEmail,
+              tenantPhone,
+              tenantTier,
+              isActive
+            }
+            """)
         )
-        tenants = results['data']
-    except FaunaError as e:
+        tenants = results.data['data']
+    except FaunaException as e:
         logger.error(e)
         raise Exception('Error getting all tenants', e)
     else:
         return utils.generate_response(tenants)
+
 
 def update_tenant(event, context):
     
@@ -93,19 +101,23 @@ def update_tenant(event, context):
     db = FaunaClients(clients)
 
     response_update = db.query(
-      update(
-        ref(collection("tenant"), tenant_id), {
-          "data": {
-              'tenantName' : tenant_details['tenantName'],
-              'tenantAddress': tenant_details['tenantAddress'],
-              'tenantEmail': tenant_details['tenantEmail'],
-              'tenantPhone': tenant_details['tenantPhone'],
-              'tenantTier': tenant_details['tenantTier']
-          }
-        }
-      )
+        fql("""
+        tenant.byId(${tenant_id}).update({
+          tenantName: ${tenantName},
+          tenantAddress: ${tenantAddress},
+          tenantEmail: ${tenantEmail},
+          tenantPhone: ${tenantPhone},
+          tenantTier: ${tenantTier}        
+        })
+        """,
+        tenant_id=tenant_id,
+        tenantName=tenant_details['tenantName'],
+        tenantAddress=tenant_details['tenantAddress'],
+        tenantEmail=tenant_details['tenantEmail'],
+        tenantPhone=tenant_details['tenantPhone'],
+        tenantTier=tenant_details['tenantTier']
+        )
     )
-
     logger.info(response_update)     
 
     logger.info("Request completed to update tenant")
@@ -120,22 +132,29 @@ def get_tenant(event, context):
     global clients
     db = FaunaClients(clients)
 
-    item = db.query(
-      let(
-        { "tenant": get(ref(collection("tenant"), tenant_id)) },
-        merge(
-          select(["data"], var("tenant")),
-          { "tenantId":  select(["ref", "id"], var("tenant")) }
-        )
-      )
+    response = db.query(
+        fql("""
+        tenant.byId(${tenant_id}) {
+          id,
+          tenantName,
+          tenantAddress,
+          tenantEmail,
+          tenantPhone
+        }
+        """,
+        tenant_id=tenant_id)
     )
-    tenant_info = TenantInfo(item['tenantName'], item['tenantAddress'],item['tenantEmail'], item['tenantPhone'])
+    item = response.data
+    tenant_info = TenantInfo(item['tenantName'], 
+                             item['tenantAddress'],
+                             item['tenantEmail'], 
+                             item['tenantPhone'])
     logger.info(tenant_info)    
     logger.info("Request completed to get tenant details")
     return utils.create_success_response(tenant_info.__dict__)
 
+
 def deactivate_tenant(event, context):
-    
     url_disable_users = os.environ['DISABLE_USERS_BY_TENANT']
     stage_name = event['requestContext']['stage']
     host = event['headers']['Host']
@@ -150,10 +169,13 @@ def deactivate_tenant(event, context):
     db = FaunaClients(clients)
 
     response = db.query(
-      update(
-        get(ref(collection("tenant"), tenant_id)),
-        { "data": { "active": False } }
-      )
+        fql("""
+        tenant.byId(${tenant_id}).update({
+          active: ${active}
+        })
+        """,
+        tenant_id=tenant_id,
+        active=False)
     )               
     logger.info(response)
 
@@ -163,8 +185,8 @@ def deactivate_tenant(event, context):
     logger.info("Request completed to deactivate tenant")
     return utils.create_success_response("Tenant Deactivated")
 
+
 def activate_tenant(event, context):
-    
     url_enable_users = os.environ['ENABLE_USERS_BY_TENANT']
     stage_name = event['requestContext']['stage']
     host = event['headers']['Host']
@@ -179,10 +201,13 @@ def activate_tenant(event, context):
     db = FaunaClients(clients)
 
     response = db.query(
-      update(
-        get(ref(collection("tenant"), tenant_id)),
-        { "data": { "active": True } }
-      )
+        fql("""
+        tenant.byId(${tenant_id}).update({
+          active: ${active}
+        })
+        """,
+        tenant_id=tenant_id,
+        active=True)
     )    
     logger.info(response)
 
@@ -192,6 +217,7 @@ def activate_tenant(event, context):
     logger.info("Request completed to activate tenant")
     return utils.create_success_response("Tenant activated")
     
+
 def __invoke_disable_users(headers, auth, host, stage_name, invoke_url, tenant_id):
     try:
         url = ''.join(['https://', host, '/', stage_name, invoke_url, '/', tenant_id])
@@ -206,6 +232,7 @@ def __invoke_disable_users(headers, auth, host, stage_name, invoke_url, tenant_i
         raise Exception('Error occured while disabling users for the tenant', e) 
     else:
         return "Success invoking disable users"
+
 
 def __invoke_enable_users(headers, auth, host, stage_name, invoke_url, tenant_id):
     try:
@@ -227,10 +254,10 @@ def __create_tenantdb_resources(tenant_id):
     global clients
     db = FaunaClients(clients, tenant_id)
     result = db.query(
-        do(
-            create_collection( {"name": "order"} ),
-            create_collection( {"name": "product"} )
-        )
+        fql("""
+        Collection.create({ name: 'order' })
+        Collection.create({ name: 'product' })
+        """)
     )
 
 
