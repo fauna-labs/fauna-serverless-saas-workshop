@@ -179,7 +179,7 @@ export default {
           'Accept': 'application/json',
       }      
       if (this.updateMode) {
-        this.url = `${import.meta.env.VITE_ADMIN_API_GATEWAY_URL}tenant/${this.tenant.tenantId}`;
+        this.url = `${import.meta.env.VITE_ADMIN_API_GATEWAY_URL}tenant/${this.tenant.id}`;
         this.apimethod = 'PUT';
         const accessToken = this.$auth.getAccessToken();
         if (!accessToken) {

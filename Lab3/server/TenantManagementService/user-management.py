@@ -4,17 +4,15 @@
 import json
 import boto3
 import os
-import sys
 import logger 
 import metrics_manager
 import auth_manager
 import utils
-from boto3.dynamodb.conditions import Key
 from aws_lambda_powertools import Tracer
 tracer = Tracer()
 
 from utils import FaunaFromConfig
-from faunadb.query import select, paginate, match, index, create, collection, ref
+from fauna import fql
 
 db = None
 
@@ -238,15 +236,20 @@ def disable_users_by_tenant(event, context):
         global db
         if db is None:
             db = FaunaFromConfig()
-        users = db.query(
-          select(["data"], paginate(match(index("usernames_by_tenant_id"), tenantid_to_update)))
+        response = db.query(
+            fql("""
+            tenantUser.usernamesByTenantId(${tenant_id}) {
+              user_name
+            }
+            """,
+            tenant_id=tenantid_to_update)
         )
-        for username in users:
+        users = response.data['data']
+        for u in users:
             response = client.admin_disable_user(
-                Username=username,
+                Username=u['user_name'],
                 UserPoolId=user_pool_id
             )
-
         logger.info(response)
         logger.info("Request completed to disable users")
         return utils.create_success_response("Users disabled")
@@ -269,15 +272,20 @@ def enable_users_by_tenant(event, context):
         global db
         if db is None:
             db = FaunaFromConfig()
-        users = db.query(
-          select(["data"], paginate(match(index("usernames_by_tenant_id"), tenantid_to_update)))
+        response = db.query(
+            fql("""
+            tenantUser.usernamesByTenantId(${tenant_id}) {
+              user_name
+            }
+            """,
+            tenant_id=tenantid_to_update)
         )
-        for username in users:
+        users = response.data['data']
+        for u in users:
             response = client.admin_enable_user(
-                Username=username,
+                Username=u['user_name'],
                 UserPoolId=user_pool_id
-            )
-            
+            )            
         logger.info(response)
         logger.info("Request completed to enable users")
         return utils.create_success_response("Users enables")
@@ -348,19 +356,20 @@ class UserManagement:
     def create_user_tenant_mapping(self, user_name, tenant_id):
         global db
         if db is None:
-            db = FaunaFromConfig()
-
+            db = FaunaFromConfig()    
         response = db.query(
-          create(
-            collection("tenant_user"), {
-              "data": {
-                "tenant_id": ref(collection("tenant"), tenant_id),
-                "user_name": user_name
-              }
+            fql("""
+            tenantUser.create({
+              tenant_id: tenant.byId(${tenant_id}),
+              user_name: ${user_name}
+            }) {
+              id
             }
-          )
+            """,
+            tenant_id=tenant_id,
+            user_name=user_name)
         )
-        return response
+        return response.data    
 
 
 class UserInfo:

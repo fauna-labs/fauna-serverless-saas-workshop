@@ -4,62 +4,14 @@
 from order_models import Order
 import logger
 from utils import FaunaClients
-from faunadb.query import get, ref, collection, map_, lambda_, let, select, var, merge, to_string, delete, create, update, \
-  lt, do, foreach, if_, abort, concat, subtract, time, paginate, documents
-from faunadb.errors import FaunaError
+
+from fauna import fql
+from fauna.errors import FaunaException
+
 clients = {}
 
 
 def get_order(event, key):
-    
-    try:
-        orderId = key
-        tenantId = event['requestContext']['authorizer']['tenantId']
-
-        global clients
-        db = FaunaClients(clients, tenantId)
-
-        item = db.query(
-          let(
-            {
-              'order': get(ref(collection('order'), orderId)),
-              'orderProducts': map_(
-                lambda_(
-                  'x',
-                  let(
-                    { 'product': get(select(['product'], var('x'))) },
-                    {
-                      'quantity': select(['quantity'], var('x')),
-                      'price': select(['price'], var('x')),
-                      'productId': select(['ref', 'id'], var('product')),
-                      'productName': select(['data', 'name'], var('product'), ''),
-                      'productSku': select(['data', 'sku'], var('product'), ''),
-                      'productDescription': select(['data', 'description'], var('product'), '')
-                    }
-                  )
-                ),
-                select(['data', 'orderProducts'], var('order'))
-              )
-            },
-            merge(
-              select(['data'], var('order')),
-              {
-                'orderId': select(['ref', 'id'], var('order')),
-                'creationDate': to_string(select(['data', 'creationDate'], var('order'))),
-                'orderProducts': var('orderProducts')
-              },
-            )
-          )
-        )
-        order = Order(item['orderId'], item['orderName'], item['creationDate'], item['status'], item['orderProducts'])
-    except FaunaError as e:
-        logger.error(e)
-        raise e
-    else:
-        return order
-
-def delete_order(event, key):
-    
     try:
         orderId = key
         tenantId = event['requestContext']['authorizer']['tenantId']
@@ -68,14 +20,56 @@ def delete_order(event, key):
         db = FaunaClients(clients, tenantId)
 
         response = db.query(
-          select(
-            ['ref', 'id'],
-            delete(
-              ref(collection('order'), orderId)
+            fql("""
+            let o = order.byId(${orderId}) 
+            let cart = o.orderProducts
+            {
+              id: o.id,
+              orderName: o.orderName,
+              creationDate: o.creationDate,
+              status: o.status,
+              orderProducts: cart.map(x=>{
+                price: x.price,
+                quantity: x.quantity,
+                productId: x.product.id,
+                productName: x.product.name,
+                productSku: x.product.sku,
+                productDescription: x.product.description
+              })
+            }
+            """,
+            orderId=orderId
             )
-          )
         )
-    except FaunaError as e:
+    except FaunaException as e:
+        logger.error(e)
+        raise e
+    else:
+        item = response.data
+        order = Order(item['id'], 
+                      item['orderName'], 
+                      item['creationDate'], 
+                      item['status'], 
+                      item['orderProducts'])
+        return order
+
+
+def delete_order(event, key):
+    try:
+        orderId = key
+        tenantId = event['requestContext']['authorizer']['tenantId']
+
+        global clients
+        db = FaunaClients(clients, tenantId)
+
+        response = db.query(
+            fql("""
+            order.byId(${orderId}).delete()
+            """, 
+            orderId = orderId
+            )
+        )
+    except FaunaException as e:
         logger.error(e)
         raise e
     else:
@@ -90,93 +84,66 @@ def create_order(event, payload):
         db = FaunaClients(clients, tenantId)
 
         response = db.query(
-          let(
-            {
-              'products': map_(
-                lambda_(
-                  'requestedProduct',
-                  let(
-                    {
-                      'requestedQuantity': select(['quantity'], var('requestedProduct')),
-                      'product': get(select(['product'], var('requestedProduct'))),
-                      'currentQuantity': select(['data', 'quantity'], var('product')),
-                      'backorderedLimit': select(['data', 'backorderedLimit'], var('product')),
-                      'updatedQuantity': subtract(var('currentQuantity'), var('requestedQuantity')),
-                    },
-                    {
-                      'ref': select('ref', var('product')),
-                      'price': select(['data', 'price'], var('product')),
-                      'name': select(['data', 'name'], var('product')),
-                      'requestedQuantity': var('requestedQuantity'),
-                      'updatedQuantity': var('updatedQuantity'),
-                      'backorderedLimit': var('backorderedLimit'),
-                      'backordered': lt(var('updatedQuantity'), var('backorderedLimit')) # if remaining stock < backorderedLimit, then backordered = True
-                    }
-                  )
-                ),
-                _format_order_products(payload.orderProducts)
-              )
-            },
-            do(
-              # for each product, check if stocked quantity is sufficient to fulfill the order
-              foreach(
-                lambda_(
-                  'product',
-                  if_(
-                    lt(select(['updatedQuantity'], var('product')), 0), # if updatedQuantity < 0 then abort
-                    abort(
-                      concat(['Stock quantity for Product [', select(['name'], var('product')), '] not enough'])
-                    ),
-                    # else
-                    # adjust the products' quantity by subtracting quantity requested
-                    # if remaining stock < backorderedLimit, then set backordered = True
-                    update(select('ref', var('product')), {
-                      'data': {
-                        'quantity': select(['updatedQuantity'], var('product')),
-                        'backordered': select(['backordered'], var('product'))
-                      }
-                    })
-                  )
-                ),
-                var('products')
-              ),
-              let(
-                {
-                  'orderProducts': map_(
-                    lambda_('product', {
-                      'product': select('ref', var('product')),
-                      'quantity': select('requestedQuantity', var('product')),
-                      'price': select('price', var('product'))
-                    }),
-                    var('products')
-                  ),
-                  'result': create(collection('order'), {
-                      'data': {
-                        'orderName': payload.orderName,
-                        'creationDate': time('now'),
-                        'status': 'processing',
-                        'orderProducts': var('orderProducts')
-                      }
-                    })
-                },
-                {
-                  'id': select(['ref', 'id'], var('result')),
-                  'creationDate': to_string(select(['data', 'creationDate'], var('result')))
+            fql("""
+              ${cart}.forEach(x=>{              
+                let p = product.byId(x.productId)
+                let updatedQty = p.quantity - x.quantity
+
+                if (updatedQty < 0) {                  
+                  abort("Insufficient stock for product " + p.name + ": Requested quantity=" + x.quantity)
+                } else {
+                  p.update({
+                    quantity: updatedQty,
+                    backordered: p.backorderedLimit > updatedQty
+                  })
                 }
-              )
-            )
+              })
+
+              order.create({
+                orderName: ${orderName},
+                creationDate: Time.now(),
+                status: 'processing',
+                orderProducts: ${cart}.map(x=>{
+                  product: product.byId(x.productId),
+                  quantity: x.quantity,
+                  price: x.price
+                })
+              }) {
+                id,
+                creationDate
+              }           
+            """,
+            cart=_format_order_products(payload.orderProducts),
+            orderName=payload.orderName
           )
+          # payload has the following shape:
+          # {
+          #     "orderName": "Example",
+          #     "orderProducts":
+          #     [
+          #         {
+          #             "price": "6.27",
+          #             "productId": "361199918684045380",
+          #             "quantity": 1
+          #         },
+          #     ]
+          # }
         )
-    except FaunaError as e:
+    except FaunaException as e:
         logger.error(e)
         raise e
     else:
         logger.info('PutItem succeeded:')
-        order = Order(response['id'], payload.orderName, response['creationDate'], 'processing', payload.orderProducts)
+        response = response.data
+        order = Order(response['id'], 
+                      payload.orderName, 
+                      response['creationDate'], 
+                      'processing', 
+                      payload.orderProducts)
         return order
 
+
 def update_order(event, payload, key):
-    
     try:
         orderId = key
         tenantId = event['requestContext']['authorizer']['tenantId']
@@ -185,99 +152,93 @@ def update_order(event, payload, key):
         db = FaunaClients(clients, tenantId)
 
         response = db.query(
-          let(
-            {
-              'update': update(
-                ref(collection('order'), orderId), {
-                  'data': {
-                    'orderName': payload.orderName,
-                    'status': payload.orderStatus,
-                    'orderProducts': _format_order_products(payload.orderProducts)
-                  }
-                }
-              )
-            },
-            {
-              'id': orderId,
-              'status': select(['data', 'status'], var('update')),
-              'creationDate': to_string(select(['data', 'creationDate'], var('update')))
-            }
+            fql("""
+              order.byId(${orderId}).update({
+                orderName: ${orderName},
+                status: ${orderStatus},
+                orderProducts: ${cart}.map(x=>{
+                  product: product.byId(x.productId),
+                  quantity: x.quantity,
+                  price: x.price
+                })
+              }) {
+                id,
+                status,
+                creationDate
+              }
+            """,
+            orderId=orderId,
+            orderName=payload.orderName,
+            orderStatus=payload.orderStatus,
+            cart=_format_order_products(payload.orderProducts)
           )
         )
-        order = Order(orderId, payload.orderName, response['creationDate'], response['status'], payload.orderProducts)
-    except FaunaError as e:
+    except FaunaException as e:
         logger.error(e)
         raise e
     else:
         logger.info('UpdateItem succeeded:')
+        response = response.data
+        order = Order(orderId, 
+                      payload.orderName, 
+                      response['creationDate'], 
+                      response['status'], 
+                      payload.orderProducts)
         return order
 
-def get_orders(event, tenantId):
-    get_all_products_response = []
 
+def get_orders(event, tenantId):
+    orders = []
     try:
         tenantId = event['requestContext']['authorizer']['tenantId']
         global clients
         db = FaunaClients(clients, tenantId)
 
-        results = db.query(
-          map_(
-            lambda_('x', 
-              let(
-                {
-                  'order': get(var('x')),
-                  'orderProducts': map_(
-                    lambda_(
-                      'x',
-                      let(
-                        { 'product': get(select(['product'], var('x'))) },
-                        {
-                          'quantity': select(['quantity'], var('x')),
-                          'price': select(['price'], var('x')),
-                          'productId': select(['ref', 'id'], var('product')),
-                          'productName': select(['data', 'name'], var('product'), ''),
-                          'productSku': select(['data', 'sku'], var('product'), ''),
-                          'productDescription': select(['data', 'description'], var('product'), '')
-                        }
-                      )
-                    ),
-                    select(['data', 'orderProducts'], var('order'))
-                  )
-                },
-                merge(
-                  select(['data'], var('order')),
-                  {
-                    'orderId': select(['ref', 'id'], var('order')),
-                    'creationDate': to_string(select(['data', 'creationDate'], var('order'))),
-                    'orderProducts': var('orderProducts')
-                  },
-                )
-              )
-            ),
-            paginate(documents(collection('order')))
-          )
+        response = db.query(
+            fql("""
+            order.all().map(o=>{
+              {
+                id: o.id,
+                orderName: o.orderName,
+                creationDate: o.creationDate,
+                status: o.status,
+                orderProducts: o.orderProducts.map(x=>{
+                  price: x.price,
+                  quantity: x.quantity,
+                  productId: x.product.id,
+                  productName: x.product.name,
+                  productSku: x.product.sku,
+                  productDescription: x.product.description
+                })
+              }
+            })
+            """)
         )
-        results = results['data']
-        for item in results:
-            order = Order(item['orderId'], item['orderName'], item['creationDate'], item['status'], item['orderProducts'])
-            get_all_products_response.append(order)
-    except FaunaError as e:
+    except FaunaException as e:
         logger.error(e)
         raise e
     else:
         logger.info('Get orders succeeded')
-        return get_all_products_response
+        results = response.data['data']
+        for item in results:
+            order = Order(item['id'], 
+                          item['orderName'], 
+                          item['creationDate'], 
+                          item['status'], 
+                          item['orderProducts'])
+            orders.append(order)
+        return orders
   
 
 def _format_order_products(orderProducts):
   orderProductList = []
   for i in range(len(orderProducts)):
       product = {
-        'product': ref(collection('product'), orderProducts[i].productId),
+        'productId': orderProducts[i].productId,
         'price': orderProducts[i].price,
         'quantity': orderProducts[i].quantity
       }
       orderProductList.append(product)
-  return orderProductList    
+  return orderProductList      
 
 

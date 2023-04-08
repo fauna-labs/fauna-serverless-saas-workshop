@@ -76,7 +76,7 @@ def delete_product(event, context):
     params = event['pathParameters']
     key = params['id']
     try:
-        response = product_service_dal.delete_product(event, key)
+        product_service_dal.delete_product(event, key)
         logger.log_with_tenant_context(event, "Request completed to delete a product")
         metrics_manager.record_metric(event, "ProductDeleted", "Count", 1)
         return utils.create_success_response("Successfully deleted the product")

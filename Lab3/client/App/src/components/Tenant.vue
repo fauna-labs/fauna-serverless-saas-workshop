@@ -28,11 +28,11 @@
                 <div class="shadow sm:rounded-md">
                   <div class="space-y-6 bg-white px-4 py-5 sm:p-6">
                     <div>
-                      <label for="tenantName" class="block text-md font-medium text-gray-700">Name</label>
+                      <label for="tenantName" class="block text-md font-medium text-gray-700">Tenant Name</label>
                       <div class="mt-2">
                         <input id="tenantName" name="tenantName" type="text" required
                           class="p-2 w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-md" 
-                          placeholder="name" v-model="tenantName">
+                          placeholder="Provide a name for your tenant" v-model="tenantName">
                       </div>
                     </div>
                     <div>
@@ -43,7 +43,7 @@
                       <div v-else class="mt-2">
                         <input id="tenantEmail" name="tenantEmail" type="text" required
                           class="p-2 w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-md" 
-                          placeholder="Email" v-model="tenantEmail">
+                          placeholder="Provide your contact Email" v-model="tenantEmail">
                       </div>
                     </div>
                     <div>
@@ -193,7 +193,7 @@ export default {
           'Accept': 'application/json',
       }      
       if (this.updateMode) {
-        this.url = `${import.meta.env.VITE_ADMIN_API_GATEWAY_URL}tenant/${this.tenant.tenantId}`;
+        this.url = `${import.meta.env.VITE_ADMIN_API_GATEWAY_URL}tenant/${this.tenant.id}`;
         this.apimethod = 'PUT';
         const accessToken = this.$auth.getAccessToken();
         if (!accessToken) {

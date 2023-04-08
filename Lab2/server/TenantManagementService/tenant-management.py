@@ -100,7 +100,7 @@ def update_tenant(event, context):
     global clients
     db = FaunaClients(clients)
 
-    response_update = db.query(
+    response = db.query(
         fql("""
         tenant.byId(${tenant_id}).update({
           tenantName: ${tenantName},
@@ -118,6 +118,7 @@ def update_tenant(event, context):
         tenantTier=tenant_details['tenantTier']
         )
     )
+    response_update = response.data
     logger.info(response_update)     
 
     logger.info("Request completed to update tenant")
@@ -172,12 +173,15 @@ def deactivate_tenant(event, context):
         fql("""
         tenant.byId(${tenant_id}).update({
           active: ${active}
-        })
+        }) {
+          id,
+          active
+        }
         """,
         tenant_id=tenant_id,
         active=False)
     )               
-    logger.info(response)
+    logger.info(response.data)
 
     update_user_response = __invoke_disable_users(headers, auth, host, stage_name, url_disable_users, tenant_id)
     logger.info(update_user_response)
@@ -204,12 +208,15 @@ def activate_tenant(event, context):
         fql("""
         tenant.byId(${tenant_id}).update({
           active: ${active}
-        })
+        }) {
+          id,
+          active
+        }
         """,
         tenant_id=tenant_id,
         active=True)
     )    
-    logger.info(response)
+    logger.info(response.data)
 
     update_user_response = __invoke_enable_users(headers, auth, host, stage_name, url_enable_users, tenant_id)
     logger.info(update_user_response)
