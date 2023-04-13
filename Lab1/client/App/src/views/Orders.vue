@@ -28,13 +28,13 @@
         <ProgressBar v-if="progress" class="pt-4"/>
       </div>
       <div class="">
-        <div v-for="order in orders" :key="order.orderId" class="text-left p-4">
+        <div v-for="order in orders" :key="order.id" class="text-left p-4">
           <div class="px-6 py-4 border rounded-md">
             <div class="grid grid-cols-12 gap-4">
               <div class="col-span-4 mb-6 flex flex-col">
                 <div class="flex flex-row items-center">
                   <h1 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-400">Order</h1>
-                  <p class="pl-2 text-sm justify-cente">{{order.orderId}}</p>
+                  <p class="pl-2 text-sm justify-cente">{{order.id}}</p>
                 </div>
                 <p class="text-sm font-light">{{ order.orderName }}</p>
                 <div class="flex flex-row text-md">
@@ -132,7 +132,7 @@ export default {
           });
 
           // sort descending
-          data.sort((a, b)=>{ return (b.orderId > a.orderId) ? 1 : -1 });
+          data.sort((a, b)=>{ return (b.id > a.id) ? 1 : -1 });
 
           this.orders = data;
 

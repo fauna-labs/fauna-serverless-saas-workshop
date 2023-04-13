@@ -5,10 +5,15 @@ import json
 import utils
 import logger
 import metrics_manager
-import order_service_dal
 from types import SimpleNamespace
 from aws_lambda_powertools import Tracer
 tracer = Tracer()
+
+from utils import FaunaClients
+from fauna import fql
+
+clients = {}
+
 
 @tracer.capture_lambda_handler
 def get_order(event, context):
@@ -17,13 +22,36 @@ def get_order(event, context):
 
     logger.log_with_tenant_context(event, "Request received to get a order")
     params = event['pathParameters']
-    key = params['id']
+    orderId = params['id']
     logger.log_with_tenant_context(event, params)
     try:
-        order = order_service_dal.get_order(event, key)
+        global clients
+        db = FaunaClients(clients, tenantId)
 
+        response = db.query(
+            fql("""
+            let o = order.byId(${orderId}) 
+            {
+              id: o.id,
+              orderName: o.orderName,
+              creationDate: o.creationDate,
+              status: o.status,
+              orderProducts: o.orderProducts.map(x=>{
+                price: x.price,
+                quantity: x.quantity,
+                productId: x.product.id,
+                productName: x.product.name,
+                productSku: x.product.sku,
+                productDescription: x.product.description
+              })
+            }
+            """,
+            orderId=orderId
+            )
+        )        
         logger.log_with_tenant_context(event, "Request completed to get a order")
         metrics_manager.record_metric(event, "SingleOrderRequested", "Count", 1)
+        order = response.data
         return utils.generate_response(order)
     except Exception as e:
         return utils.generate_error_response(e)
@@ -37,9 +65,61 @@ def create_order(event, context):
     logger.log_with_tenant_context(event, "Request received to create a order")
     payload = json.loads(event['body'], object_hook=lambda d: SimpleNamespace(**d))
     try:
-        order = order_service_dal.create_order(event, payload)
+        global clients
+        db = FaunaClients(clients, tenantId)
+
+        response = db.query(
+            fql("""
+              ${cart}.forEach(x=>{              
+                let p = product.byId(x.productId)
+                let updatedQty = p.quantity - x.quantity
+
+                if (updatedQty < 0) {                  
+                  abort("Insufficient stock for product " + p.name + ": Requested quantity=" + x.quantity)
+                } else {
+                  p.update({
+                    quantity: updatedQty,
+                    backordered: p.backorderedLimit > updatedQty
+                  })
+                }
+              })
+
+              order.create({
+                orderName: ${orderName},
+                creationDate: Time.now(),
+                status: 'processing',
+                orderProducts: ${cart}.map(x=>{
+                  product: product.byId(x.productId),
+                  quantity: x.quantity,
+                  price: x.price
+                })
+              }) {
+                id,
+                orderName,
+                creationDate,
+                status,
+                orderProducts
+              }           
+            """,
+            cart=_format_order_products(payload.orderProducts),
+            orderName=payload.orderName
+          )
+          # payload has the following shape:
+          # {
+          #     "orderName": "Example",
+          #     "orderProducts":
+          #     [
+          #         {
+          #             "price": "6.27",
+          #             "productId": "361199918684045380",
+          #             "quantity": 1
+          #         },
+          #     ]
+          # }
+        )        
         logger.log_with_tenant_context(event, "Request completed to create a order")
         metrics_manager.record_metric(event, "OrderCreated", "Count", 1)
+        order = response.data
         return utils.generate_response(order)
     except Exception as e:
         return utils.generate_error_response(e)
@@ -53,11 +133,38 @@ def update_order(event, context):
     logger.log_with_tenant_context(event, "Request received to update a order")
     payload = json.loads(event['body'], object_hook=lambda d: SimpleNamespace(**d))
     params = event['pathParameters']
-    key = params['id']
+    orderId = params['id']
     try:
-        order = order_service_dal.update_order(event, payload, key)
+        global clients
+        db = FaunaClients(clients, tenantId)
+
+        response = db.query(
+            fql("""
+              order.byId(${orderId}).update({
+                orderName: ${orderName},
+                status: ${orderStatus},
+                orderProducts: ${cart}.map(x=>{
+                  product: product.byId(x.productId),
+                  quantity: x.quantity,
+                  price: x.price
+                })
+              }) {
+                id,
+                orderName,
+                status,
+                creationDate,
+                orderProducts
+              }
+            """,
+            orderId=orderId,
+            orderName=payload.orderName,
+            orderStatus=payload.orderStatus,
+            cart=_format_order_products(payload.orderProducts)
+          )
+        )        
         logger.log_with_tenant_context(event, "Request completed to update a order") 
         metrics_manager.record_metric(event, "OrderUpdated", "Count", 1)   
+        order = response.data
         return utils.generate_response(order)
     except Exception as e:
         return utils.generate_error_response(e)
@@ -70,9 +177,18 @@ def delete_order(event, context):
 
     logger.log_with_tenant_context(event, "Request received to delete a order")
     params = event['pathParameters']
-    key = params['id']
+    orderId = params['id']
     try:
-        order_service_dal.delete_order(event, key)
+        global clients
+        db = FaunaClients(clients, tenantId)
+
+        response = db.query(
+            fql("""
+            order.byId(${orderId}).delete()
+            """, 
+            orderId = orderId
+            )
+        )
         logger.log_with_tenant_context(event, "Request completed to delete a order")
         metrics_manager.record_metric(event, "OrderDeleted", "Count", 1)
         return utils.create_success_response("Successfully deleted the order")
@@ -87,11 +203,44 @@ def get_orders(event, context):
     
     logger.log_with_tenant_context(event, "Request received to get all orders")
     try:
-        response = order_service_dal.get_orders(event, tenantId)
-        metrics_manager.record_metric(event, "OrdersRetrieved", "Count", len(response))
+        global clients
+        db = FaunaClients(clients, tenantId)
+
+        response = db.query(
+            fql("""
+            order.all().map(o=>{
+              {
+                id: o.id,
+                orderName: o.orderName,
+                creationDate: o.creationDate,
+                status: o.status,
+                orderProducts: o.orderProducts.map(x=>{
+                  price: x.price,
+                  quantity: x.quantity,
+                  productId: x.product.id,
+                  productName: x.product.name,
+                  productSku: x.product.sku,
+                  productDescription: x.product.description
+                })
+              }
+            })
+            """)
+        )
+        results = response.data['data']    
+        metrics_manager.record_metric(event, "OrdersRetrieved", "Count", len(results))
         logger.log_with_tenant_context(event, "Request completed to get all orders")
-        return utils.generate_response(response)
+        return utils.generate_response(results)
     except Exception as e:
         return utils.generate_error_response(e)
 
-  
+
+def _format_order_products(orderProducts):
+  orderProductList = []
+  for i in range(len(orderProducts)):
+      product = {
+        'productId': orderProducts[i].productId,
+        'price': orderProducts[i].price,
+        'quantity': orderProducts[i].quantity
+      }
+      orderProductList.append(product)
+  return orderProductList      

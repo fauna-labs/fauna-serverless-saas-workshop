@@ -46,7 +46,7 @@
                       </thead>
                       <tbody>
                         <tr><td colspan="4"><ProgressBar v-if="loadingProducts" /></td></tr>
-                        <tr class="border-b border-gray-300" v-for="p in products" :key="p.productId">                  
+                        <tr class="border-b border-gray-300" v-for="p in products" :key="p.id">                  
                           <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <a href="#" @click="viewProduct(p)">
                               <div class="flex flex-col">
@@ -186,7 +186,7 @@ export default {
       this.products.forEach(p=>{
         if (p.requestedQuantity && p.requestedQuantity > 0) {
           orderProducts.push({
-            productId: p.productId,
+            productId: p.id,
             quantity: p.requestedQuantity,
             price: p.price
           })
@@ -207,7 +207,7 @@ export default {
       this.url = `${this.$store.state.apiGatewayUrl}order`;
       this.apimethod = 'POST';
       if (this.updateMode) {
-        this.url += `/${this.product.productId}`;
+        this.url += `/${this.product.id}`;
         this.apimethod = 'PUT';
       }
       try {

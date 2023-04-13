@@ -44,7 +44,7 @@
                     <ProgressBar v-if="progress" />
                   </td>
                 </tr>
-                <tr class="border-b dark:border-gray-600" v-for="p in products" :key="p.productId">                  
+                <tr class="border-b dark:border-gray-600" v-for="p in products" :key="p.id">                  
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <a href="#" @click="viewProduct(p)">
                         <div class="flex flex-col">

@@ -140,7 +140,7 @@ export default {
       this.url = `${import.meta.env.VITE_APP_APIGATEWAYURL}/product`;
       this.apimethod = 'POST';
       if (this.updateMode) {
-        this.url += `/${this.product.productId}`;
+        this.url += `/${this.product.id}`;
         this.apimethod = 'PUT';
       }
       const res = await fetch(

@@ -144,7 +144,7 @@ export default {
       this.url = `${this.$store.state.apiGatewayUrl}product`;
       this.apimethod = 'POST';
       if (this.updateMode) {
-        this.url += `/${this.product.productId}`;
+        this.url += `/${this.product.id}`;
         this.apimethod = 'PUT';
       }
       const res = await fetch(
