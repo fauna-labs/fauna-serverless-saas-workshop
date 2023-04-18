@@ -6,7 +6,6 @@ import utils
 import logger
 import metrics_manager
 from aws_lambda_powertools import Tracer
-from types import SimpleNamespace
 tracer = Tracer()
 
 from utils import FaunaClients
@@ -59,7 +58,7 @@ def create_product(event, context):
     tracer.put_annotation(key="TenantId", value=tenantId)
 
     logger.log_with_tenant_context(event, "Request received to create a product")
-    payload = json.loads(event['body'], object_hook=lambda d: SimpleNamespace(**d))
+    payload = json.loads(event['body'])
     try:
         global clients
         db = FaunaClients(clients, tenantId)
@@ -85,13 +84,13 @@ def create_product(event, context):
               backordered
             }
             """,
-            sku=payload.sku,
-            name=payload.name,
-            description=payload.description,
-            price=payload.price,
-            quantity=payload.quantity,
-            backorderedLimit=payload.backorderedLimit,
-            backordered=True if payload.quantity < payload.backorderedLimit else False
+            sku=payload['sku'],
+            name=payload['name'],
+            description=payload['description'],
+            price=payload['price'],
+            quantity=payload['quantity'],
+            backorderedLimit=payload['backorderedLimit'],
+            backordered=True if payload['quantity'] < payload['backorderedLimit'] else False
             )
         )        
         logger.log_with_tenant_context(event, "Request completed to create a product")
@@ -108,7 +107,7 @@ def update_product(event, context):
     tracer.put_annotation(key="TenantId", value=tenantId)
 
     logger.log_with_tenant_context(event, "Request received to update a product")
-    payload = json.loads(event['body'], object_hook=lambda d: SimpleNamespace(**d))
+    payload = json.loads(event['body'])
     params = event['pathParameters']
     productId = params['id']
     try:
@@ -137,13 +136,13 @@ def update_product(event, context):
             }
             """,
             productId=productId,
-            sku=payload.sku,
-            name=payload.name, 
-            description=payload.description,
-            price=payload.price,
-            quantity=payload.quantity,
-            backorderedLimit=payload.backorderedLimit,
-            backordered=True if payload.quantity < payload.backorderedLimit else False
+            sku=payload['sku'],
+            name=payload['name'], 
+            description=payload['description'],
+            price=payload['price'],
+            quantity=payload['quantity'],
+            backorderedLimit=payload['backorderedLimit'],
+            backordered=True if payload['quantity'] < payload['backorderedLimit'] else False
             )
         )        
         logger.log_with_tenant_context(event, "Request completed to update a product") 
@@ -204,7 +203,7 @@ def get_products(event, context):
             }
             """)
         )
-        results = response.data['data']        
+        results = response.data.data
         metrics_manager.record_metric(event, "ProductsRetrieved", "Count", len(results))
         logger.log_with_tenant_context(event, "Request completed to get all products")
         return utils.generate_response(results)

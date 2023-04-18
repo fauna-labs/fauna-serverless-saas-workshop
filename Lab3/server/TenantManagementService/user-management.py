@@ -244,7 +244,7 @@ def disable_users_by_tenant(event, context):
             """,
             tenant_id=tenantid_to_update)
         )
-        users = response.data['data']
+        users = response.data.data
         for u in users:
             response = client.admin_disable_user(
                 Username=u['user_name'],
@@ -280,7 +280,7 @@ def enable_users_by_tenant(event, context):
             """,
             tenant_id=tenantid_to_update)
         )
-        users = response.data['data']
+        users = response.data.data
         for u in users:
             response = client.admin_enable_user(
                 Username=u['user_name'],

@@ -4,7 +4,6 @@
 import json
 import utils
 import logger
-from types import SimpleNamespace
 
 from utils import Fauna, load_config
 from fauna import fql
@@ -51,7 +50,7 @@ def get_order(event, context):
 
 def create_order(event, context):  
     logger.info("Request received to create a order")
-    payload = json.loads(event['body'], object_hook=lambda d: SimpleNamespace(**d))
+    payload = json.loads(event['body'])
     try:
         global db
         if db is None:
@@ -90,8 +89,8 @@ def create_order(event, context):
                 orderProducts
               }           
             """,
-            cart=_format_order_products(payload.orderProducts),
-            orderName=payload.orderName
+            cart=payload['orderProducts'],
+            orderName=payload['orderName']
           )
           # payload has the following shape:
           # {
@@ -115,7 +114,7 @@ def create_order(event, context):
 
 def update_order(event, context):    
     logger.info("Request received to update a order")
-    payload = json.loads(event['body'], object_hook=lambda d: SimpleNamespace(**d))
+    payload = json.loads(event['body'])
     params = event['pathParameters']
     orderId = params['id']
     try:
@@ -142,9 +141,9 @@ def update_order(event, context):
               }
             """,
             orderId=orderId,
-            orderName=payload.orderName,
-            orderStatus=payload.orderStatus,
-            cart=_format_order_products(payload.orderProducts)
+            orderName=payload['orderName'],
+            orderStatus=payload['orderStatus'],
+            cart=payload['orderProducts']
           )
         )        
         logger.info("Request completed to update a order")
@@ -204,19 +203,7 @@ def get_orders(event, context):
             """)
         )        
         logger.info("Request completed to get all orders")
-        orders = response.data['data']
+        orders = response.data.data
         return utils.generate_response(orders)
     except Exception as e:
         return utils.generate_error_response(e)
-
-
-def _format_order_products(orderProducts):
-  orderProductList = []
-  for i in range(len(orderProducts)):
-      product = {
-        'productId': orderProducts[i].productId,
-        'price': orderProducts[i].price,
-        'quantity': orderProducts[i].quantity
-      }
-      orderProductList.append(product)
-  return orderProductList   

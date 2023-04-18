@@ -5,7 +5,6 @@ import json
 import utils
 import logger
 import metrics_manager
-from types import SimpleNamespace
 from aws_lambda_powertools import Tracer
 tracer = Tracer()
 
@@ -63,7 +62,7 @@ def create_order(event, context):
     tracer.put_annotation(key="TenantId", value=tenantId)
 
     logger.log_with_tenant_context(event, "Request received to create a order")
-    payload = json.loads(event['body'], object_hook=lambda d: SimpleNamespace(**d))
+    payload = json.loads(event['body'])
     try:
         global clients
         db = FaunaClients(clients, tenantId)
@@ -101,8 +100,8 @@ def create_order(event, context):
                 orderProducts
               }           
             """,
-            cart=_format_order_products(payload.orderProducts),
-            orderName=payload.orderName
+            cart=payload['orderProducts'],
+            orderName=payload['orderName']
           )
           # payload has the following shape:
           # {
@@ -131,7 +130,7 @@ def update_order(event, context):
     tracer.put_annotation(key="TenantId", value=tenantId)
     
     logger.log_with_tenant_context(event, "Request received to update a order")
-    payload = json.loads(event['body'], object_hook=lambda d: SimpleNamespace(**d))
+    payload = json.loads(event['body'])
     params = event['pathParameters']
     orderId = params['id']
     try:
@@ -157,9 +156,9 @@ def update_order(event, context):
               }
             """,
             orderId=orderId,
-            orderName=payload.orderName,
-            orderStatus=payload.orderStatus,
-            cart=_format_order_products(payload.orderProducts)
+            orderName=payload['orderName'],
+            orderStatus=payload['orderStatus'],
+            cart=payload['orderProducts']
           )
         )        
         logger.log_with_tenant_context(event, "Request completed to update a order") 
@@ -226,21 +225,9 @@ def get_orders(event, context):
             })
             """)
         )
-        results = response.data['data']    
+        results = response.data.data
         metrics_manager.record_metric(event, "OrdersRetrieved", "Count", len(results))
         logger.log_with_tenant_context(event, "Request completed to get all orders")
         return utils.generate_response(results)
     except Exception as e:
         return utils.generate_error_response(e)
-
-
-def _format_order_products(orderProducts):
-  orderProductList = []
-  for i in range(len(orderProducts)):
-      product = {
-        'productId': orderProducts[i].productId,
-        'price': orderProducts[i].price,
-        'quantity': orderProducts[i].quantity
-      }
-      orderProductList.append(product)
-  return orderProductList      

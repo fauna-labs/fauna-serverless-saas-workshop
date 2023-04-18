@@ -4,7 +4,6 @@
 import json
 import utils
 import logger
-from types import SimpleNamespace
 
 from aws_xray_sdk.core import patch_all
 patch_all()
@@ -48,7 +47,7 @@ def get_product(event, context):
 
 def create_product(event, context):    
     logger.info("Request received to create a product")
-    payload = json.loads(event['body'], object_hook=lambda d: SimpleNamespace(**d))
+    payload = json.loads(event['body'])
     logger.info(payload)
     try:
         global db
@@ -76,13 +75,13 @@ def create_product(event, context):
               backordered
             }
             """,
-            sku=payload.sku,
-            name=payload.name,
-            description=payload.description,
-            price=payload.price,
-            quantity=payload.quantity,
-            backorderedLimit=payload.backorderedLimit,
-            backordered=True if payload.quantity < payload.backorderedLimit else False
+            sku=payload['sku'],
+            name=payload['name'],
+            description=payload['description'],
+            price=payload['price'],
+            quantity=payload['quantity'],
+            backorderedLimit=payload['backorderedLimit'],
+            backordered=True if payload['quantity'] < payload['backorderedLimit'] else False
             )
         )        
         logger.info("Request completed to create a product")
@@ -94,7 +93,7 @@ def create_product(event, context):
 
 def update_product(event, context):
     logger.info("Request received to update a product")
-    payload = json.loads(event['body'], object_hook=lambda d: SimpleNamespace(**d))
+    payload = json.loads(event['body'])
     params = event['pathParameters']
     productId = params['id']
     try:
@@ -124,13 +123,13 @@ def update_product(event, context):
             }
             """,
             productId=productId,
-            sku=payload.sku,
-            name=payload.name, 
-            description=payload.description,
-            price=payload.price,
-            quantity=payload.quantity,
-            backorderedLimit=payload.backorderedLimit,
-            backordered=True if payload.quantity < payload.backorderedLimit else False
+            sku=payload['sku'],
+            name=payload['name'], 
+            description=payload['description'],
+            price=payload['price'],
+            quantity=payload['quantity'],
+            backorderedLimit=payload['backorderedLimit'],
+            backordered=True if payload['quantity'] < payload['backorderedLimit'] else False
             )
         )        
         logger.info("Request completed to update a product") 
@@ -184,7 +183,7 @@ def get_products(event, context):
             """)
         )        
         logger.info("Request completed to get all products")
-        results = response.data['data']
+        results = response.data.data
         return utils.generate_response(results)
     except Exception as e:
         return utils.generate_error_response(e)

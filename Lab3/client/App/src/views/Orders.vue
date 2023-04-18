@@ -49,7 +49,7 @@
               </div>
               <div class="col-span-2 flex flex-col">
                 <p class="font-medium">Status</p>
-                <p class="">{{ order.orderStatus }}</p>
+                <p class="">{{ order.status }}</p>
               </div>
               <div class="col-span-2">
                 <button @click="tbd"
@@ -144,8 +144,8 @@ export default {
             }
             x.total = total.toFixed(2);
 
-            if (x.orderCreated) {
-              x.orderPlaced = new Date(x.orderCreated).toLocaleDateString('en-us', { weekday:"long", year:"numeric", month:"short", day:"numeric"});
+            if (x.creationDate) {
+              x.orderPlaced = new Date(x.creationDate).toLocaleDateString('en-us', { weekday:"long", year:"numeric", month:"short", day:"numeric"});
             }
             return x;
           });

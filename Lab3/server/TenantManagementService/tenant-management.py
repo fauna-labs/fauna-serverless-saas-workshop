@@ -86,7 +86,7 @@ def get_tenants(event, context):
             }
             """)
         )
-        tenants = results.data['data']
+        tenants = results.data.data
     except FaunaException as e:
         logger.error(e)
         raise Exception('Error getting all tenants', e)
