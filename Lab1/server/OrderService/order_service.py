@@ -63,7 +63,8 @@ def create_order(event, context):
                 let updatedQty = p.quantity - x.quantity
 
                 if (updatedQty < 0) {                  
-                  abort("Insufficient stock for product " + p.name + ": Requested quantity=" + x.quantity)
+                  abort("Insufficient stock for product " + p.name + 
+                        ": Requested quantity=" + x.quantity)
                 } else {
                   p.update({
                     quantity: updatedQty,

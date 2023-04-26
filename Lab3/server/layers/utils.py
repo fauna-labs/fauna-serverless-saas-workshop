@@ -10,7 +10,7 @@ import os, configparser, traceback
 import logger
 
 from fauna.client import Client as FaunaClient
-from fauna.errors import FaunaException, FaunaError, AuthenticationError, AuthorizationError, QueryRuntimeError
+from fauna.errors import FaunaException, FaunaError, AuthenticationError, AuthorizationError, QueryRuntimeError, AbortError
 
 
 FAUNA_CONFIG_PATH = os.environ['FAUNA_CONFIG_PATH']
@@ -124,9 +124,12 @@ def generate_response(inputObject):
     }
 
 
-def generate_error_response(err):
+def generate_error_response(err):    
     errorType = type(err)
-    if errorType in (FaunaException, FaunaError, AuthenticationError, AuthorizationError):
+    if errorType == AbortError:
+        code = 400
+        responseBody = err.abort
+    elif errorType in (FaunaException, FaunaError, AuthenticationError, AuthorizationError):
         code = err.args[0]
         responseBody = err.args[1]
     elif errorType == QueryRuntimeError:
