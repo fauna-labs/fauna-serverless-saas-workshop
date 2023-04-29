@@ -36,17 +36,18 @@ if [[ -z "$faunaApiKey" ]]; then
     exit 1  
 fi
 
-cp .env ../../Lab3/scripts/
-cp .env ../../Lab4/scripts/
-cp .env ../../Lab5/scripts/
-cp .env ../../Lab6/scripts/
-
 if [[ $server -eq 1 ]]; then
   echo "Migrate Fauna database resources"
   cd ../server/fauna_adminApp_resources
   npm install
   node index.js $faunaApiKey
   cd ../../scripts
+
+  echo "copying env to labs"
+  cp .env ../../Lab3/scripts/
+  cp .env ../../Lab4/scripts/
+  cp .env ../../Lab5/scripts/
+  cp .env ../../Lab6/scripts/
 fi
 
 if [[ $server -eq 1 ]]; then

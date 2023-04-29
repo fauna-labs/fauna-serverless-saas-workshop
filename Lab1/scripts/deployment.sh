@@ -47,6 +47,18 @@ if [[ $server -eq 1 ]]; then
   npm install
   node index.js $faunaApiKey
   cd ../../scripts
+
+  echo "copying profile to labs"
+  cp ../../Lab2/scripts/.env.template ../../Lab2/scripts/.env
+  cp ../../Lab3/scripts/.env.template ../../Lab3/scripts/.env
+  cp ../../Lab4/scripts/.env.template ../../Lab4/scripts/.env
+  cp ../../Lab5/scripts/.env.template ../../Lab5/scripts/.env
+  cp ../../Lab6/scripts/.env.template ../../Lab6/scripts/.env
+  ex -sc '%s/AWS_PROFILE=.*/AWS_PROFILE=\"'$AWS_PROFILE'\"/|x' ../../Lab2/scripts/.env
+  ex -sc '%s/AWS_PROFILE=.*/AWS_PROFILE=\"'$AWS_PROFILE'\"/|x' ../../Lab3/scripts/.env
+  ex -sc '%s/AWS_PROFILE=.*/AWS_PROFILE=\"'$AWS_PROFILE'\"/|x' ../../Lab4/scripts/.env
+  ex -sc '%s/AWS_PROFILE=.*/AWS_PROFILE=\"'$AWS_PROFILE'\"/|x' ../../Lab5/scripts/.env
+  ex -sc '%s/AWS_PROFILE=.*/AWS_PROFILE=\"'$AWS_PROFILE'\"/|x' ../../Lab6/scripts/.env
 fi
 
 if [[ $server -eq 1 ]]; then
