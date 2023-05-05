@@ -5,13 +5,10 @@ import re
 import json
 import os
 import urllib.request
-import boto3
 import time
 import logger
 from jose import jwk, jwt
 from jose.utils import base64url_decode
-import auth_manager
-import utils
 
 region = os.environ['AWS_REGION']
 
