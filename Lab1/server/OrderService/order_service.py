@@ -5,7 +5,7 @@ import json
 import utils
 import logger
 
-from utils import Fauna, load_config
+from utils import Fauna
 from fauna import fql
 
 db = None
@@ -18,7 +18,7 @@ def get_order(event, context):
     try:
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = Fauna.from_config()
 
         response = db.query(
             fql("""
@@ -54,7 +54,7 @@ def create_order(event, context):
     try:
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = Fauna.from_config()
 
         response = db.query(
             fql("""
@@ -121,7 +121,7 @@ def update_order(event, context):
     try:
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = Fauna.from_config()
 
         response = db.query(
             fql("""
@@ -161,7 +161,7 @@ def delete_order(event, context):
     try:
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = Fauna.from_config()
 
         response = db.query(
             fql("""
@@ -181,7 +181,7 @@ def get_orders(event, context):
     try:
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = Fauna.from_config()
 
         response = db.query(
             fql("""

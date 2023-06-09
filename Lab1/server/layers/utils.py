@@ -79,16 +79,15 @@ def  encode_to_json_object(inputObject):
     return jsonpickle.encode(inputObject, unpicklable=False, use_decimal=True)
 
 
-class Fauna(FaunaClient):
+class Fauna(FaunaClient):    
     @classmethod
-    def from_config(cls, config):
+    def from_config(cls):
         logger.info("Loading config and creating new db...")
-        return cls(
-            secret=config['FAUNA']['secret']
-        )
+        config = _load_config()
+        return cls(secret=config['FAUNA']['secret'])
 
-# https://aws.amazon.com/blogs/compute/sharing-secrets-with-aws-lambda-using-aws-systems-manager-parameter-store/
-def load_config():
+
+def _load_config():
     configuration = configparser.ConfigParser()
     config_dict = {}
     try: 
@@ -106,4 +105,5 @@ def load_config():
     finally:
         configuration['FAUNA'] = config_dict
         return configuration
+
 

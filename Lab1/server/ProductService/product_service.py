@@ -8,7 +8,7 @@ import logger
 from aws_xray_sdk.core import patch_all
 patch_all()
 
-from utils import Fauna, load_config
+from utils import Fauna
 from fauna import fql
 
 db = None
@@ -21,7 +21,7 @@ def get_product(event, context):
     try:
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = Fauna.from_config()
 
         response = db.query(
             fql("""
@@ -52,7 +52,7 @@ def create_product(event, context):
     try:
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = Fauna.from_config()
 
         response = db.query(
             fql("""
@@ -99,7 +99,7 @@ def update_product(event, context):
     try:
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = Fauna.from_config()
 
         response = db.query(
             fql("""
@@ -146,7 +146,7 @@ def delete_product(event, context):
     try:
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = Fauna.from_config()
 
         response = db.query(
             fql("""
@@ -166,7 +166,7 @@ def get_products(event, context):
     try:
         global db
         if db is None:
-            db = Fauna.from_config(load_config())
+            db = Fauna.from_config()
 
         response = db.query(
             fql("""
