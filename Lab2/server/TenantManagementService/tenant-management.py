@@ -7,11 +7,11 @@ import utils
 import logger
 import requests
 
-from utils import FaunaClients
+from utils import Fauna
 from fauna import fql
 from fauna.errors import FaunaException
 
-clients = {}
+db = None
 
 region = os.environ['AWS_REGION']
 
@@ -20,8 +20,9 @@ def create_tenant(event, context):
     tenant_details = json.loads(event['body'])
 
     try:
-        global clients
-        db = FaunaClients(clients)
+        global db
+        if db is None:
+            db = Fauna.from_config()
 
         response = db.query(
             fql("""
@@ -68,8 +69,10 @@ def create_tenant(event, context):
 def get_tenants(event, context):
     tenants = []
     try:
-        global clients
-        db = FaunaClients(clients)
+        global db
+        if db is None:
+            db = Fauna.from_config()
+
         results = db.query(
             fql("""
             tenant.all() {
@@ -97,8 +100,9 @@ def update_tenant(event, context):
     tenant_id = event['pathParameters']['tenantid']
     logger.info("Request received to update tenant")        
 
-    global clients
-    db = FaunaClients(clients)
+    global db
+    if db is None:
+        db = Fauna.from_config()
 
     response = db.query(
         fql("""
@@ -130,8 +134,9 @@ def get_tenant(event, context):
     tenant_id = event['pathParameters']['tenantid']    
     logger.info("Request received to get tenant details")
 
-    global clients
-    db = FaunaClients(clients)
+    global db
+    if db is None:
+        db = Fauna.from_config()
 
     response = db.query(
         fql("""
@@ -166,8 +171,9 @@ def deactivate_tenant(event, context):
     
     logger.info("Request received to deactivate tenant")
 
-    global clients
-    db = FaunaClients(clients)
+    global db
+    if db is None:
+        db = Fauna.from_config()
 
     response = db.query(
         fql("""
@@ -201,8 +207,9 @@ def activate_tenant(event, context):
     
     logger.info("Request received to activate tenant")
        
-    global clients
-    db = FaunaClients(clients)
+    global db
+    if db is None:
+        db = Fauna.from_config()
 
     response = db.query(
         fql("""
@@ -258,8 +265,8 @@ def __invoke_enable_users(headers, auth, host, stage_name, invoke_url, tenant_id
 
 
 def __create_tenantdb_resources(tenant_id):
-    global clients
-    db = FaunaClients(clients, tenant_id)
+    db = Fauna.from_config(tenant_id=tenant_id)
+
     result = db.query(
         fql("""
         Collection.create({ name: 'order' })

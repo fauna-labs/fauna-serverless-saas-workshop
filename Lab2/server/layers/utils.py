@@ -17,51 +17,19 @@ FAUNA_CONFIG_PATH = os.environ['FAUNA_CONFIG_PATH']
 boto_client = boto3.client('ssm')
 
 
-class FaunaFromConfig(FaunaClient):
-    def __init__(self):
-        config = load_config()
-        logger.info("Loading config and creating new Fauna client...")
-
-        self.secret = config['FAUNA']['secret']
-
-        FaunaClient.__init__(self,
-            secret=config['FAUNA']['secret']
-        )
-
-    def get_secret(self):
-        return self.secret
-
-
-def FaunaClients(clients, tenant_id=None):
-    if tenant_id is None:
-        tenant_id = 'admin'
-
-    if tenant_id in clients:
-        logger.info("Client for tenant_id {} found".format(tenant_id))
-        return clients[tenant_id]
-    else:
-        if 'admin' in clients:
-            admin_client = clients['admin']
+class Fauna(FaunaClient):    
+    @classmethod
+    def from_config(cls, tenant_id=None):
+        config = _load_config()
+        if tenant_id is None:
+            logger.info("Loading config and creating new db.")
+            return cls(secret=config['FAUNA']['secret'])
         else:
-            admin_client = FaunaFromConfig()
-            clients['admin'] = admin_client
-
-        if tenant_id == 'admin':
-            client = admin_client
-        else:
-          try:
-            logger.info("creating client for tenant {}".format(tenant_id))
-            client = FaunaClient(
-                secret="{}:tenant_{}:server".format(admin_client.get_secret(), tenant_id)
-            )
-            clients[tenant_id] = client
-          except Exception as e:
-            logger.error("EXCEPTION {}".format(e))
- 
-        return client
+            logger.info("Loading config and creating new db. tenant_id={}".format(tenant_id))
+            return cls(secret="{}:tenant_{}:server".format(config['FAUNA']['secret'], tenant_id))
 
 
-def load_config():
+def _load_config():
     configuration = configparser.ConfigParser()
     config_dict = {}
     try: 
@@ -79,6 +47,7 @@ def load_config():
     finally:
         configuration['FAUNA'] = config_dict
         return configuration
+
 
 class StatusCodes(Enum):
     SUCCESS    = 200
@@ -135,7 +104,7 @@ def generate_error_response(err):
     return response
 
     
-def  encode_to_json_object(inputObject):
+def encode_to_json_object(inputObject):
     jsonpickle.set_encoder_options('simplejson', use_decimal=True, sort_keys=True)
     jsonpickle.set_preferred_backend('simplejson')
     return jsonpickle.encode(inputObject, unpicklable=False, use_decimal=True)

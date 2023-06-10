@@ -7,7 +7,7 @@ import os
 import logger 
 import utils
 
-from utils import FaunaFromConfig
+from utils import Fauna
 from fauna import fql
 
 db = None
@@ -166,7 +166,7 @@ def disable_users_by_tenant(event, context):
 
     global db
     if db is None:
-        db = FaunaFromConfig()
+        db = Fauna.from_config()
     response = db.query(
         fql("""
         tenantUser.usernamesByTenantId(${tenant_id}) {
@@ -196,7 +196,7 @@ def enable_users_by_tenant(event, context):
     
     global db
     if db is None:
-        db = FaunaFromConfig()
+        db = Fauna.from_config()
     response = db.query(
         fql("""
         tenantUser.usernamesByTenantId(${tenant_id}) {
@@ -277,7 +277,7 @@ class UserManagement:
     def create_user_tenant_mapping(self, user_name, tenant_id):
         global db
         if db is None:
-            db = FaunaFromConfig()
+            db = Fauna.from_config()
 
         response = db.query(
             fql("""
