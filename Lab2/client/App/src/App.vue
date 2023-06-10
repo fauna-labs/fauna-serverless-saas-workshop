@@ -66,7 +66,7 @@
         </nav>
 
         <div v-if="loggedInName">
-          <Schmoe :title="loggedInName"/>
+          <Robohash :title="loggedInName"/>
         </div>
       </div>
     </div>
@@ -108,13 +108,13 @@
 
 <script>
 import Login from '@/components/Login.vue';
-import Schmoe from '@/components/Schmoe.vue';
+import Robohash from '@/components/Robohash.vue';
 
 export default {
   name: 'App',
   components: {
     Login,
-    Schmoe
+    Robohash
   },
   data() {
     return {
