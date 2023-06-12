@@ -1,3 +1,7 @@
+<!--
+Copyright Fauna, Inc.
+SPDX-License-Identifier: MIT-0
+-->
 <template>
   <div class="flex min-h-full items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
     @click.self="exit"
@@ -5,7 +9,6 @@
     <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all p-4">
       <div class="w-full max-w-md space-y-8">
         <div>
-          <!-- <img class="mx-auto h-8 w-auto" src="" alt=""> -->
           <h2 class="mt-6 text-center text-2xl font-bold tracking-tight text-gray-900">Sign in to your account</h2>
         </div>
         <form class="mt-8 space-y-6" @submit.prevent="login">

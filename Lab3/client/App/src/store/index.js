@@ -1,3 +1,6 @@
+// Copyright Fauna, Inc.
+// SPDX-License-Identifier: MIT-0
+
 import { createStore } from 'vuex';
 import VuexPersistence from 'vuex-persist';
 

@@ -1,3 +1,7 @@
+<!--
+Copyright Fauna, Inc.
+SPDX-License-Identifier: MIT-0
+-->
 <template>
   <div class="font-medium text-white">
     <button v-if="inactive" type="submit" value="submit"

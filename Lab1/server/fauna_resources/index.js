@@ -1,3 +1,6 @@
+// Copyright Fauna, Inc.
+// SPDX-License-Identifier: MIT-0
+
 import { Client, fql } from "fauna";
 
 const args = process.argv.slice(2);

@@ -1,3 +1,7 @@
+<!--
+Copyright Fauna, Inc.
+SPDX-License-Identifier: MIT-0
+-->
 <template>
   <div class="flex bg-white border-r dark:bg-gray-900 dark:border-gray-700">
 
@@ -7,7 +11,6 @@
           <span class="sr-only">Menu</span>
           <h1 v-if="isSysAdmin" class="text-3xl h-8 px-4">Admin App</h1>
           <h1 v-else class="text-3xl h-8 px-4">Tenant App</h1>
-          <!-- <img class="h-8 w-auto" src="" alt=""> -->
         </a>
       </div>
 

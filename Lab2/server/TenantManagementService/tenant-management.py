@@ -1,4 +1,4 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright Fauna, Inc.
 # SPDX-License-Identifier: MIT-0
 
 import os

@@ -1,59 +1,55 @@
-# Contributing Guidelines
+# Contributing to Fauna Labs
 
-Thank you for your interest in contributing to our project. Whether it's a bug report, new feature, correction, or additional
-documentation, we greatly value feedback and contributions from our community.
+First, thank you for your interest in contributing to Fauna Labs! Contributions like yours help the Fauna community build more effectively, ship faster, and delight customers. We appreciate it!
 
-Please read through this document before submitting any issues or pull requests to ensure we have all the necessary
-information to effectively respond to your bug report or contribution.
+Reading and following these guidelines helps to make the contribution process easy and effective for everyone involved. It also communicates that you agree to respect the time of the developers managing and developing these open source projects. We reciprocate that respect by addressing your issue, assessing changes, and helping you finalize your pull requests.
 
+## Quicklinks
 
-## Reporting Bugs/Feature Requests
-
-We welcome you to use the GitHub issue tracker to report bugs or suggest features.
-
-When filing an issue, please check existing open, or recently closed, issues to make sure somebody else hasn't already
-reported the issue. Please try to include as much information as you can. Details like these are incredibly useful:
-
-* A reproducible test case or series of steps
-* The version of our code being used
-* Any modifications you've made relevant to the bug
-* Anything unusual about your environment or deployment
-
-
-## Contributing via Pull Requests
-Contributions via pull requests are much appreciated. Before sending us a pull request, please ensure that:
-
-1. You are working against the latest source on the *main* branch.
-2. You check existing open, and recently merged, pull requests to make sure someone else hasn't addressed the problem already.
-3. You open an issue to discuss any significant work - we would hate for your time to be wasted.
-
-To send us a pull request, please:
-
-1. Fork the repository.
-2. Modify the source; please focus on the specific change you are contributing. If you also reformat all the code, it will be hard for us to focus on your change.
-3. Ensure local tests pass.
-4. Commit to your fork using clear commit messages.
-5. Send us a pull request, answering any default questions in the pull request interface.
-6. Pay attention to any automated CI failures reported in the pull request, and stay involved in the conversation.
-
-GitHub provides additional document on [forking a repository](https://help.github.com/articles/fork-a-repo/) and
-[creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
-
-
-## Finding contributions to work on
-Looking at the existing issues is a great way to find something to contribute on. As our projects, by default, use the default GitHub issue labels (enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any 'help wanted' issues is a great place to start.
-
+* [Code of Conduct](#code-of-conduct)
+* [Getting Started](#getting-started)
+    * [Issues](#issues)
+    * [Pull Requests](#pull-requests)
+* [Getting Help](#getting-help)
 
 ## Code of Conduct
-This project has adopted the [Amazon Open Source Code of Conduct](https://aws.github.io/code-of-conduct).
-For more information see the [Code of Conduct FAQ](https://aws.github.io/code-of-conduct-faq) or contact
-opensource-codeofconduct@amazon.com with any additional questions or comments.
 
+Fauna is dedicated to providing a positive experience for everyone in the Fauna community, and we need your help to ensure that everyone feels welcomed. By participating and contributing to Fauna Labs, you agree to uphold our [Code of Conduct](https://forums.fauna.com/guidelines).
 
-## Security issue notifications
-If you discover a potential security issue in this project we ask that you notify AWS/Amazon Security via our [vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/). Please do **not** create a public github issue.
+## Getting Started
 
+Contributions are made to this repository via Issues and Pull Requests (PRs).
 
-## Licensing
+- To report security vulnerabilities, please follow the guidance in [SECURITY.md](SECURITY.md).
 
-See the [LICENSE](LICENSE) file for our project's licensing. We will ask you to confirm the licensing of your contribution.
+### Issues
+
+Issues should be used to report problems, request new features, or discuss potential changes before a PR is created. Please search for existing Issues and PRs before creating your own.
+
+If you find an Issue that addresses the problem you're having, please add your own reproduction information to the existing issue rather than creating a new issue. Adding a [reaction](https://github.blog/2016-03-10-add-reactions-to-pull-requests-issues-and-comments/) also indicates that a particular problem affects more than just the reporter.
+
+### Pull Requests
+
+PRs to Fauna Labs repositories are always welcome and can be a quick way to get your fix or improvement slated for the next release. In general, PRs should:
+
+- Only fix/add the functionality in question **OR** address wide-spread whitespace/style issues, not both.
+- Add unit or integration tests for fixed or changed functionality (if a test suite already exists).
+- Address a single concern in the fewest number of changed lines possible.
+- Include documentation in the repository.
+- Be accompanied by a complete Pull Request template (loaded automatically when a PR is created).
+
+Breaking changes require an Issue to discuss your proposal first.
+
+Fauna Labs follows the ["fork-and-pull" Git workflow](https://github.com/susam/gitpr)
+
+1. Fork the repository to your own Github account
+2. Clone the project to your machine
+3. Create a branch locally with a succinct but descriptive name
+4. Commit changes to the branch
+5. Following any formatting and testing guidelines specific to this repository
+6. Push changes to your fork
+7. Open a PR in our repository and follow the PR template so that we can efficiently review the changes.
+
+## Getting Help
+
+Join us in the [Fauna forums](https://forums.fauna.com/). For best reults, post your question in the relevant category with appropriate tags.

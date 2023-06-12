@@ -1,3 +1,7 @@
+<!--
+Copyright Fauna, Inc.
+SPDX-License-Identifier: MIT-0
+-->
 <template>
   <div class="flex bg-white border-r dark:bg-gray-900 dark:border-gray-700">
 
@@ -6,7 +10,6 @@
         <a href="#">
           <span class="sr-only">Menu</span>
           <h1 class="text-3xl h-8 px-4">Demo App</h1>
-          <!-- <img class="h-8 w-auto" src="" alt=""> -->
         </a>
       </div>
 

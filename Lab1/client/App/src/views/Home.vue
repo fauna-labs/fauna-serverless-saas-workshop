@@ -1,3 +1,7 @@
+<!--
+Copyright Fauna, Inc.
+SPDX-License-Identifier: MIT-0
+-->
 <template>
   <div class="">
     <h2 class="text-2xl font-bold text-pink-500 underline">Home</h2>

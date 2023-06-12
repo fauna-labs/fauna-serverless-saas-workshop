@@ -1,3 +1,7 @@
+<!--
+Copyright Fauna, Inc.
+SPDX-License-Identifier: MIT-0
+-->
 <template>
     <div class="max-w-full -mt-0" v-if="width>0">
       <div class="bg-gray-200 rounded h-1" role="progressbar" 
