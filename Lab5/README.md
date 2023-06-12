@@ -6,6 +6,32 @@ of service, where the tenant is provided dedicated AWS resources for higher leve
 
 ## Deploying Lab5
 
+### Prerequisites
+* Node 16 or greater
+* Python 3.9 or greater
+* [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+* [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)
+* [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html)
+* [jq](https://pypi.org/project/jq/)
+* [pylint](https://pypi.org/project/pylint/)
+* [git-remote-codecommit](https://pypi.org/project/git-remote-codecommit/)
+
+### AWS Setup
+> Ignore this step if you've already completed it in previous lab(s)
+* Navigate to the IAM services dashboard and create a new user with Administrator access (as we'll need it to provision lots
+  of AWS resources).
+* Create an "access key" and when done copy its **Access Key** and **Secret Access Key** for the next step, below.
+* Create a "named profile" in your AWS CLI's credentials file:
+  * Your AWS **config** and **credentials** files are normally in the **~/.aws** folder (Linux/macOS) 
+    or **C:&#92;Users&#92; USERNAME &#92;.aws&#92;** (Windows). For more information about config and credentials
+    file settings see [AWS documentation](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html#cli-configure-files-using-profiles)
+  * Edit the `credentials` file by adding the following entry: 
+  ```
+  [serverless-workshop]
+  aws_access_key_id=<<"Access Key" from the previous step>>
+  aws_secret_access_key=<<"Secret Access Key" from the previous step>>
+  ```
+
 ### Fauna Setup
 > Note: If you completed Lab2, Lab3 or Lab4, skip this entire Fauna setup.
 
@@ -53,4 +79,4 @@ named **/serverless-saas-fauna/faunadb/config/appConfig** created already*).
 * Value = `{"secret": "<key from Fauna setup>"}`
   > **Note:** Be sure to include the double quotes (`"`)
   >
-  > e.g. `{"secret": "fnAE6pbfUUAAVVBN3kACeHLr5YWAFLQSCecdAwmt"}`
+  > e.g. `{"secret": "thefAUNageNERateDSecReTVAlueFORapiKEy"}`

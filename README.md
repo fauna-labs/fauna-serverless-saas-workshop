@@ -1,12 +1,15 @@
-# AWS Serverless SaaS Workshop
-The goal of this workshop is to build a multi-tenant Software-as-a-Service (SaaS) solution using AWS Serverless Services, such as Amazon API Gateway, Amazon Cognito, AWS Lambda, Amazon DynamoDB, AWS CodePipeline, and Amazon CloudWatch.
+# AWS Serverless SaaS Architecture Workshop
 
-By the end of this workshop you will be able to understand the challenges that are unique to a SaaS based delivery, such as onboarding, tenant isolation, data partitioning, tenant deployment pipelines, observability, and how to address them using AWS Serverless services.
+In this workshop you will be building a multi-tenant Software-as-a-Service (SaaS) solution using Fauna and AWS Serverless Services, specifically Amazon API Gateway, Amazon Cognito, AWS Lambda, AWS CodePipeline, and Amazon CloudWatch. The diagram below describes at a high-level, the reference architecture; And we walk you through the entire solution. The goal is to provide an understanding of serverless architecture as it apples to multi-tenancy, and introduce Fauna features/functionality that make them seamless to implement.
 
-# Starting the workshop
-Follow this link for detailed instructions to run this workshop in your AWS Account: https://catalog.us-east-1.prod.workshops.aws/v2/workshops/b0c6ad36-0a4b-45d8-856b-8a64f0ac76bb/en-US
+![Architecture Diagram](/images/ServerlessSaas-Final.png)
 
-# License
-The documentation is made available under the Creative Commons Attribution-ShareAlike 4.0 International License. See the LICENSE file.
+## Navigating the workshop
 
-The sample code within this documentation is made available under the MIT-0 license. See the LICENSE-SAMPLECODE file.
+Navigate into each Lab's folder and follow along the instructions. 
+
+The workshop's infrastructure and underlying sample apps buildout sequentially, i.e. we start with a basic full-stack app in Lab 1, and continue to add more capabilities in subsequent labs. As such, it is best to work through the Labs sequentially. However, each Lab comes with self-contained CloudFormation files and deployment scripts such that you can deploy any lab without any dependency on deploying a prior one.
+
+---
+
+> This workshop is a fork of the [SaaS Factory Serverless SaaS reference solution](https://github.com/aws-samples/aws-saas-factory-ref-solution-serverless-saas), combined with Fauna concepts. The combination produces an architecture that’s both scalable yet highly flexible (at the database layer), allowing requirements to effortlessly change over time, while providing the best developer experience.

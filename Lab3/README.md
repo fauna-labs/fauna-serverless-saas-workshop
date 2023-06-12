@@ -7,6 +7,8 @@ tenant-users, ensuring that only resources belonging to the users' tenant can be
 construct extends all the way to the data layer, where logic routes requests to the proper child-database 
 corresponding to the tenant.
 
+![Lab 3 Microservices](/images/Lab3Microservices.png)
+
 ## Deploying Lab3
 
 ### Prerequisites
@@ -14,10 +16,8 @@ corresponding to the tenant.
 * Python 3.9 or greater
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 * [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)
-* [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html)
 * [jq](https://pypi.org/project/jq/)
 * [pylint](https://pypi.org/project/pylint/)
-* [git-remote-codecommit](https://pypi.org/project/git-remote-codecommit/)
 
 ### AWS Setup
 > Ignore this step if you've already completed it in previous lab(s)
@@ -25,7 +25,8 @@ corresponding to the tenant.
   of AWS resources).
 * Create an "access key" and when done copy its **Access Key** and **Secret Access Key** for the next step, below.
 * Create a "named profile" in your AWS CLI's credentials file:
-  * Your AWS `config` and `credentials` files are normally in the `~/.aws` folder. For more information about config and credentials
+  * Your AWS **config** and **credentials** files are normally in the **~/.aws** folder (Linux/macOS) 
+    or **C:&#92;Users&#92; USERNAME &#92;.aws&#92;** (Windows). For more information about config and credentials
     file settings see [AWS documentation](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html#cli-configure-files-using-profiles)
   * Edit the `credentials` file by adding the following entry: 
   ```
@@ -83,4 +84,4 @@ named **/serverless-saas-fauna/faunadb/config/appConfig** created already*).
 * Value = `{"secret": "<key from Fauna setup>"}`
   > **Note:** Be sure to include the double quotes (`"`)
   >
-  > e.g. `{"secret": "fnAE6pbfUUAAVVBN3kACeHLr5YWAFLQSCecdAwmt"}`
+  > e.g. `{"secret": "thefAUNageNERateDSecReTVAlueFORapiKEy"}`
