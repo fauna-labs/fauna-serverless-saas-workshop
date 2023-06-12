@@ -39,18 +39,18 @@ Resources:
       Description: Utilities for project
       ContentUri: layers/
       CompatibleRuntimes:
-        - python3.8          
+        - python3.9          
       LicenseInfo: 'MIT'
       RetentionPolicy: Retain      
     Metadata:
-      BuildMethod: python3.8   
+      BuildMethod: python3.9   
                
   GetProductFunction:
     Type: AWS::Serverless::Function 
     Properties:
       CodeUri: ProductService/
       Handler: product_service.get_product
-      Runtime: python3.8  
+      Runtime: python3.9  
       Tracing: Active
       Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
@@ -67,7 +67,7 @@ Resources:
     Properties:
       CodeUri: ProductService/
       Handler: product_service.get_products
-      Runtime: python3.8  
+      Runtime: python3.9  
       Tracing: Active
       Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
@@ -84,7 +84,7 @@ Resources:
     Properties:
       CodeUri: ProductService/
       Handler: product_service.create_product
-      Runtime: python3.8  
+      Runtime: python3.9  
       Tracing: Active 
       Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
@@ -101,7 +101,7 @@ Resources:
     Properties:
       CodeUri: ProductService/
       Handler: product_service.update_product
-      Runtime: python3.8 
+      Runtime: python3.9 
       Tracing: Active
       Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
@@ -118,7 +118,7 @@ Resources:
     Properties:
       CodeUri: ProductService/
       Handler: product_service.delete_product
-      Runtime: python3.8 
+      Runtime: python3.9 
       Tracing: Active
       Role: !ImportValue Svls-saas-wkshp-ProductFunctionExecutionRoleArn
       Layers: 
@@ -135,7 +135,7 @@ Resources:
     Properties:
       CodeUri: OrderService/
       Handler: order_service.get_orders
-      Runtime: python3.8  
+      Runtime: python3.9  
       Tracing: Active
       Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
@@ -152,7 +152,7 @@ Resources:
     Properties:
       CodeUri: OrderService/
       Handler: order_service.get_order
-      Runtime: python3.8  
+      Runtime: python3.9  
       Tracing: Active
       Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
@@ -169,7 +169,7 @@ Resources:
     Properties:
       CodeUri: OrderService/
       Handler: order_service.create_order
-      Runtime: python3.8  
+      Runtime: python3.9  
       Tracing: Active 
       Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
@@ -186,7 +186,7 @@ Resources:
     Properties:
       CodeUri: OrderService/
       Handler: order_service.update_order
-      Runtime: python3.8 
+      Runtime: python3.9 
       Tracing: Active
       Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
@@ -203,7 +203,7 @@ Resources:
     Properties:
       CodeUri: OrderService/
       Handler: order_service.delete_order
-      Runtime: python3.8 
+      Runtime: python3.9 
       Tracing: Active
       Role: !ImportValue Svls-saas-wkshp-OrderFunctionExecutionRoleArn
       Layers: 
@@ -230,7 +230,7 @@ Resources:
     Properties:
       CodeUri: Resources/
       Handler: tenant_authorizer.lambda_handler
-      Runtime: python3.8
+      Runtime: python3.9
       Role: !ImportValue Svls-saas-wkshp-AuthorizerExecutionRoleArn
       MemorySize: 256
       Tracing: Active
