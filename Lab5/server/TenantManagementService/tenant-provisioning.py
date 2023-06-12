@@ -24,7 +24,6 @@ def provision_tenant(event, context):
     
     try:          
         if tenant_details['dedicatedTenancy'].upper() == 'TRUE':
-          #TODO: Add missing code to kick off the pipeline
           response_ddb = table_tenant_stack_mapping.put_item(
               Item={
                       'tenantId': tenant_details['tenantId'],

@@ -26,7 +26,7 @@ def register_tenant(event, context):
         else:
             tenant_details['dedicatedTenancy'] = 'false'
 
-        #TODO: Pass relevant apikey to tenant_details object based upon tenant tier
+        # Pass relevant apikey to tenant_details object based upon tenant tier
         tenant_details['apiKey'] = __getApiKey(tenant_details['tenantTier'])
 
         logger.info(tenant_details)

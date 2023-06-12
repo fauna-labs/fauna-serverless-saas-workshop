@@ -48,7 +48,7 @@ def lambda_handler(event, context):
         )
         userpool_id = res['data']['userPoolId']
         appclient_id = res['data']['appClientId']
-        # TODO: Assign API Key to authorizer response
+        # Assign API Key to authorizer response
         api_key = res['data']['apiKey']
 
     #get keys for tenant user pool to validate
@@ -100,12 +100,12 @@ def lambda_handler(event, context):
         'tenantId': tenant_id,
         'userPoolId': userpool_id,
         'userRole': user_role,
-        # TODO: Assign API Key to authorizer response
+        # Assign API Key to authorizer response
         'apiKey': api_key
     }
     
     authResponse['context'] = context
-    # TODO: Assign API Key to usageIdentifierKey response
+    # Assign API Key to usageIdentifierKey response
     authResponse['usageIdentifierKey'] = api_key
     
     return authResponse

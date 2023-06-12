@@ -39,8 +39,8 @@ def create_tenant_admin_user(event, context):
     response = {"userPoolId": user_pool_id, "appClientId": app_client_id, "tenantAdminUserName": tenant_admin_user_name}
     return utils.create_success_response(response)
 
+
 #only tenant admin can create users
-#TODO: Implement the below method
 def create_user(event, context):
     user_details = json.loads(event['body'])
 

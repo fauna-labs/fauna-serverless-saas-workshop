@@ -14,7 +14,7 @@ create_tenant_resource_path = os.environ['CREATE_TENANT_RESOURCE_PATH']
 
 lambda_client = boto3.client('lambda')
 
-#TODO: Implement this method
+
 def register_tenant(event, context):
     try:
         tenant_details = json.loads(event['body'])

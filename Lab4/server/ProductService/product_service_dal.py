@@ -58,7 +58,7 @@ def delete_product(event, key):
         logger.info("DeleteItem succeeded:")
         return response
 
-#TODO: Implement this method
+
 def create_product(event, payload):
     tenantId = event['requestContext']['authorizer']['tenantId']        
     try:

@@ -129,7 +129,7 @@ def update_tenant(event, context):
     return utils.create_success_response("Tenant Updated")    
 
 
-# TODO: Implement the below method
+
 def get_tenant(event, context):
     tenant_id = event['pathParameters']['tenantid']    
     logger.info("Request received to get tenant details")

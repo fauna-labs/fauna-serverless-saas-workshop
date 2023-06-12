@@ -6,7 +6,7 @@ from aws_lambda_powertools import Metrics
 
 metrics = Metrics()
 
-#TODO: Implement the below method
+
 def record_metric(event, metric_name, metric_unit, metric_value):
     """ Record the metric in Cloudwatch using EMF format
 

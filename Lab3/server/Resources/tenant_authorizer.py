@@ -42,8 +42,7 @@ def lambda_handler(event, context):
         principal_id = response["sub"]
         user_name = response["cognito:username"]
         tenant_id = response["custom:tenantId"]
-        
-    
+
     tmp = event['methodArn'].split(':')
     api_gateway_arn_tmp = tmp[5].split('/')
     aws_account_id = tmp[4]    
@@ -53,13 +52,11 @@ def lambda_handler(event, context):
     policy.region = tmp[3]
     policy.stage = api_gateway_arn_tmp[1]
 
-
     #roles are not fine-grained enough to allow selectively
     policy.allowAllMethods()        
     
     authResponse = policy.build()
  
-    # TODO: Add tenant context to authResponse
     context = {
         'userName': user_name,
         'tenantId': tenant_id        

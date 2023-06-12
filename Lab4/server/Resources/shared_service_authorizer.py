@@ -74,7 +74,6 @@ def lambda_handler(event, context):
 
 
     #only tenant admin and system admin can do certain actions like create and disable users
-    #TODO: Add policy so that only tenant and SaaS admins can add/modify tenant information
     if (auth_manager.isTenantAdmin(user_role) or auth_manager.isSystemAdmin(user_role)):
         policy.allowAllMethods()
         if (auth_manager.isTenantAdmin(user_role)):
