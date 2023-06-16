@@ -45,9 +45,9 @@ if [[ $server -eq 1 ]]; then
 
   echo "copying env to labs"
   cp .env ../../Lab3/scripts/
-  cp .env ../../Lab4/scripts/
-  cp .env ../../Lab5/scripts/
-  cp .env ../../Lab6/scripts/
+  # cp .env ../../Lab4/scripts/
+  # cp .env ../../Lab5/scripts/
+  # cp .env ../../Lab6/scripts/
 fi
 
 if [[ $server -eq 1 ]]; then

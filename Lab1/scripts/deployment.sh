@@ -56,20 +56,20 @@ if [[ $server -eq 1 ]]; then
     cp ../../Lab3/scripts/.env.template ../../Lab3/scripts/.env
 
   fi
-  if ! test -f ../../Lab4/scripts/.env; then
-    cp ../../Lab4/scripts/.env.template ../../Lab4/scripts/.env
-  fi
-  if ! test -f ../../Lab5/scripts/.env; then
-    cp ../../Lab5/scripts/.env.template ../../Lab5/scripts/.env
-  fi
-  if ! test -f ../../Lab6/scripts/.env; then
-    cp ../../Lab6/scripts/.env.template ../../Lab6/scripts/.env
-  fi
+  # if ! test -f ../../Lab4/scripts/.env; then
+  #   cp ../../Lab4/scripts/.env.template ../../Lab4/scripts/.env
+  # fi
+  # if ! test -f ../../Lab5/scripts/.env; then
+  #   cp ../../Lab5/scripts/.env.template ../../Lab5/scripts/.env
+  # fi
+  # if ! test -f ../../Lab6/scripts/.env; then
+  #   cp ../../Lab6/scripts/.env.template ../../Lab6/scripts/.env
+  # fi
   ex -sc '%s/AWS_PROFILE=.*/AWS_PROFILE=\"'$AWS_PROFILE'\"/|x' ../../Lab2/scripts/.env
   ex -sc '%s/AWS_PROFILE=.*/AWS_PROFILE=\"'$AWS_PROFILE'\"/|x' ../../Lab3/scripts/.env
-  ex -sc '%s/AWS_PROFILE=.*/AWS_PROFILE=\"'$AWS_PROFILE'\"/|x' ../../Lab4/scripts/.env
-  ex -sc '%s/AWS_PROFILE=.*/AWS_PROFILE=\"'$AWS_PROFILE'\"/|x' ../../Lab5/scripts/.env
-  ex -sc '%s/AWS_PROFILE=.*/AWS_PROFILE=\"'$AWS_PROFILE'\"/|x' ../../Lab6/scripts/.env
+  # ex -sc '%s/AWS_PROFILE=.*/AWS_PROFILE=\"'$AWS_PROFILE'\"/|x' ../../Lab4/scripts/.env
+  # ex -sc '%s/AWS_PROFILE=.*/AWS_PROFILE=\"'$AWS_PROFILE'\"/|x' ../../Lab5/scripts/.env
+  # ex -sc '%s/AWS_PROFILE=.*/AWS_PROFILE=\"'$AWS_PROFILE'\"/|x' ../../Lab6/scripts/.env
 fi
 
 if [[ $server -eq 1 ]]; then
