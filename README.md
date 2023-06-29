@@ -6,7 +6,7 @@ This repository contains unofficial patterns, sample code, or tools to help deve
 
 In this workshop you will be building a multi-tenant Software-as-a-Service (SaaS) solution using Fauna and AWS Serverless Services, specifically Amazon API Gateway, Amazon Cognito, AWS Lambda, AWS CodePipeline, and Amazon CloudWatch. The diagram below describes at a high-level, the reference architecture; And we walk you through the entire solution. The goal is to provide an understanding of serverless architecture as it apples to multi-tenancy, and introduce Fauna features/functionality that make them seamless to implement.
 
-![Architecture Diagram](/images/ServerlessSaas-Final.png)
+![Architecture Diagram](/images/Architecture.png)
 
 ## Navigating the workshop
 

@@ -9,7 +9,7 @@ The web application in Lab2:
   tenants. 
 * Introduces Fauna parent-child database features that allows for siloed segregation of tenant data
 
-![Lab 2 Architecture](/images/ServerlessSaas-Lab2.png)
+![Lab 2 Architecture](/images/Lab2.png)
 
 ## Deploying Lab2
 

@@ -7,7 +7,7 @@ Lab1 is a basic e-commerce application that introduces the core components of a 
 * Introducing [Fauna](https://fauna.com)
   * An ACID-compliant, globally distributed, replicated (with active-active writes) database delivered as an API 
 
-![Lab 1 Architecture](/images/ServerlessSaas-Lab1.png)
+![Lab 1 Architecture](/images/Lab1.png)
 
 ## Deploying Lab1
 
