@@ -103,7 +103,7 @@ def update_product(event, context):
 
         response = db.query(
             fql("""
-            product.byId(${productId}).update({
+            product.byId(${productId})!.update({
               'sku': ${sku},
               'name': ${name},
               'description': ${description},

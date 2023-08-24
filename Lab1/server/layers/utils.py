@@ -9,7 +9,7 @@ import os, configparser, traceback
 import logger
 
 from fauna.client import Client as FaunaClient
-from fauna.errors import FaunaException, FaunaError, AuthenticationError, AuthorizationError, QueryRuntimeError, AbortError
+from fauna.errors import FaunaError, AbortError
 
 
 FAUNA_CONFIG_PATH = os.environ['FAUNA_CONFIG_PATH']
@@ -73,23 +73,14 @@ def generate_response(inputObject):
     }
 
 
-def generate_error_response(err):
-    errorType = type(err)
-    if errorType == AbortError:
-        code = 400
+def generate_error_response(err: FaunaError):
+    if type(err) == AbortError:
         responseBody = err.abort
-    elif errorType in (FaunaException, FaunaError, AuthenticationError, AuthorizationError):
-        code = err.args[0]
-        responseBody = err.args[1]
-    elif errorType == QueryRuntimeError:
-        code = err.args[0]
-        responseBody = err.query_info.summary
     else:
-        code = 400
-        responseBody = err.args[0]
+        responseBody = err.message
 
     response = {
-        "statusCode": code,
+        "statusCode": err.status_code,
         "headers": {
             "Access-Control-Allow-Headers" : "Content-Type, Origin, X-Requested-With, Accept, Authorization, Access-Control-Allow-Methods, Access-Control-Allow-Headers, Access-Control-Allow-Origin",
             "Access-Control-Allow-Origin": "*",
@@ -98,7 +89,7 @@ def generate_error_response(err):
         "body": responseBody
     }
 
-    return response  
+    return response
     
 
 def  encode_to_json_object(inputObject):

@@ -22,7 +22,7 @@ def get_order(event, context):
 
         response = db.query(
             fql("""
-            let o = order.byId(${orderId}) 
+            let o = order.byId(${orderId})!
             {
               id: o.id,
               orderName: o.orderName,
@@ -59,12 +59,12 @@ def create_order(event, context):
         response = db.query(
             fql("""
               ${cart}.forEach(x=>{              
-                let p = product.byId(x.productId)
+                let p = product.byId(x.productId)!
                 let updatedQty = p.quantity - x.quantity
 
                 if (updatedQty < 0) {                  
                   abort("Insufficient stock for product " + p.name + 
-                        ": Requested quantity=" + x.quantity)
+                        ": Requested quantity=" + x.quantity.toString())
                 } else {
                   p.update({
                     quantity: updatedQty,
@@ -125,7 +125,7 @@ def update_order(event, context):
 
         response = db.query(
             fql("""
-              order.byId(${orderId}).update({
+              order.byId(${orderId})!.update({
                 orderName: ${orderName},
                 status: ${orderStatus},
                 orderProducts: ${cart}.map(x=>{
@@ -165,7 +165,7 @@ def delete_order(event, context):
 
         response = db.query(
             fql("""
-            order.byId(${orderId}).delete()
+            order.byId(${orderId})!.delete()
             """, 
             orderId = orderId
             )

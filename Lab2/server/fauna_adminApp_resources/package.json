@@ -9,7 +9,7 @@
   },
   "author": "zee.khoo@fauna.com",
   "dependencies": {
-    "fauna": "^0.5.7"
+    "fauna": "^1.0.0"
   },
   "type": "module"
 }

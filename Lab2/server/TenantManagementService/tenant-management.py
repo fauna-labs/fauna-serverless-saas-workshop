@@ -106,7 +106,7 @@ def update_tenant(event, context):
 
     response = db.query(
         fql("""
-        tenant.byId(${tenant_id}).update({
+        tenant.byId(${tenant_id})!.update({
           tenantName: ${tenantName},
           tenantAddress: ${tenantAddress},
           tenantEmail: ${tenantEmail},
@@ -177,7 +177,7 @@ def deactivate_tenant(event, context):
 
     response = db.query(
         fql("""
-        tenant.byId(${tenant_id}).update({
+        tenant.byId(${tenant_id})!.update({
           active: ${active}
         }) {
           id,
@@ -213,7 +213,7 @@ def activate_tenant(event, context):
 
     response = db.query(
         fql("""
-        tenant.byId(${tenant_id}).update({
+        tenant.byId(${tenant_id})!.update({
           active: ${active}
         }) {
           id,

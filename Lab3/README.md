@@ -38,22 +38,15 @@ corresponding to the tenant.
 ### Fauna Setup
 > Note: If you completed Lab2, skip this entire Fauna setup.
 
-* Login to the Fauna [dashboard](https://dashboard.fauna.com)
-* Create a new database
-* Generate an API Key for the database above:
-  * Naviate to __Security__ > __Keys__
-  * Click **New Key**
-  * Role = **Admin**
-  * Provide a name for the key
-  * Copy the value, you will not be able to see it again.
-* Save API Key from previous step into a new file `/scripts/.env`
+* Create a database and database access token according to [these instructions](https://docs.fauna.com/fauna/current/get_started/client_quick_start?lang=python)
+* Save database access token from previous step into a new file `/scripts/.env`
   > A template file [/scripts/.env.template](./scripts/.env.template) has been provided for you. Make a copy of it and rename it `.env`, and edit in the values
 * Update the `AWS_PROFILE` variable to match the profile name you set in the AWS `credentials` file above
 
   e.g. 
   ```
   STACK_NAME="serverless-saas-fauna"
-  FAUNA_API_KEY="<The API Key>"
+  FAUNA_API_KEY="<The database access token>"
   AWS_PROFILE="serverless-workshop"
   ```
 

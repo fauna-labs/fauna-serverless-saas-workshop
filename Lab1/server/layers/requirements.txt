@@ -1,4 +1,4 @@
 aws-lambda-powertools[Tracer,Logger,Metrics]
 simplejson
 jsonpickle
-fauna==0.6.1
+fauna==1.0.0
